@@ -1,0 +1,53 @@
+openapi: 3.1.0
+info:
+  title: My Manga List API - OpenAPI 3.1
+  description: |-
+    My Manga List API is a self-hosted platform for tracking manga and manga-like series you have read, are reading, or plan to read. It is designed for personal use but can also be deployed by anyone who wishes to manage their own reading list.
+    ***
+    This project relies on public APIs from MangaUpdates, Mangadex, and MyAnimeList to provide up-to-date manga information. We sincerely thank these communities and recommend users to contribute to their databases to keep the ecosystem rich and accurate. By using My Manga List API, you acknowledge and agree to the Terms of Service of these third-party platforms.
+    - [MangaUpdates](https://www.mangaupdates.com/), [API usage Policy](https://api.mangaupdates.com/#section/Acceptable-Use-Policy)
+    - [Mangadex](https://mangadex.org/), [API usage Policy](https://api.mangadex.org/docs/#acceptable-usage-policy)
+    - [MyAnimeList](https://myanimelist.net/), [API License and Developer Agreement](https://myanimelist.net/static/apiagreement.html)
+    ***
+    As a self-hosted FOSS solution, you have full control over your data and privacy. Please consider whether hosting and managing your own database fits your needs. If you wish to contribute to this project or need help, the documentation and community are here for you.
+    - [Project Github Page](https://github.com/ma-tecik/MyMangaList)
+  contact:
+    name: Mehmet Akif Tecik
+    url: "https://github.com/ma-tecik"
+    email: "mehmetakiftecik@gmail.com"
+  termsOfService: https://dev.mat.tr.eu.org:5050/series/list/plan-to
+  license:
+    name: GNU Affero General Public License v3.0
+    url: https://www.gnu.org/licenses/agpl-3.0.html
+  version: 1.0.0
+servers:
+  - url: "https://dev.mat.tr.eu.org/api/v1"
+    description: Development Server (DNS record may be deleted any time)
+tags:
+  - name: Series
+    description: Operations related to series.
+  - name: Authors
+    description: Operations related to authors.
+  - name: H
+    description: Operations related to hentai.
+  - name: Misc
+    description: Other operations
+paths:
+  /ping:
+    get:
+      operationId: get-ping
+      summary: Ping healthcheck
+      description: Returns a plaintext response containing only the word 'pong' if the API is healthy
+      tags:
+        - Misc
+      security: [ ]
+      responses:
+        '200':
+          description: Pong
+          content:
+            text/plain:
+              schema:
+                type: string
+                default: pong
+
+  
