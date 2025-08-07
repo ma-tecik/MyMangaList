@@ -1,16 +1,23 @@
 create table authors
 (
-    id          INTEGER
+    id     INTEGER
         primary key autoincrement,
-    id_mu       TEXT
+    id_mu  TEXT
         unique,
-    id_dex      TEXT
+    id_dex TEXT
         unique,
-    id_mal      INTEGER
+    id_mal INTEGER
         unique,
-    nationality TEXT,
-    gender      TEXT,
-    check (gender in ('f', 'm', 'n'))
+    name   TEXT
+);
+
+create table authors_names
+(
+    id   INTEGER not null
+        references authors
+            on delete cascade,
+    name TEXT    not null,
+    unique (id, name)
 );
 
 create table genres

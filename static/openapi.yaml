@@ -3,24 +3,26 @@ info:
   title: My Manga List API - OpenAPI 3.1
   description: |-
     My Manga List API is a self-hosted platform for tracking manga and manga-like series you have read, are reading, or plan to read. It is designed for personal use but can also be deployed by anyone who wishes to manage their own reading list.
+    
+    As a self-hosted FOSS solution, you have full control over your data and privacy. Please consider whether hosting and managing your own database fits your needs. If you wish to contribute to this project or need help, the documentation and community are here for you.
+    - [Project Github Page](https://github.com/ma-tecik/MyMangaList)
     ***
     This project relies on public APIs from MangaUpdates, Mangadex, and MyAnimeList to provide up-to-date manga information. We sincerely thank these communities and recommend users to contribute to their databases to keep the ecosystem rich and accurate. By using My Manga List API, you acknowledge and agree to the Terms of Service of these third-party platforms.
     - [MangaUpdates](https://www.mangaupdates.com/), [API usage Policy](https://api.mangaupdates.com/#section/Acceptable-Use-Policy)
     - [Mangadex](https://mangadex.org/), [API usage Policy](https://api.mangadex.org/docs/#acceptable-usage-policy)
     - [MyAnimeList](https://myanimelist.net/), [API License and Developer Agreement](https://myanimelist.net/static/apiagreement.html)
-    ***
-    As a self-hosted FOSS solution, you have full control over your data and privacy. Please consider whether hosting and managing your own database fits your needs. If you wish to contribute to this project or need help, the documentation and community are here for you.
-    - [Project Github Page](https://github.com/ma-tecik/MyMangaList)
+  termsOfService: https://github.com/ma-tecik/MyMangaList/ToS.md
   contact:
     name: Mehmet Akif Tecik
     url: "https://github.com/ma-tecik"
     email: "mehmetakiftecik@gmail.com"
-  termsOfService: https://dev.mat.tr.eu.org:5050/series/list/plan-to
   license:
     name: GNU Affero General Public License v3.0
     url: https://www.gnu.org/licenses/agpl-3.0.html
   version: 1.0.0
 servers:
+  - url: "http://localhost:5000/api/v1"
+    description: Localhost Server (for development purposes)
   - url: "https://dev.mat.tr.eu.org/api/v1"
     description: Development Server (DNS record may be deleted any time)
 tags:
@@ -35,7 +37,7 @@ tags:
 paths:
   /ping:
     get:
-      operationId: get-ping
+      operationId: getPing
       summary: Ping healthcheck
       description: Returns a plaintext response containing only the word 'pong' if the API is healthy
       tags:
@@ -50,4 +52,685 @@ paths:
                 type: string
                 default: pong
 
-  
+  /series:
+    get:
+      operationId: getSeriesList
+      summary: Retrieve series list
+      description: Returns a list of series with optional filters for status, type, and tags.
+      tags:
+        - Series
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: perpage
+          in: query
+          description: for pagination 30-100
+          schema:
+            type: integer
+            default: 30
+            minimum: 30
+            maximum: 100
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/Status'
+        - name: type
+          in: query
+          description: other for all series except manga, manhwa, and manhua.
+          schema:
+            type: string
+            enum:
+              - all
+              - manga
+              - manwha
+              - manhua
+              - other
+            default: all
+        - name: included
+          in: query
+          description: |-
+            Genres to include in results.
+            For Josei, Seinen, Shoujo, Shounen; works matching any (OR logic) will be included, for other genres, works must match all (AND logic).
+            Example: "Josei,Seinen,Action,Adventure" returns series that are Josei OR Seinen AND also have Action AND Adventure.
+          schema:
+            $ref: '#/components/schemas/GenresSearch'
+        - name: excluded
+          in: query
+          description: |-
+            Genres to exclude from results (works containing any of these will be omitted).
+            Example: "Hentai,Yaoi" will exclude any series with those genres.
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/GenresSearch'
+              - default:
+                  - nsfw
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum:
+              - rating
+              - name
+              - series_id
+            default: rating
+      responses:
+        200:
+          description: Series list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    default: OK
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Series'
+        400:
+          description: Bad request (invalid query)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+        500:
+          description: Internal error, check logs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+    post:
+      operationId: createSeries
+      summary: Add a series entry
+      description: Adds a new series to your manga list.
+      tags:
+        - Series
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeriesDataEA'
+      responses:
+        201:
+          description: Series created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    default: OK
+                  data:
+                    $ref: '#/components/schemas/Series'
+        400:
+          description: Bad request (invalid query)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+        409:
+          description: Series already exists, use merge or update endpoint.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseMerge'
+        500:
+          description: Internal error, check logs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+        502:
+          description: Error while downloading series image.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+  /series/{id}:
+    get:
+      operationId: getSeriesById
+      summary: Get a series by series_id
+      description: Returns series details for a given series_id.
+      tags:
+        - Series
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Internal series ID
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Series details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Series'
+        400:
+          description: Bad request (invalid or missing data)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+        404:
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+        500:
+          description: Internal error, check logs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+    delete:
+      operationId: deleteSeries
+      summary: Delete a series by series_id
+      description: Deletes a series for given series_id.
+      tags:
+        - Series
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Internal series ID
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Series deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    default: OK
+                  data:
+                    $ref: '#/components/schemas/Series'
+        400:
+          description: Bad request (invalid query)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+        404:
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+        500:
+          description: Internal error, check logs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+    patch:
+      operationId: updateSeries
+      summary: Update a series by series_id
+      description: Updates a series by given series_id
+      tags:
+        - Series
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Internal series ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeriesData'
+      responses:
+        200:
+          description: Series updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    default: OK
+                  data:
+                    $ref: '#/components/schemas/Series'
+        400:
+          description: Bad request (invalid query)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+        409:
+          description: Series conflict, use merge endpoint.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseMerge'
+        500:
+          description: Internal error, check logs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+
+  /external/series/id:
+    get:
+      operationId: externalSeriesID
+      summary: Get the series_id of a series by external IDs
+      description: Returns the series_id of a series based on given one or more MU, Dex, MAL, Bato, Line IDs
+      tags:
+        - Series
+      parameters:
+        - name: mu
+          in: query
+          schema:
+            type: string
+        - name: dex
+          in: query
+          schema:
+            type: string
+        - name: mal
+          in: query
+          schema:
+            type: integer
+        - name: bato
+          in: query
+          schema:
+            type: integer
+        - name: line
+          in: query
+          schema:
+            type: integer
+      responses:
+        200:
+          description: series_id
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    default: OK
+                  data:
+                    type: integer
+        400:
+          description: Bad request (invalid query)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+        404:
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+        409:
+          description: Series conflict, use merge endpoint. Or possibly author problem.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseMerge'
+        500:
+          description: Internal error, check logs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+
+  /external/series/data:
+    get:
+      operationId: externalSeriesData
+      summary: Get the series details from external sources
+      description: Retrieves and returns series details from external sources  based on given one or more MU, Dex, MAL, Bato, line IDs
+      tags:
+        - Series
+      parameters:
+        - name: mu
+          in: query
+          schema:
+            type: string
+        - name: dex
+          in: query
+          schema:
+            type: string
+        - name: mal
+          in: query
+          schema:
+            type: integer
+        - name: bato
+          in: query
+          schema:
+            type: integer
+        - name: line
+          in: query
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Series data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    default: OK
+                  data:
+                    $ref: '#/components/schemas/SeriesDataEA'
+        400:
+          description: Bad request (invalid query)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+        404:
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+        500:
+          description: Internal error, check logs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+        502:
+          description: Error while retrieving series details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+
+
+
+
+
+
+
+
+
+components:
+  schemas:
+    SeriesBase:
+      type: object
+      properties:
+        ids:
+          $ref: '#/components/schemas/IDs'
+        title:
+          type: string
+        alt_titles:
+          type: array
+          items:
+            type: string
+        type:
+          $ref: '#/components/schemas/Type'
+        description:
+          type: string
+        vol_ch:
+          type: string
+          description: Volume and chapter information
+        is_md:
+          type: boolean
+          description: True if description and vol_ch are in Markdown format
+        genres:
+          $ref: '#/components/schemas/Genres'
+        status:
+          $ref: '#/components/schemas/Status'
+        year:
+          type: integer
+          examples:
+            - 2000
+    SeriesData:
+      allOf:
+        - $ref: '#/components/schemas/SeriesBase'
+        - type: object
+          properties:
+            authors:
+              $ref: '#/components/schemas/AuthorsS'
+    SeriesDataEA:
+      allOf:
+        - $ref: '#/components/schemas/SeriesBase'
+        - type: object
+          properties:
+            authors:
+              $ref: '#/components/schemas/AuthorsSE'
+    Series:
+      allOf:
+        - type: object
+          properties:
+            id:
+              type: integer
+              description: internal ID of the series
+            image_ext:
+              type: string
+              description: Image file extension (e.g., jpg, png)
+        - $ref: '#/components/schemas/SeriesData'
+        - type: object
+          properties:
+            rating:
+              type: number
+              format: float
+              description: Average rating of the series
+            user_rating:
+              type: number
+              format: float
+
+
+
+    IDs:
+      type: object
+      description: External IDs from various sources
+      properties:
+        mu:
+          type: string
+          pattern: '^[0-9a-z]+$'
+          examples:
+            - 's0htgp6'
+          description: MangaUpdates ID in base36 format NOT base10
+        dex:
+          type: string
+          pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+          description: Mangadex ID
+        mal:
+          type: integer
+          description: MyAnimeList ID
+        bato:
+          type: integer
+          description: Bato.to ID
+        line:
+          type: integer
+          description: Line Webtoon ID
+    Type:
+      type: string
+      description: Series type
+      enum:
+        - Manga
+        - Manhwa
+        - Manhua
+        - OEL
+        - Vietnamese
+        - Malaysian
+        - Indonesian
+        - Novel
+        - Artbook
+        - Doujinshi
+        - Filipino
+        - Thai
+        - Drama CD
+        - Nordic
+        - French
+        - Spanish
+        - German
+    Status:
+      type: string
+      description: Reading status
+      enum:
+        - Plan to Read
+        - Reading
+        - Completed
+        - One-shot
+        - Dropped
+        - Ongoing
+
+    Genres:
+      type: array
+      description: Genre list
+      items:
+        type: string
+        enum:
+          - Josei
+          - Seinen
+          - Shoujo
+          - Shounen
+          - Yaoi
+          - Yuri
+          - Shounen Ai
+          - Shoujo Ai
+          - Lolicon
+          - Shotacon
+          - Hentai
+          - Smut
+          - Adult
+          - Mature
+          - Doujinshi
+          - Action
+          - Adventure
+          - Comedy
+          - Drama
+          - Ecchi
+          - Fantasy
+          - Gender Bender
+          - Harem
+          - Historical
+          - Horror
+          - Martial Arts
+          - Mecha
+          - Mystery
+          - Psychological
+          - Romance
+          - School Life
+          - Sci-fi
+          - Slice of Life
+          - Sports
+          - Supernatural
+          - Tragedy
+    GenresSearch:
+      allOf:
+        - type: array
+          items:
+            type: string
+            enum:
+              - nsfw
+              - sfw
+        - $ref: '#/components/schemas/Genres'
+
+    AuthorTypes:
+      type: string
+      description: Author type
+      enum:
+        - Author
+        - Artist
+        - Both
+    AuthorIDs:
+      type: object
+      properties:
+        mu:
+          type: string
+          pattern: '^[0-9a-z]+$'
+          examples:
+            - '45vzs8e'
+          description: MangaUpdates ID in base36 format NOT base10
+        dex:
+          type: string
+          pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+          description: Mangadex ID
+        mal:
+          type: integer
+          description: MyAnimeList ID
+    AuthorsS:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: integer
+            description: internal ID of the author
+          name:
+            type: string
+            description: Author's name
+          type:
+            $ref: '#/components/schemas/AuthorTypes'
+    AuthorsSE:
+      type: array
+      items:
+        type: object
+        properties:
+          ids:
+            $ref: '#/components/schemas/AuthorIDs'
+          name:
+            type: string
+            description: Author's name
+          type:
+            $ref: '#/components/schemas/AuthorTypes'
+
+
+    response200:
+      type: object
+      properties:
+        result:
+          type: string
+          default: OK
+        data:
+          type: array
+      required:
+        - result
+        - data
+    responseKO:
+      type: object
+      properties:
+        result:
+          type: string
+          default: KO
+        error:
+          type: string
+          description: 'error message'
+      required:
+        - result
+        - error
+    responseMerge:
+      description: 'Duplicate entry, use merge endpoint'
+      type: object
+      properties:
+        result:
+          type: string
+          default: 'MERGE_REQUIRED'
+        error:
+          type: string
+          description: 'error message'
+          default: 'Manual merge required for ...'
+        url:
+          type: string
+          format: uri
+          description: 'URL to trigger manual merge/ for conflicting entrises'
+      required:
+        - result
+        - error
+        - url

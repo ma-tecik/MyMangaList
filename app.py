@@ -2,26 +2,32 @@ from flask import Flask, render_template, jsonify
 import logging
 import os
 import json
+from views.api import api_bp
 
 app = Flask(__name__, instance_relative_config=True)
 app.config.from_file("config.json", load=json.load)
 
+# Configure logging
+logging.getLogger().handlers.clear()
 log_dir = os.path.join(app.instance_path, "logs")
 os.makedirs(log_dir, exist_ok=True)
-
 file_handler = logging.FileHandler(os.path.join(log_dir, "app.log"))
 file_handler.setLevel(logging.INFO)
 file_handler.setFormatter(logging.Formatter("[%(asctime)s] %(levelname)s in %(module)s.%(funcName)s: %(message)s", datefmt = "%Y-%m-%d %H:%M:%S"))
-
 console_handler = logging.StreamHandler()
 console_handler.setLevel(logging.INFO)
+app.logger.setLevel(logging.INFO)
+app.logger.addHandler(console_handler)
+app.logger.addHandler(file_handler)
 
-logging.basicConfig(handlers=[file_handler, console_handler], level=logging.INFO)
+# Blueprints
+app.register_blueprint(api_bp)
+
 
 @app.route("/", methods=["GET"])
 def index():
     return "", 301, {"Location": "/series/list/plan-to"}
-@app.route('/series/list/<path>', methods=['GET'])
+@app.route("/series/list/<path>", methods=["GET"])
 def series(path):
     try:
         if path not in {"plan-to", "reading", "completed", "one-shots", "dropped", "ongoing"}:
@@ -41,5 +47,5 @@ def series(path):
             page=path,
         ), 200
     except Exception as e:
-        logging.error(str(e))
+        app.logger.error(e)
         return jsonify({"result": "KO", "error": "Internal server error"}), 500
