@@ -1,8 +1,9 @@
 from flask import Flask, render_template, jsonify
+from views.api import api_bp
+from views.misc import misc_bp
 import logging
 import os
 import json
-from views.api import api_bp
 
 app = Flask(__name__, instance_relative_config=True)
 app.config.from_file("config.json", load=json.load)
@@ -22,6 +23,7 @@ app.logger.addHandler(file_handler)
 
 # Blueprints
 app.register_blueprint(api_bp)
+app.register_blueprint(misc_bp)
 
 
 @app.route("/", methods=["GET"])

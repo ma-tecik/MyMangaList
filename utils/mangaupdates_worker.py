@@ -2,7 +2,7 @@ def worker(genres, data):
     valid_categories = [entry.get("category") for entry in data if
                         entry.get("votes_minus", 0) <= entry.get("votes_plus", 0)]
     genre_map = {
-        "Os Coll.": ["Anthology", "Collection of Stories", "Oneshot", "Promotional Oneshot", "Short Story",
+        "Anthology": ["Anthology", "Collection of Stories", "Oneshot", "Promotional Oneshot", "Short Story",
                        "Promotional Short Series"],
         "Cancelled": ["Axed/Cancelled/Discontinued", "Incomplete Due to Author/Artist Death"],
         "Rushed": ["Rushed Ending / Not Axed"],
@@ -63,11 +63,12 @@ def worker(genres, data):
         "Boss-Sub": ["Boss", "Boss-Subordinate Relationship", "CEO/s", "Company President"],
         "Showbiz": ["Showbiz", "Acting", "Actor/s", "TV Show/s", "Idol/s", "Entertainment Industry",
                     "Celebrity/ies", "Actress/es", "Child Actor/Actress"],
-        "inc.": ["Brother-Sister Incest", "False Incest", "Incest", "Incest-Like Relationship",
+        "Incest": ["Brother-Sister Incest", "False Incest", "Incest", "Incest-Like Relationship",
                  "Stepbrother-Stepsister Intercourse", "Stepsibling Love"],
         "Borderline H": ["Borderline H"],
         "Yandere": ["Yandere", "Yandere Male Lead"],
         "Toxic Rel.": ["Toxic Male Lead", "Toxic Relationship", "Trashy Male Lead"],
+        "Harlequin": ["Harlequin"],
     }
     if "School Life" not in genres:
         genre_map["School Life"] = [

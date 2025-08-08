@@ -36,4 +36,4 @@ def detect_language(name) -> tuple[str, bool]:
         return "_", False
 
 if __name__ == '__main__':
-    print(detect_language("""Nanyou Laile Da Yima?!"""))
+    print(detect_language("""Hidupku Tentram dengan Pai"""))

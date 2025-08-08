@@ -55,12 +55,9 @@ def series(id_dex: str) -> Tuple[Dict[str, Any], int]:
 
     accepted_languages = ["en"]
     accepted_languages.extend(app.config.get("TITLE_LANGUAGES", [])) # TODO: check if this works.
-    if original_lang == "ja":
-        accepted_languages.extend(["ja-ro", "ja"])
-    elif original_lang == "ko":
-        accepted_languages.append("ko")
-    elif original_lang in ["zh", "zh-hk"]:
-        accepted_languages.extend(["zh", "zh-hk"])
+    language_map = {"ja": ["ja-ro", "ja"], "ko": ["ko"], "zh": ["zh", "zh-hk"], "zh-hk": ["zh", "zh-hk"]}
+    if original_lang in language_map:
+        accepted_languages.extend(language_map[original_lang])
 
     alt_titles = []
     if "altTitles" in data["attributes"]:
@@ -78,7 +75,6 @@ def series(id_dex: str) -> Tuple[Dict[str, Any], int]:
 
     os_a = False
     os_a_tag_ids = {
-        "b13b2a48-c720-44a9-9c77-39c9979373fb",  # Doujinshi
         "51d83883-4103-437c-b4b1-731cb73d786c",  # Anthology
         "0234a31e-a729-4e28-9d6a-3f87c4966b9e"  # Oneshot
     }

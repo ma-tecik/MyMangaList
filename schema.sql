@@ -154,3 +154,10 @@ create table series_schale_ids
             on delete cascade,
     primary key (series_id, schale_id)
 );
+
+create table settings
+(
+    key   TEXT not null
+        primary key,
+    value TEXT not null
+);

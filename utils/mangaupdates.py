@@ -31,9 +31,9 @@ def get_id(url: str) -> str:
     if "/series/" in url:
         id_ = url.split("/series/")[1].split("/")[0]
     elif "/series.html" in url or type(url) == int:
-        id_ = _id_from_old_url(url) if text else ""
+        id_ = _id_from_old_url(url) if url else ""
     else:
-        app.logger.warning(f"Invalid URL format or empty text: {text}")
+        app.logger.warning(f"Invalid URL format: {url}")
         return ""
     return id_
 
@@ -44,14 +44,14 @@ def series(id_mu36: str) -> Tuple[Dict[str, Any], int]:
     try:
         response = requests.get(f"https://api.mangaupdates.com/v1/series/{id_mu}")
     except Exception as e:
-        app.logger.error(f"Fetching data for ID {id_mu36}: {e}")
-        return {"status": "KO", "error": "CFailed to fetch details from MangaUpdates"}, 502
+        app.logger.error(f"Fetching data for ID{id_mu36}: {e}")
+        return {"status": "KO", "error": "Failed to fetch details from MangaUpdates"}, 502
 
     if response.status_code == 404:
-        app.logger.info(f"Series not found for ID {id_mu36}")
+        app.logger.info(f"Series not found for ID:{id_mu36}")
         return {"status": "KO", "error": "Series not found"}, 404
     if response.status_code != 200:
-        app.logger.error(f"Error fetching data for ID {id_mu36}, status code: {response.status_code}")
+        app.logger.error(f"Error fetching data for ID:{id_mu36}, status code: {response.status_code}")
         return {"status": "KO", "error": "Series not found"}, response.status_code
 
     data = response.json()
@@ -59,12 +59,10 @@ def series(id_mu36: str) -> Tuple[Dict[str, Any], int]:
     accepted_languages = ["en"]
     accepted_languages.extend(app.config.get("TITLE_LANGUAGES", [])) # TODO: check if this works.
     series_type = data["type"]
-    if series_type in ["Manga", "Doujinshi"]:
-        accepted_languages.append("ja")
-    elif series_type == "Manhwa":
-        accepted_languages.append("kr")
-    elif series_type == "Manhua":
-        accepted_languages.append("zh-CN")
+
+    type_map = { "Manga": "jp", "Doujinshi": "jp", "Manhwa": "ko", "Manhua": "zh-CN"}
+    if series_type in type_map:
+        accepted_languages.append(type_map[series_type])
 
     alt_titles_all = []
     alt_titles = []
