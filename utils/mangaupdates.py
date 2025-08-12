@@ -27,6 +27,7 @@ def _id_from_old_url(old_url: str) -> str:
         app.logger.error(f"for {old_url}: {e}")
         return ""
 
+
 def get_id(url: str) -> str:
     if "/series/" in url:
         id_ = url.split("/series/")[1].split("/")[0]
@@ -57,12 +58,20 @@ def series(id_mu36: str) -> Tuple[Dict[str, Any], int]:
     data = response.json()
 
     accepted_languages = ["en"]
-    accepted_languages.extend(app.config.get("TITLE_LANGUAGES", [])) # TODO: check if this works.
-    series_type = data["type"]
+    accepted_languages.extend(app.config.get("TITLE_LANGUAGES", []))  # TODO: check if this works.
 
-    type_map = { "Manga": "jp", "Doujinshi": "jp", "Manhwa": "ko", "Manhua": "zh-CN"}
-    if series_type in type_map:
-        accepted_languages.append(type_map[series_type])
+    type_map = {"Manga": ["jp"], "Manhwa": ["ko"], "Manhua": ["zh-CN"], "OEL": [],
+                "Vietnamese": ["vi"], "Malaysian": ["ms"], "Indonesian": ["id"],
+                "Novel": ["jp", "ko", "zh-CN"], "Artbook": ["jp", "ko", "zh-CN"]}
+    _type = data["type"]
+    if _type in type_map:
+        accepted_languages.extend(type_map[_type])
+        type_ = _type
+    elif _type == "Doujinshi":
+        type_ = "Manga"
+        accepted_languages.extend(type_map[type_])
+    else:
+        type_ = "Other"
 
     alt_titles_all = []
     alt_titles = []
@@ -91,17 +100,15 @@ def series(id_mu36: str) -> Tuple[Dict[str, Any], int]:
             any(author_.get("author_id") == "3316twv" for author_ in authors)):
         os_a = True
 
-
     ids: Dict[str, Any] = {'mu': id_mu36}
     if id_line := _extract_line_id(data["title"]):
         ids['line'] = id_line
-
 
     data_final = {
         'ids': ids,
         'title': data['title'],
         'alt_titles': alt_titles,
-        'type': data['type'],
+        'type': type_,
         'description': data['description'],
         'vol_ch': data['status'],
         'is_md': True,
@@ -110,11 +117,9 @@ def series(id_mu36: str) -> Tuple[Dict[str, Any], int]:
         'authors': authors,
         'os_a': os_a,
         'image_url': data['image']['url']['original'],
-        'timestamps': { "mu": data['last_updated']['timestamp'], }
+        'timestamps': {"mu": data['last_updated']['timestamp'], }
     }
     return data_final, 200
-
-
 
 
 # def search(text_: str) -> list:

@@ -2,16 +2,18 @@ from flask import current_app as app
 from utils.common_code import author_type_merger
 from typing import Dict, Any, Tuple
 import requests
-
+from utils.line import get_id as get_id_line
 
 def get_id(url: str) -> str:
     parts = url.split("/title/")[1].split("/")
     id_ = parts[0]
     return id_
 
+
 def series(id_dex: str) -> Tuple[Dict[str, Any], int]:
     try:
-        response = requests.get(f"https://api.mangadex.org/manga/{id_dex}?includes[]=author&includes[]=artist&includes[]=cover_art")
+        response = requests.get(
+            f"https://api.mangadex.org/manga/{id_dex}?includes[]=author&includes[]=artist&includes[]=cover_art")
     except Exception as e:
         app.logger.error(f"Fetching data for ID {id_dex}: {e}")
         return {"status": "KO", "error": "Failed to  fetch details from Mangadex"}, 502
@@ -20,7 +22,7 @@ def series(id_dex: str) -> Tuple[Dict[str, Any], int]:
         return {"status": "KO", "error": "Series not found"}, 404
     if response.status_code != 200:
         app.logger.error(f"Error fetching data for ID {id_dex}, status code: {response.status_code}")
-        return {"status": "KO", "error": "Series not found"}, response.status_code
+        return {"status": "KO", "error": "Unexpected error"}, response.status_code
 
     data = response.json()
     data = data["data"]
@@ -39,22 +41,16 @@ def series(id_dex: str) -> Tuple[Dict[str, Any], int]:
             cover_filename = i["attributes"]["fileName"]
     authors = author_type_merger(authors)
 
-
-    type_ = None
-    lang_map = {"ja": "Manga", "ko": "Manhwa", "zh": "Manhua", "zh-hk": "Manhua", "en": "OEL",
-                     "vi": "Vietnamese", "ms": "Malaysian", "id": "Indonesian", "tl": "Filipino", "th": "Thai",
-                     "fr": "French", "es": "Spanish", "de": "German"}
+    lang_map = {"ja": "Manga", "ko": "Manhwa", "zh": "Manhua", "zh-hk": "Manhua",
+                "en": "OEL", "vi": "Vietnamese", "ms": "Malaysian", "id": "Indonesian"}
     original_lang = data["attributes"]["originalLanguage"]
-    for lang, t in lang_map.items():
-        if original_lang == lang:
-            type_ = t
-            break
-    if not type_:
-        app.logger.info(f"Original language {original_lang} not recognized for ID {id_dex}. Defaulting to 'Other'.")
+    if original_lang in lang_map:
+        type_ = lang_map[original_lang]
+    else:
         type_ = "Other"
 
     accepted_languages = ["en"]
-    accepted_languages.extend(app.config.get("TITLE_LANGUAGES", [])) # TODO: check if this works.
+    accepted_languages.extend(app.config.get("TITLE_LANGUAGES", []))  # TODO: check if this works.
     language_map = {"ja": ["ja-ro", "ja"], "ko": ["ko"], "zh": ["zh", "zh-hk"], "zh-hk": ["zh", "zh-hk"]}
     if original_lang in language_map:
         accepted_languages.extend(language_map[original_lang])
@@ -66,7 +62,7 @@ def series(id_dex: str) -> Tuple[Dict[str, Any], int]:
                 if lang in accepted_languages:
                     alt_titles.append(title)
 
-    image_url = f"https://uploads.mangadex.org/covers/{id_dex}/{cover_filename}.256.jpg"
+    thumbnail = f"https://uploads.mangadex.org/covers/{id_dex}/{cover_filename}.256.jpg"
 
     import datetime
     updated_at_str = data["attributes"]["updatedAt"]
@@ -88,29 +84,23 @@ def series(id_dex: str) -> Tuple[Dict[str, Any], int]:
         "type": type_,
         "description": data["attributes"]["description"].get("en", ""),
         "is_md": True,
-        "genres": [], # TODO: implement genres
+        "genres": [],  # TODO: implement genres
         "year": data["attributes"].get("year"),
         "authors": authors,
         "os_a": os_a,
-        "image_url": image_url,
+        "thumbnail": thumbnail,
         'timestamps': {"dex": timestamp},
     }
-
     if data["attributes"]["links"].get("mu"):
-        data_final["id"]["mu"] = data["attributes"]["links"]["mu"]
+        data_final["ids"]["mu"] = data["attributes"]["links"]["mu"]
     if data["attributes"]["links"].get("mal"):
-         data_final["id"]["mal"] = data["attributes"]["links"]["mal"]
+        data_final["ids"]["mal"] = data["attributes"]["links"]["mal"]
     if not data_final.get("line") and data["attributes"]["links"].get("engtl"):
         engtl = data["attributes"]["links"]["engtl"]
         if "webtoons.com" in engtl:
-            data_final["id"]["line"] = engtl.split("title_no=")[1] if "title_no=" in engtl else engtl.split("titleNo=")[1]
-
+            data_final["id"]["line"] = get_id_line(engtl)
     return data_final, 200
 
 
 if __name__ == "__main__":
-    #manga_id = "c408ec80-586a-4d87-8bbc-e5e8d17a3898"
-    #manga_id = "984df7d5-ae4c-43c6-aa65-737b9f37e5ef"
-    manga_id = "c1c408f6-3dec-4d62-b6b3-b57e615d933c"
-    manga_data = series(manga_id)
-    print(manga_data)
+    pass

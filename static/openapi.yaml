@@ -104,10 +104,9 @@ paths:
             Genres to exclude from results (works containing any of these will be omitted).
             Example: "Hentai,Yaoi" will exclude any series with those genres.
           schema:
-            allOf:
-              - $ref: '#/components/schemas/GenresSearch'
-              - default:
-                  - nsfw
+            $ref: '#/components/schemas/GenresSearch'
+            default:
+              - nsfw
         - name: sort_by
           in: query
           schema:
@@ -169,6 +168,15 @@ paths:
                     default: OK
                   data:
                     $ref: '#/components/schemas/Series'
+                    required:
+                      - id
+                      - image_ext
+                      - ids
+                      - title
+                      - type
+                      - is_md
+                      - status
+                      - authors
         400:
           description: Bad request (invalid query)
           content:
@@ -512,6 +520,17 @@ components:
           properties:
             authors:
               $ref: '#/components/schemas/AuthorsSE'
+            thumbnail:
+              type: string
+              format: uri
+      required:
+        - ids
+        - title
+        - type
+        - status
+        - authors
+        - thumbnail
+
     Series:
       allOf:
         - type: object
@@ -532,7 +551,14 @@ components:
             user_rating:
               type: number
               format: float
-
+      required:
+        - id
+        - image_ext
+        - ids
+        - title
+        - type
+        - status
+        - authors
 
 
     IDs:
@@ -571,14 +597,7 @@ components:
         - Indonesian
         - Novel
         - Artbook
-        - Doujinshi
-        - Filipino
-        - Thai
-        - Drama CD
-        - Nordic
-        - French
-        - Spanish
-        - German
+        - Other
     Status:
       type: string
       description: Reading status
@@ -678,6 +697,9 @@ components:
             description: Author's name
           type:
             $ref: '#/components/schemas/AuthorTypes'
+        required:
+          - id
+          - type
     AuthorsSE:
       type: array
       items:
@@ -690,6 +712,8 @@ components:
             description: Author's name
           type:
             $ref: '#/components/schemas/AuthorTypes'
+        required:
+          - type
 
 
     response200:

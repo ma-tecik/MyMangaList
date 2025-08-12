@@ -65,6 +65,8 @@ create table series
     status       TEXT not null,
     user_rating  REAL
         check (status in ('Plan to Read', 'Reading', 'Completed', 'One-shot', 'Dropped', 'Ongoing'))
+        check ( type in ('Manga', 'Manhwa', 'Manhua', 'OEL', 'Vietnamese', 'Malaysian', 'Indonesian',
+                         'Novel', 'Artbook', 'Other') )
 );
 
 create table series_titles

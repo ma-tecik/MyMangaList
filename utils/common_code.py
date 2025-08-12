@@ -1,7 +1,6 @@
 from flask import current_app as app
 from typing import List
 
-
 def base36(num: int) -> str:
     alphabet = '0123456789abcdefghijklmnopqrstuvwxyz'
     result = ''
@@ -54,7 +53,6 @@ def author_id_merger(authors: List[dict], series_data) -> List[dict]:
         else:
             merged_authors.extend(author_list)
     return merged_authors
-
 
 if __name__ == '__main__':
     pass

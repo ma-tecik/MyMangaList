@@ -124,9 +124,8 @@ def series(id_bato: int) -> Tuple[Dict[str, str], int]:
         else:
             continue
 
-    # Unused variables: genres, status, authors
     return {
-        "id": ids,
+        "ids": ids,
         "title": title,
         "alt_titles": alt_titles,
         "type": type_,

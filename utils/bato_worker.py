@@ -57,7 +57,7 @@ def worker(genres_: List[str], original_language: str) -> Tuple[List[str], str, 
         type_ = language_map.get(original_language)[0]
         accepted_languages.append(language_map.get(original_language)[1])
     elif "Doujinshi" in genres:
-        type_ = "Doujinshi"
+        type_ = "Manga"
         accepted_languages.append("jp")
 
     if "" in accepted_languages:
