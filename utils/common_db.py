@@ -1,6 +1,7 @@
+import requests
 from flask import current_app as app
 import sqlite3
-from typing import Tuple, Union, Dict, List
+from typing import Tuple, Union, Dict, List, Any
 
 
 def download_thumbnail(series_id: int, thumbnail: str, cursor: sqlite3.Cursor) -> Tuple[dict, int]:
@@ -10,14 +11,14 @@ def download_thumbnail(series_id: int, thumbnail: str, cursor: sqlite3.Cursor) -
         if response.status_code != 200:
             app.logger.error(f"Failed to download image from {thumbnail}, status code: {response.status_code}")
             return {"result": "KO", "error": "Failed to download thumbnail"}, 502
-        ext = response.headers.get('Content-Type').split('/')[-1]
-        with open(f"static/images/{series_id}.{ext}", 'wb') as f:
+        ext = response.headers.get("Content-Type").split("/")[-1]
+        with open(f"static/images/{series_id}.{ext}", "wb") as f:
             f.write(response.content)
         cursor.execute("INSERT INTO series_images (series_id, extension) VALUES (?, ?)", (series_id, ext))
+        return {"result": "OK"}, 201
     except Exception as e:
         app.logger.error(f"Failed to download the image from {thumbnail}: {e}")
         return {"result": "KO", "error": "Failed to download thumbnail"}, 500
-    return {"result": "OK"}, 201
 
 # def delete_thumbnail(series_id: int, cursor: sqlite3.Cursor) -> Tuple[Dict[str, str], int]:
 #     try:
@@ -30,22 +31,40 @@ def download_thumbnail(series_id: int, thumbnail: str, cursor: sqlite3.Cursor) -
 #         app.logger.error(f"Failed to delete the image for series {series_id}: {e}")
 #         return {"result": "KO", "error": "Failed to delete image"}, 500
 #
-# def update_thumbnail(series_id: int, thumbnail: str, cursor: sqlite3.Cursor) -> Tuple[Dict[str, str], int]:
-#     return {"status": "KO", "error": "Not implemented yet"}, 501
+def update_thumbnail(series_id: int, thumbnail: str, cursor: sqlite3.Cursor) -> Tuple[Dict[str, str], int]:
+    try:
+        response = requests.get(thumbnail)
+        if response.status_code != 200:
+            app.logger.error(f"Failed to download image from {thumbnail}, status code: {response.status_code}")
+            return {"result": "KO", "error": "Failed to download thumbnail"}, 502
+        ext = response.headers.get("Content-Type").split("/")[-1]
+        cursor.execute("SELECT extension FROM series_images WHERE series_id = ?", (series_id,))
+        old_ext = cursor.fetchone()[0]
+        if old_ext != ext:
+            cursor.execute(f"UPDATE series_images SET extension = ? WHERE series_id = ?", (ext, series_id))
+        with open(f"static/images/{series_id}.{old_ext}", "wb") as f:
+            f.write(b"")
+        with open(f"static/images/{series_id}.{ext}", "wb") as f:
+            f.write(response.content)
+        return {"result": "OK"}, 201
+    except Exception as e:
+        app.logger.error(f"Failed to update the image for series {series_id}: {e}")
+        return {"result": "KO", "error": "Failed to update thumbnail"}, 500
 
 
 def get_author_id(author: Dict[str, Union[str, int]], cursor: sqlite3.Cursor) -> Tuple[List[int], int]:
     try:
-        id_mu = author.get("id_mu")
-        id_dex = author.get("id_dex")
-        id_mal = author.get("id_mal")
+        ids = author.get("ids", {})
+        id_mu = ids.get("mu")
+        id_dex = ids.get("dex")
+        id_mal = ids.get("mal")
         if not (id_mu or id_dex or id_mal):
             return [], 400
 
         cursor.execute("SELECT id FROM authors WHERE id_mu = ? OR id_dex = ? OR id_mal = ?", (id_mu, id_dex, id_mal))
         rows = cursor.fetchall()
         if not rows:
-            cursor.execute("INSERT INTO authors (id_mu, id_dex, id_mal) VALUES (?, ?, ?) RETURNING id", (id_mu, id_dex, id_mal))
+            cursor.execute("INSERT INTO authors (id_mu, id_dex, id_mal, name) VALUES (?, ?, ?, ?) RETURNING id", (id_mu, id_dex, id_mal, author.get("name")))
             author_id = cursor.fetchone()[0]
         elif len(rows) == 1:
             author_id = rows[0][0]
@@ -65,3 +84,6 @@ def get_author_id(author: Dict[str, Union[str, int]], cursor: sqlite3.Cursor) ->
     except Exception as e:
         app.logger.error(e)
         return [], 500
+
+def get_series_info(id_: int, cursor: sqlite3.Cursor) -> Tuple[Dict[str, Any], int]: # TODO: will be implemented
+    return {"status": "KO", "error": "Not implemented yet"}, 501

@@ -30,6 +30,8 @@ tags:
     description: Operations related to series.
   - name: Authors
     description: Operations related to authors.
+  - name: Merge
+    description: Operations related to merge series and authors.
   - name: H
     description: Operations related to hentai.
   - name: Misc
@@ -92,6 +94,8 @@ paths:
             default: all
         - name: included
           in: query
+          style: form
+          explode: false
           description: |-
             Genres to include in results.
             For Josei, Seinen, Shoujo, Shounen; works matching any (OR logic) will be included, for other genres, works must match all (AND logic).
@@ -100,37 +104,31 @@ paths:
             $ref: '#/components/schemas/GenresSearch'
         - name: excluded
           in: query
+          style: form
+          explode: false
           description: |-
             Genres to exclude from results (works containing any of these will be omitted).
             Example: "Hentai,Yaoi" will exclude any series with those genres.
           schema:
             $ref: '#/components/schemas/GenresSearch'
-            default:
-              - nsfw
         - name: sort_by
           in: query
           schema:
             type: string
             enum:
-              - rating
+              - rating-mu
+              - rating-dex
+              - rating-mal
               - name
-              - series_id
-            default: rating
+              - id
+            default: rating-mu
       responses:
         200:
           description: Series list
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  result:
-                    type: string
-                    default: OK
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Series'
+                $ref: '#/components/schemas/responseSeriesGet'
         400:
           description: Bad request (invalid query)
           content:
@@ -287,7 +285,9 @@ paths:
     patch:
       operationId: updateSeries
       summary: Update a series by series_id
-      description: Updates a series by given series_id
+      description: |-
+        Updates a series by given series_id  
+        Note: All provided fields will be overwrited except IDs included titles, alt_titles, genres... Only IDs will be merged.
       tags:
         - Series
       parameters:
@@ -302,7 +302,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SeriesData'
+              allOf:
+                - $ref: '#/components/schemas/SeriesBase'
+                - type: object
+                  properties:
+                    thumbnail:
+                      type: string
+                      format: uri
+                    timestamp:
+                      $ref: '#/components/schemas/Timestamp'
       responses:
         200:
           description: Series updated
@@ -328,6 +336,67 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/responseMerge'
+        500:
+          description: Internal error, check logs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+
+  /series/{id}/ratings:
+    post:
+      operationId: update series ratings
+      summary: Update series ratings and vote counts
+      description: Updates/overwrites ratings and vote counts of given series
+      tags:
+        - Series
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Internal series ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_rating:
+                  type: number
+                  format: float
+                mu_rating:
+                  type: number
+                  format: float
+                mu_votes:
+                  type: integer
+                dex_rating:
+                  type: number
+                  format: float
+                dex_votes:
+                  type: integer
+                mal_rating:
+                  type: number
+                  format: float
+                mal_votes:
+                  type: integer
+      responses:
+        204:
+          description: updated
+        400:
+          description: Bad request (invalid query)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+        404:
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
         500:
           description: Internal error, check logs.
           content:
@@ -544,10 +613,19 @@ components:
         - $ref: '#/components/schemas/SeriesData'
         - type: object
           properties:
-            rating:
-              type: number
-              format: float
-              description: Average rating of the series
+            ratings:
+              type: object
+              description: Average (Bayesian) ratings of the series
+              properties:
+                mu:
+                  type: number
+                  format: float
+                dex:
+                  type: number
+                  format: float
+                mal:
+                  type: number
+                  format: float
             user_rating:
               type: number
               format: float
@@ -559,7 +637,6 @@ components:
         - type
         - status
         - authors
-
 
     IDs:
       type: object
@@ -608,6 +685,19 @@ components:
         - One-shot
         - Dropped
         - Ongoing
+    Timestamp:
+      type: object
+      description: UNIX timestamp in seconds (Only one of mu, dex, mal)
+      properties:
+        mu:
+          type: integer
+        dex:
+          type: integer
+        mal:
+          type: integer
+      additionalProperties: false
+      minProperties: 1
+      maxProperties: 1
 
     Genres:
       type: array
@@ -758,3 +848,32 @@ components:
         - result
         - error
         - url
+    responseSeriesGet:
+      type: object
+      properties:
+        result:
+          type: string
+          default: OK
+        page:
+          type: integer
+          default: 1
+        data:
+          allOf:
+            - type: object
+              properties:
+                id:
+                  type: integer
+                  description: internal ID of the series
+                image_ext:
+                  type: string
+                  description: Image file extension (e.g., jpg, png)
+            - $ref: '#/components/schemas/SeriesData'
+            - type: object
+              properties:
+                rating:
+                  type: number
+                  format: float
+                  description: Average rating of the series
+                user_rating:
+                  type: number
+                  format: float

@@ -1,7 +1,7 @@
 from typing import List, Tuple
 def worker(genres_: List[str], original_language: str) -> Tuple[List[str], str, bool, List[str]]:
-    valid_types = {"Manga": "jp", "Manhwa": "ko", "Manhua": "zh-CN", "Artbook": ""}
-    language_map = {"Japanese": ("Manga", "jp"), "Korean": ("Manhwa", "ko"), "Chinese": ("Manhua", "zh-CN"), "English": ("OEL", "")}
+    valid_types = {"Manga": "ja", "Manhwa": "ko", "Manhua": "zh-CN", "Artbook": ""}
+    language_map = {"Japanese": ("Manga", "ja"), "Korean": ("Manhwa", "ko"), "Chinese": ("Manhua", "zh-CN"), "English": ("OEL", "")}
     valid_genres = [
         "Josei", "Seinen", "Shoujo", "Shounen", "GL", "BL", "Lolicon", "Hentai", "Smut",
         "Adult", "Mature", "Ecchi", "Doujinshi", "Action", "Adventure", "Comedy", "Drama", "Fantasy",
@@ -58,7 +58,7 @@ def worker(genres_: List[str], original_language: str) -> Tuple[List[str], str, 
         accepted_languages.append(language_map.get(original_language)[1])
     elif "Doujinshi" in genres:
         type_ = "Manga"
-        accepted_languages.append("jp")
+        accepted_languages.append("ja")
 
     if "" in accepted_languages:
         accepted_languages.remove("")

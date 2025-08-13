@@ -36,14 +36,14 @@ def series_data_external(ids: dict) -> Tuple[Dict[str, Any], int]:
                 http_codes.append(s)
 
     # Priority order: mu > dex > mal > bato > line
-    priority_sources = ("mu", "dex", "mal", "bato", "line",)
+    priority_sources = ("mu", "dex", "mal", "bato", "line") # TODO: make this configurable
 
     for primary_source in priority_sources:
         if primary_source in data_results:
             data_final = data_results[primary_source].copy()
 
             # Merge data from other sources
-            for other_source in data_results: # TODO: implement timestamps
+            for other_source in data_results:
                 if other_source != primary_source:
                     if other_source in ["dex", "mal"]:
                         data_final["authors"].extend(data_results[other_source].get("authors", []))
@@ -51,7 +51,7 @@ def series_data_external(ids: dict) -> Tuple[Dict[str, Any], int]:
                     data_final["alt_titles"] = data_final["alt_titles"] + [at for at in data_results[other_source].get("alt_titles", []) if at not in data_final.get("alt_titles") and at != data_final["title"]]
 
             data_final["authors"] = author_id_merger(data_final.get("authors", []), ids)
-            data_final["id"] = ids
+            data_final["ids"] = ids
             return data_final, 200
 
     return {}, 502 if 502 in http_codes else 404 if 404 in http_codes else 500

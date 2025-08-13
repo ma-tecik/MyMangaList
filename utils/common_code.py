@@ -1,9 +1,10 @@
 from flask import current_app as app
-from typing import List
+from typing import List, Dict, Any
+import re
 
 def base36(num: int) -> str:
-    alphabet = '0123456789abcdefghijklmnopqrstuvwxyz'
-    result = ''
+    alphabet = "0123456789abcdefghijklmnopqrstuvwxyz"
+    result = ""
     if 0 <= num < 36:
         return alphabet[num]
     while num > 0:
@@ -13,46 +14,57 @@ def base36(num: int) -> str:
 
 def author_type_merger(authors: List[dict]) -> List[dict]:
     merged_authors = {}
-    if any(a.get("id_mu") or a.get("id_dex") or a.get("id_mal") for a in authors):
+    if any(a.get("ids", {}).get(k) for a in authors for k in ("mu", "dex", "mal")):
         for author in authors:
-            author_id = author.get("id_mu") or author.get("id_dex") or author.get("id_mal")
-            if author_id in merged_authors:
-                merged_authors[author_id]['type'] = 'Both'
+            author_id = next((author.get("ids").get(k) for k in ("mu", "dex", "mal") if author.get("ids").get(k)), None)
+            if author_id and author_id in merged_authors:
+                merged_authors[author_id]["type"] = "Both"
             else:
                 merged_authors[author_id] = author
     else:
         for author in authors:
-            name = author['name']
-            type_ = author['type'].capitalize()
+            name = author["name"]
+            type_ = author["type"].capitalize()
             if name not in merged_authors:
-                merged_authors[name] = {'name': name, 'type': type_}
+                merged_authors[name] = {"name": name, "type": type_}
             else:
-                merged_authors[name]['type'] = 'Both'
+                merged_authors[name]["type"] = "Both"
     return list(merged_authors.values())
 
 def author_id_merger(authors: List[dict], series_data) -> List[dict]:
     merged_authors = []
     type_groups = {
-        'Both': [a for a in authors if a.get('type') == 'Both'],
-        'Author': [a for a in authors if a.get('type') == 'Author'],
-        'Artist': [a for a in authors if a.get('type') == 'Artist']
+        "Both": [a for a in authors if a.get("type") == "Both"],
+        "Author": [a for a in authors if a.get("type") == "Author"],
+        "Artist": [a for a in authors if a.get("type") == "Artist"]
     }
     for author_type, author_list in type_groups.items():
         if len(author_list) in (2, 3):
-            id_type_values = {}
+            ids = {}
             for a in author_list:
-                for k, v in a.items():
-                    if k.startswith('id_'):
-                        if k in id_type_values and id_type_values[k] != v:
-                            app.logger.warning(f"Conflict in author_id_merge. Series:{series_data} Authors:{authors}")
-                            return authors
-                        id_type_values[k] = v
-            merged_author = {'type': author_type}
-            merged_author.update(id_type_values)
+                for k, v in a.get("ids").items():
+                    if k in ids and ids[k] != v:
+                        app.logger.warning(f"Conflict in author_id_merge. Series:{series_data} Authors:{authors}")
+                        return authors
+                    ids[k] = v
+            merged_author = {"type": author_type, "name": author_list[0]["name"]}
+            merged_author.update(ids)
             merged_authors.append(merged_author)
         else:
             merged_authors.extend(author_list)
     return merged_authors
 
-if __name__ == '__main__':
-    pass
+def valid_ids(ids: Dict[str, Any], author: bool = False) -> Dict[str, Any]:
+    valid_keys = ("mu", "dex", "mal")
+    if not author:
+        valid_keys += ("bato", "line")
+    ids = {k: v for k, v in ids.items() if k in valid_keys and v is not None}
+    if not ids:
+        return {}
+    if any(not value.isdigit() for value in [ids[k] for k in ["mal", "bato", "line"] if k in ids]):
+        return {}
+    if "mu" in ids and not re.fullmatch(r"[0-9a-z]+", ids["mu"]):
+        return {}
+    if "dex" in ids and not re.fullmatch(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", ids["dex"]):
+        return {}
+    return ids

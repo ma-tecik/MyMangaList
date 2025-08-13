@@ -32,7 +32,7 @@ def series(id_dex: str) -> Tuple[Dict[str, Any], int]:
     for i in data["relationships"]:
         if i["type"] in ["author", "artist"]:
             author_info = {
-                "id_dex": i.get("id"),
+                "ids": {"dex": i.get("id")},
                 "name": i.get("attributes", {}).get("name"),
                 "type": i["type"].capitalize()
             }
@@ -50,7 +50,7 @@ def series(id_dex: str) -> Tuple[Dict[str, Any], int]:
         type_ = "Other"
 
     accepted_languages = ["en"]
-    accepted_languages.extend(app.config.get("TITLE_LANGUAGES", []))  # TODO: check if this works.
+    accepted_languages.extend(app.config["TITLE_LANGUAGES"])
     language_map = {"ja": ["ja-ro", "ja"], "ko": ["ko"], "zh": ["zh", "zh-hk"], "zh-hk": ["zh", "zh-hk"]}
     if original_lang in language_map:
         accepted_languages.extend(language_map[original_lang])
@@ -89,7 +89,7 @@ def series(id_dex: str) -> Tuple[Dict[str, Any], int]:
         "authors": authors,
         "os_a": os_a,
         "thumbnail": thumbnail,
-        'timestamps': {"dex": timestamp},
+        'timestamp': {"dex": timestamp},
     }
     if data["attributes"]["links"].get("mu"):
         data_final["ids"]["mu"] = data["attributes"]["links"]["mu"]

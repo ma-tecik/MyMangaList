@@ -91,7 +91,7 @@ def series(id_bato: int) -> Tuple[Dict[str, str], int]:
     authors = author_type_merger(authors)
 
     genres, type_, os_a, accepted_languages = worker(genres_, original_language)
-    accepted_languages.extend(app.config.get("TITLE_LANGUAGES", [])) # TODO: check if this works.
+    accepted_languages.extend(app.config["TITLE_LANGUAGES"])
 
     alt_titles = []
     alt_titles_all = []
@@ -103,8 +103,8 @@ def series(id_bato: int) -> Tuple[Dict[str, str], int]:
         if confidence and lang in accepted_languages:
             alt_titles.append(t)
 
-    thumbnail = soup.select_one("div.attr-cover img")
-    image_url = thumbnail["src"] if thumbnail else ""
+    thumbnail_ = soup.select_one("div.attr-cover img")
+    thumbnail = thumbnail_["src"] if thumbnail_ else ""
 
 
     extra_info_links = []
@@ -134,7 +134,7 @@ def series(id_bato: int) -> Tuple[Dict[str, str], int]:
         "genres": genres,
         "authors": authors,
         "os_a": os_a,
-        "image_url": image_url,
+        "thumbnail": thumbnail,
     }, 200
 
 if __name__ == "__main__":

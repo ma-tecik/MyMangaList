@@ -58,11 +58,11 @@ def series(id_mu36: str) -> Tuple[Dict[str, Any], int]:
     data = response.json()
 
     accepted_languages = ["en"]
-    accepted_languages.extend(app.config.get("TITLE_LANGUAGES", []))  # TODO: check if this works.
+    accepted_languages.extend(app.config["TITLE_LANGUAGES"])
 
-    type_map = {"Manga": ["jp"], "Manhwa": ["ko"], "Manhua": ["zh-CN"], "OEL": [],
+    type_map = {"Manga": ["ja"], "Manhwa": ["ko"], "Manhua": ["zh-CN"], "OEL": [],
                 "Vietnamese": ["vi"], "Malaysian": ["ms"], "Indonesian": ["id"],
-                "Novel": ["jp", "ko", "zh-CN"], "Artbook": ["jp", "ko", "zh-CN"]}
+                "Novel": ["ja", "ko", "zh-CN"], "Artbook": ["ja", "ko", "zh-CN"]}
     _type = data["type"]
     if _type in type_map:
         accepted_languages.extend(type_map[_type])
@@ -83,11 +83,11 @@ def series(id_mu36: str) -> Tuple[Dict[str, Any], int]:
             alt_titles.append(name)
 
     authors = []
-    for author_ in data["authors"]:
+    for author in data["authors"]:
         author_info = {
-            "id_mu": base36(author_.get("author_id")),
-            "name": author_.get('name'),
-            "type": author_.get('type')
+            "ids": {"mu": base36(author.get("author_id"))},
+            "name": author.get('name'),
+            "type": author.get('type')
         }
         authors.append(author_info)
     authors = author_type_merger(authors)
@@ -105,19 +105,19 @@ def series(id_mu36: str) -> Tuple[Dict[str, Any], int]:
         ids['line'] = id_line
 
     data_final = {
-        'ids': ids,
-        'title': data['title'],
-        'alt_titles': alt_titles,
-        'type': type_,
-        'description': data['description'],
-        'vol_ch': data['status'],
-        'is_md': True,
-        'genres': genres,
-        'year': data['year'],
-        'authors': authors,
-        'os_a': os_a,
-        'image_url': data['image']['url']['original'],
-        'timestamps': {"mu": data['last_updated']['timestamp'], }
+        "ids": ids,
+        "title": data["title"],
+        "alt_titles": alt_titles,
+        "type": type_,
+        "description": data["description"],
+        "vol_ch": data["status"],
+        "is_md": True,
+        "genres": genres,
+        "year": data["year"],
+        "authors": authors,
+        "os_a": os_a,
+        "thumbnail": data["image"]["url"]["original"],
+        "timestamp": {"mu": data["last_updated"]["timestamp"], }
     }
     return data_final, 200
 

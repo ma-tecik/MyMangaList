@@ -59,44 +59,37 @@ create table series
     type         TEXT not null,
     description  TEXT,
     vol_ch       TEXT,
-    year         INTEGER,
-    timestamp_mu INTEGER,
     is_md        BOOLEAN default 0,
     status       TEXT not null,
+    year         INTEGER,
+    timestamp_mu INTEGER,
+    timestamp_dex INTEGER,
+    timestamp_mal INTEGER,
     user_rating  REAL
         check (status in ('Plan to Read', 'Reading', 'Completed', 'One-shot', 'Dropped', 'Ongoing'))
         check ( type in ('Manga', 'Manhwa', 'Manhua', 'OEL', 'Vietnamese', 'Malaysian', 'Indonesian',
                          'Novel', 'Artbook', 'Other') )
 );
 
-create table series_titles
-(
-    id        INTEGER
-        primary key autoincrement,
-    series_id INTEGER not null
-        references series
-            on delete cascade,
-    alt_title TEXT    not null,
-    unique (series_id, alt_title)
-);
-
-create index idx_alt_titles_series_id
-    on series_titles (series_id);
+create index idx_series_status
+    on series (status);
+create index idx_series_type
+    on series (type);
 
 create table series_authors
 (
-    series_id   INTEGER               not null
+    series_id   INTEGER not null
         references series
             on delete cascade,
-    author_id   INTEGER               not null
+    author_id   INTEGER not null
         references authors
             on delete cascade,
-    author_type TEXT default 'Author' not null,
+    author_type TEXT    not null,
     primary key (series_id, author_id, author_type),
     check (author_type IN ('Author', 'Artist', 'Both'))
 );
 
-create index series_authors_series_id
+create index idx_series_authors
     on series_authors (series_id);
 
 create table series_genres
@@ -110,7 +103,7 @@ create table series_genres
     primary key (series_id, genre_id)
 );
 
-create index series_genres_series_id
+create index idx_series_genres
     on series_genres (series_id);
 
 create table series_images
@@ -133,6 +126,32 @@ create table series_nhentai_ids
     primary key (series_id, nhentai_id)
 );
 
+create table series_ratings_dex
+(
+    id_dex TEXT    not null
+        primary key
+        references series (id_dex)
+            on delete cascade,
+    rating REAL    not null,
+    votes  INTEGER not null
+);
+
+create index idx_series_ratings_dex
+    on series_ratindgs_dex (rating);
+
+create table series_ratings_mal
+(
+    id_mal INTEGER not null
+        primary key
+        references series (id_mal)
+            on delete cascade,
+    rating REAL    not null,
+    votes  INTEGER not null
+);
+
+create index idx_series_ratings_mal
+    on series_ratings_mal (rating);
+
 create table series_ratings_mu
 (
     id_mu  INTEGER not null
@@ -143,7 +162,7 @@ create table series_ratings_mu
     votes  INTEGER not null
 );
 
-create index idx_series_ratings_rating
+create index idx_series_ratings_mu
     on series_ratings_mu (rating);
 
 create table series_schale_ids
@@ -157,9 +176,23 @@ create table series_schale_ids
     primary key (series_id, schale_id)
 );
 
+create table series_titles
+(
+    id        INTEGER
+        primary key autoincrement,
+    series_id INTEGER not null
+        references series
+            on delete cascade,
+    alt_title TEXT    not null,
+    unique (series_id, alt_title)
+);
+
+create index idx_alt_titles
+    on series_titles (series_id);
+
 create table settings
 (
     key   TEXT not null
         primary key,
     value TEXT not null
-);
+)
