@@ -20,7 +20,7 @@ def _valid_type(type_: str) -> bool:
     return True if type_ in allowed_types else False
 
 
-def _valid_genres(genres: List[str]) -> List[str]:  # TODO: Will be implemented
+def _valid_genres(genres: List[str]) -> List[str]:
     allowed_genres = ["nsfw", "Josei", "Seinen", "Shoujo", "Shounen", "GL", "BL", "Lolicon", "Shotacon", "Hentai",
                       "Smut", "Adult", "Mature", "Ecchi", "Doujinshi", "'4-Koma", "Anthology", "Harlequin", "Webtoon",
                       "Old-Style", "Award", "Cancel", "Rushed", "European", "Asian", "isekai", "Reverse isekai",

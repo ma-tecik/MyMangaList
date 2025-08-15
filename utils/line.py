@@ -3,7 +3,7 @@ from webtoon_api import WebtoonApi
 from typing import Dict, Any, Tuple, Optional
 
 api = WebtoonApi()
-
+# TODO: Add support for canvas
 
 def get_id(url: str) -> int:
     part = url.split("title_no=")[1] if "title_no=" in url else url.split("titleNo=")[1]
