@@ -1,8 +1,11 @@
 from flask import current_app as app
 from utils.common_code import author_type_merger
+from utils.mangadex_worker import worker
 from typing import Dict, Any, Tuple
 import requests
 from utils.line import get_id as get_id_line
+from utils.mangaupdates import get_id_old as get_id_mu
+
 
 def get_id(url: str) -> str:
     parts = url.split("/title/")[1].split("/")
@@ -41,19 +44,11 @@ def series(id_dex: str) -> Tuple[Dict[str, Any], int]:
             cover_filename = i["attributes"]["fileName"]
     authors = author_type_merger(authors)
 
-    lang_map = {"ja": "Manga", "ko": "Manhwa", "zh": "Manhua", "zh-hk": "Manhua",
-                "en": "OEL", "vi": "Vietnamese", "ms": "Malaysian", "id": "Indonesian"}
-    original_lang = data["attributes"]["originalLanguage"]
-    if original_lang in lang_map:
-        type_ = lang_map[original_lang]
-    else:
-        type_ = "Other"
-
-    accepted_languages = ["en"]
+    genres, type_, os_a, accepted_languages = worker(data["attributes"].get("tags", []),
+                                                     data["attributes"]["publicationDemographic"],
+                                                     data["attributes"]["contentRating"],
+                                                     data["attributes"]["originalLanguage"])
     accepted_languages.extend(app.config["TITLE_LANGUAGES"])
-    language_map = {"ja": ["ja-ro", "ja"], "ko": ["ko"], "zh": ["zh", "zh-hk"], "zh-hk": ["zh", "zh-hk"]}
-    if original_lang in language_map:
-        accepted_languages.extend(language_map[original_lang])
 
     alt_titles = []
     if "altTitles" in data["attributes"]:
@@ -69,14 +64,6 @@ def series(id_dex: str) -> Tuple[Dict[str, Any], int]:
     dt = datetime.datetime.fromisoformat(updated_at_str.replace("Z", "+00:00"))
     timestamp = int(dt.timestamp())
 
-    os_a = False
-    os_a_tag_ids = {
-        "51d83883-4103-437c-b4b1-731cb73d786c",  # Anthology
-        "0234a31e-a729-4e28-9d6a-3f87c4966b9e"  # Oneshot
-    }
-    if any(tag["id"] in os_a_tag_ids for tag in data["attributes"].get("tags", [])):
-        os_a = True
-
     data_final = {
         "ids": {"dex": id_dex},
         "title": data["attributes"]["title"].get("en"),
@@ -84,23 +71,18 @@ def series(id_dex: str) -> Tuple[Dict[str, Any], int]:
         "type": type_,
         "description": data["attributes"]["description"].get("en", ""),
         "is_md": True,
-        "genres": [],  # TODO: implement genres
+        "genres": genres,
         "year": data["attributes"].get("year"),
         "authors": authors,
         "os_a": os_a,
         "thumbnail": thumbnail,
         'timestamp': {"dex": timestamp},
     }
-    if data["attributes"]["links"].get("mu"):
-        data_final["ids"]["mu"] = data["attributes"]["links"]["mu"]
+    if id_mu := data["attributes"]["links"].get("mu"):
+        data_final["ids"]["mu"] = get_id_mu(id_mu)
     if data["attributes"]["links"].get("mal"):
         data_final["ids"]["mal"] = data["attributes"]["links"]["mal"]
-    if not data_final.get("line") and data["attributes"]["links"].get("engtl"):
-        engtl = data["attributes"]["links"]["engtl"]
+    if engtl := data["attributes"]["links"].get("engtl"):
         if "webtoons.com" in engtl:
-            data_final["id"]["line"] = get_id_line(engtl)
+            data_final["ids"]["line"] = get_id_line(engtl)
     return data_final, 200
-
-
-if __name__ == "__main__":
-    pass

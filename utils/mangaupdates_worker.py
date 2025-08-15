@@ -44,7 +44,7 @@ def worker(genres, data):
             "Transported to Another World", "Transported to a Book World",
             "Transported to a Game World", "Transported to a Parallel World"
         ],
-        "Reverse Isekai": ["Reverse Isekai"],
+        "Reverse isekai": ["Reverse Isekai"],
         "Time Rewind": ["Time Rewind"],
         "Villainess": [
             "Reincarnated as the Villain/ess", "Transmigrated as the Villain/ess",
@@ -69,6 +69,8 @@ def worker(genres, data):
         "Yandere": ["Yandere", "Yandere Male Lead"],
         "Toxic Rel.": ["Toxic Male Lead", "Toxic Relationship", "Trashy Male Lead"],
         "Harlequin": ["Harlequin"],
+        "4-Koma": ["4-koma/Yonkoma"],
+        "Reverse Harem": ["Reverse Harem"]
     }
     if "School Life" not in genres:
         genre_map["School Life"] = [

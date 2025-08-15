@@ -168,7 +168,7 @@ paths:
                     $ref: '#/components/schemas/Series'
                     required:
                       - id
-                      - image_ext
+                      - thumbnail_ext
                       - ids
                       - title
                       - type
@@ -194,7 +194,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseKO'
         502:
-          description: Error while downloading series image.
+          description: Error while downloading series thumbnail.
           content:
             application/json:
               schema:
@@ -344,8 +344,8 @@ paths:
                 $ref: '#/components/schemas/responseKO'
 
   /series/{id}/ratings:
-    post:
-      operationId: update series ratings
+    patch:
+      operationId: updateSeriesRatings
       summary: Update series ratings and vote counts
       description: Updates/overwrites ratings and vote counts of given series
       tags:
@@ -367,24 +367,35 @@ paths:
                 user_rating:
                   type: number
                   format: float
+                  minimum: 1
+                  maximum: 10
                 mu_rating:
                   type: number
                   format: float
+                  minimum: 1
+                  maximum: 10
                 mu_votes:
                   type: integer
+                  minimum: 1
                 dex_rating:
                   type: number
                   format: float
+                  minimum: 1
+                  maximum: 10
                 dex_votes:
                   type: integer
+                  minimum: 1
                 mal_rating:
                   type: number
                   format: float
+                  minimum: 1
+                  maximum: 10
                 mal_votes:
                   type: integer
+                  minimum: 1
       responses:
         204:
-          description: updated
+          description: Updated
         400:
           description: Bad request (invalid query)
           content:
@@ -393,6 +404,80 @@ paths:
                 $ref: '#/components/schemas/responseKO'
         404:
           description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+        500:
+          description: Internal error, check logs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+
+  /external/series/ratings:
+    put:
+      operationId: externalUpdateSeriesRatings
+      summary: Update a list of series' ratings and vote counts
+      description: Updates/adds/overwrites or skips (if series not exist in db) ratings and vote counts of given list of series
+      tags:
+        - Series
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id_type:
+                  type: string
+                  enum:
+                    - mu
+                    - dex
+                    - mal
+                data:
+                  type: array
+                  items:
+                    type: object
+                    allOf:
+                      - type: object
+                        properties:
+                          id:
+                            description: external ID
+                            examples:
+                              - 'g25jlvk'
+                              - 'b15632d7-88d0-4233-9815-c01e75cabda8'
+                              - '92182'
+                          rating:
+                            type: number
+                            format: float
+                            minimum: 1
+                            maximum: 10
+                          votes:
+                            type: integer
+                            minimum: 1
+      responses:
+        200:
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    default: OK
+                  not_exist:
+                    type: array
+                    description: series that is not exist in the db
+                    items:
+                      type: string
+                      examples:
+                        - 'g25jlvk'
+                        - 'b15632d7-88d0-4233-9815-c01e75cabda8'
+                        - '92182'
+        400:
+          description: Bad request (invalid query)
           content:
             application/json:
               schema:
@@ -607,9 +692,9 @@ components:
             id:
               type: integer
               description: internal ID of the series
-            image_ext:
+            thumbnail_ext:
               type: string
-              description: Image file extension (e.g., jpg, png)
+              description: extension of thumbnail(e.g., jpg, png)
         - $ref: '#/components/schemas/SeriesData'
         - type: object
           properties:
@@ -631,7 +716,7 @@ components:
               format: float
       required:
         - id
-        - image_ext
+        - thumbnail_ext
         - ids
         - title
         - type
@@ -843,7 +928,7 @@ components:
         url:
           type: string
           format: uri
-          description: 'URL to trigger manual merge/ for conflicting entrises'
+          description: 'URL to trigger manual merge for conflicting entries'
       required:
         - result
         - error
@@ -858,22 +943,25 @@ components:
           type: integer
           default: 1
         data:
-          allOf:
-            - type: object
-              properties:
-                id:
-                  type: integer
-                  description: internal ID of the series
-                image_ext:
-                  type: string
-                  description: Image file extension (e.g., jpg, png)
-            - $ref: '#/components/schemas/SeriesData'
-            - type: object
-              properties:
-                rating:
-                  type: number
-                  format: float
-                  description: Average rating of the series
-                user_rating:
-                  type: number
-                  format: float
+          type: array
+          items:
+            type: object
+            allOf:
+              - type: object
+                properties:
+                  id:
+                    type: integer
+                    description: internal ID of the series
+                  thumbnail_ext:
+                    type: string
+                    description: extension of thumbnail (e.g., jpg, png)
+              - $ref: '#/components/schemas/SeriesData'
+              - type: object
+                properties:
+                  rating:
+                    type: number
+                    format: float
+                    description: Average rating of the series
+                  user_rating:
+                    type: number
+                    format: float

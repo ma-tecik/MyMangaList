@@ -3,7 +3,7 @@ from utils.detect_language import detect_language
 from utils.common_code import author_type_merger, base36
 from utils.mangaupdates_worker import worker
 from utils.line import get_id as get_id_line
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, Union
 import requests
 import re
 
@@ -28,7 +28,7 @@ def _id_from_old_url(old_url: str) -> str:
         return ""
 
 
-def get_id(url: str) -> str:
+def get_id_url(url: str) -> str:
     if "/series/" in url:
         id_ = url.split("/series/")[1].split("/")[0]
     elif "/series.html" in url or type(url) == int:
@@ -38,6 +38,12 @@ def get_id(url: str) -> str:
         return ""
     return id_
 
+def get_id_old(id_: Union[str, int]) -> str:
+    if id_.isdigit():
+        return _id_from_old_url("https://www.mangaupdates.com/series.html?id=" + str(id_))
+    elif isinstance(id_, str):
+        return id_
+    return ""
 
 def series(id_mu36: str) -> Tuple[Dict[str, Any], int]:
     id_mu = int(id_mu36, 36)

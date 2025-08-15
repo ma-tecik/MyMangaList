@@ -2,6 +2,7 @@ from flask import current_app as app
 from typing import List, Dict, Any
 import re
 
+
 def base36(num: int) -> str:
     alphabet = "0123456789abcdefghijklmnopqrstuvwxyz"
     result = ""
@@ -11,6 +12,7 @@ def base36(num: int) -> str:
         num, i = divmod(num, 36)
         result = alphabet[i] + result
     return result
+
 
 def author_type_merger(authors: List[dict]) -> List[dict]:
     merged_authors = {}
@@ -31,7 +33,8 @@ def author_type_merger(authors: List[dict]) -> List[dict]:
                 merged_authors[name]["type"] = "Both"
     return list(merged_authors.values())
 
-def author_id_merger(authors: List[dict], series_data) -> List[dict]:
+
+def author_id_merger(authors: List[dict], count, series_ids) -> List[dict]:
     merged_authors = []
     type_groups = {
         "Both": [a for a in authors if a.get("type") == "Both"],
@@ -39,24 +42,24 @@ def author_id_merger(authors: List[dict], series_data) -> List[dict]:
         "Artist": [a for a in authors if a.get("type") == "Artist"]
     }
     for author_type, author_list in type_groups.items():
-        if len(author_list) in (2, 3):
+        if len(author_list) == count:
             ids = {}
             for a in author_list:
                 for k, v in a.get("ids").items():
                     if k in ids and ids[k] != v:
-                        app.logger.warning(f"Conflict in author_id_merge. Series:{series_data} Authors:{authors}")
+                        app.logger.warning(f"Conflict. Series:{series_ids} Authors:{authors}")
                         return authors
                     ids[k] = v
-            merged_author = {"type": author_type, "name": author_list[0]["name"]}
-            merged_author.update(ids)
+            merged_author = {"type": author_type, "name": author_list[0]["name"], "ids": ids}
             merged_authors.append(merged_author)
         else:
             merged_authors.extend(author_list)
     return merged_authors
 
-def valid_ids(ids: Dict[str, Any], author: bool = False) -> Dict[str, Any]:
+
+def valid_ids(ids: Dict[str, Any], reduced: bool = False) -> Dict[str, Any]:
     valid_keys = ("mu", "dex", "mal")
-    if not author:
+    if not reduced:
         valid_keys += ("bato", "line")
     ids = {k: v for k, v in ids.items() if k in valid_keys and v is not None}
     if not ids:

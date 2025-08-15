@@ -1,5 +1,5 @@
 from flask import current_app as app
-from utils.mangaupdates import get_id as get_id_mu
+from utils.mangaupdates import get_id_url as get_id_mu
 from utils.line import get_id as get_id_line
 from utils.bato_worker import worker
 from utils.detect_language import detect_language

@@ -37,7 +37,7 @@ def series_data_external(ids: dict) -> Tuple[Dict[str, Any], int]:
 
     # Priority order: mu > dex > mal > bato > line
     priority_sources = ("mu", "dex", "mal", "bato", "line") # TODO: make this configurable
-
+    count = 1
     for primary_source in priority_sources:
         if primary_source in data_results:
             data_final = data_results[primary_source].copy()
@@ -47,19 +47,13 @@ def series_data_external(ids: dict) -> Tuple[Dict[str, Any], int]:
                 if other_source != primary_source:
                     if other_source in ["dex", "mal"]:
                         data_final["authors"].extend(data_results[other_source].get("authors", []))
+                        count += 1
                     data_final["genres"] = data_final["genres"] + [genre for genre in data_results[other_source].get("genres", []) if genre not in data_final.get("genres")]
                     data_final["alt_titles"] = data_final["alt_titles"] + [at for at in data_results[other_source].get("alt_titles", []) if at not in data_final.get("alt_titles") and at != data_final["title"]]
 
-            data_final["authors"] = author_id_merger(data_final.get("authors", []), ids)
+            if count > 1:
+                data_final["authors"] = author_id_merger(data_final.get("authors", []), count, ids)
             data_final["ids"] = ids
             return data_final, 200
 
     return {}, 502 if 502 in http_codes else 404 if 404 in http_codes else 500
-
-
-if __name__ == "__main__":
-    example_ids = {
-        "dex": "8573d280-7f60-411d-b146-c97dca3c62f2",
-    }
-    data, status = series_data_external(example_ids)
-    print(data, status)

@@ -43,30 +43,33 @@ create table schale_ids
 
 create table series
 (
-    id           INTEGER
+    id                INTEGER
         primary key autoincrement,
-    id_mu        TEXT
+    id_mu             TEXT
         unique,
-    id_dex       TEXT
+    id_dex            TEXT
         unique,
-    id_bato      INTEGER
+    id_mal            INTEGER
         unique,
-    id_mal       INTEGER
+    id_bato           INTEGER
         unique,
-    id_line      INTEGER
+    id_line           INTEGER
         unique,
-    title        TEXT not null,
-    type         TEXT not null,
-    description  TEXT,
-    vol_ch       TEXT,
-    is_md        BOOLEAN default 0,
-    status       TEXT not null,
-    year         INTEGER,
-    timestamp_mu INTEGER,
-    timestamp_dex INTEGER,
-    timestamp_mal INTEGER,
-    user_rating  REAL
-        check (status in ('Plan to Read', 'Reading', 'Completed', 'One-shot', 'Dropped', 'Ongoing'))
+    title             TEXT    not null,
+    type              TEXT    not null,
+    description       TEXT,
+    vol_ch            TEXT,
+    is_md             BOOLEAN default 0,
+    status            TEXT    not null,
+    year              INTEGER,
+    timestamp_status  INTEGER not null,
+    timestamp_mu      INTEGER,
+    timestamp_dex     INTEGER,
+    timestamp_mal     INTEGER,
+    automation        BOOLEAN default 1,
+    automation_genres BOOLEAN default 0,
+    user_rating       REAL,
+        check (status in ('Plan to Read', 'Reading', 'Completed', 'One-shot', 'Dropped', 'Ongoing')),
         check ( type in ('Manga', 'Manhwa', 'Manhua', 'OEL', 'Vietnamese', 'Malaysian', 'Indonesian',
                          'Novel', 'Artbook', 'Other') )
 );
@@ -75,6 +78,8 @@ create index idx_series_status
     on series (status);
 create index idx_series_type
     on series (type);
+create index idx_status_time
+    on series (timestamp_status);
 
 create table series_authors
 (
@@ -106,7 +111,7 @@ create table series_genres
 create index idx_series_genres
     on series_genres (series_id);
 
-create table series_images
+create table series_thumbnails
 (
     extension TEXT    not null,
     series_id integer not null
@@ -137,7 +142,7 @@ create table series_ratings_dex
 );
 
 create index idx_series_ratings_dex
-    on series_ratindgs_dex (rating);
+    on series_ratings_dex (rating);
 
 create table series_ratings_mal
 (
