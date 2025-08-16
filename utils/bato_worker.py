@@ -21,7 +21,7 @@ def worker(genres_: List[str], original_language: str) -> Tuple[List[str], str, 
         "Isekai": "isekai", "Reincarnation": "isekai", "Transmigration": "isekai",
         "Emperor's daughte": "European", "Royal Family": "European", "Royalty": "European"
     }
-    accepted_languages = ["en"]
+    accepted_languages = []
     genres = []
     types_ = []
     type_ = "Other"

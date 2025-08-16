@@ -45,7 +45,7 @@ def worker(genres_: List[dict], demographic: str, content_rating: str, original_
         "0bc90acb-ccc1-44ca-a34a-b9f3a73259d0": "isekai"
     }
 
-    accepted_languages = ["en"]
+    accepted_languages = []
     genres = []
     type_ = "Other"
     os_a = False

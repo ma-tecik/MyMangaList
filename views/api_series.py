@@ -5,7 +5,7 @@ import sqlite3
 import time
 from typing import List, Tuple
 
-series_bp = Blueprint("series_api", __name__)
+api_series_bp = Blueprint("api_series", __name__)
 
 allowed_statuses = ["Plan to Read", "Reading", "Completed", "One-shot", "Dropped", "Ongoing"]
 allowed_types = ["Manga", "Manhwa", "Manhua", "OEL", "Vietnamese", "Malaysian", "Indonesian",
@@ -40,10 +40,10 @@ def _add_genres(id_: int, genres: List[str], cursor: sqlite3.Cursor) -> None:
                        [(id_, genre_id) for genre_id in genre_ids])
 
 
-@series_bp.route("/series", methods=["GET"])
+@api_series_bp.route("/series", methods=["GET"])
 def get_series_list() -> Tuple[jsonify, int]:
     try:
-        sr = app.config["MAIN_SERIES_RATING"]
+        sr = app.config["MAIN_RATING"]
         # Query parameters
         args = request.args.to_dict()
         page = int(args.get("page", 1))
@@ -74,7 +74,7 @@ def get_series_list() -> Tuple[jsonify, int]:
         if any(genre in genres_included for genre in genres_excluded):
             return jsonify({"result": "KO", "error": "Genres cannot be both included and excluded"}), 400
 
-        conn = sqlite3.connect("instance/mml.sqlite3")
+        conn = sqlite3.connect("data/mml.sqlite3")
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         query = """
@@ -184,31 +184,31 @@ def get_series_list() -> Tuple[jsonify, int]:
             series.append(series_data)
 
         conn.close()
-        return jsonify({"status": "OK", "series": series, "page": page}), 200
+        return jsonify({"result": "OK", "series": series, "page": page}), 200
 
     except Exception as e:
         app.logger.error(e)
-        return jsonify({"status": "KO", "message": "Internal server error"}), 500
+        return jsonify({"result": "KO", "message": "Internal error"}), 500
 
 
-@series_bp.route("/series", methods=["POST"])
+@api_series_bp.route("/series", methods=["POST"])
 def create_series() -> Tuple[jsonify, int]:
     try:
         data = request.get_json()
         # Validate parameters
         if not data:
-            return jsonify({"status": "KO", "message": "No data provided"}), 400
+            return jsonify({"result": "KO", "message": "No data provided"}), 400
         if not all(field in data and data.get(field) for field in
                    ["ids", "title", "type", "status", "authors", "thumbnail"]):
-            return jsonify({"status": "KO", "message": "Missing required fields"}), 400
+            return jsonify({"result": "KO", "message": "Missing required fields"}), 400
         if not _valid_status(data["status"]):
-            return jsonify({"status": "KO", "message": "Invalid status", "valid": allowed_statuses}), 400
+            return jsonify({"result": "KO", "message": "Invalid status", "valid": allowed_statuses}), 400
         if not _valid_type(data["type"]):
-            return jsonify({"status": "KO", "message": "Invalid type", "valid": allowed_types}), 400
+            return jsonify({"result": "KO", "message": "Invalid type", "valid": allowed_types}), 400
         if not (ids := valid_ids(data.get("ids"))):
             return {"result": "KO", "error": "At least one valid ID is required"}, 400
 
-        conn = sqlite3.connect("instance/mml.sqlite3")
+        conn = sqlite3.connect("data/mml.sqlite3")
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         cursor.execute(
@@ -229,7 +229,7 @@ def create_series() -> Tuple[jsonify, int]:
             if author.get("type") in ["Author", "Artist", "Both"]:
                 a_t = author["type"]
             else:
-                return jsonify({"status": "KO", "message": "Missing or invalid author info"}), 400
+                return jsonify({"result": "KO", "message": "Missing or invalid author info"}), 400
 
             if author.get("id"):
                 a_id = author["id"]
@@ -245,10 +245,10 @@ def create_series() -> Tuple[jsonify, int]:
                          "merge_url": f"/author/merge?ids={",".join(str(i) for i in r)}"}), 409
                 else:
                     app.logger.info(f"Error getting author ID for {author}")
-                    return jsonify({"status": "KO", "message": "Internal server error"}), 500
+                    return jsonify({"result": "KO", "message": "Internal error"}), 500
             else:
                 return jsonify(
-                    {"status": "KO", "message": "Author must have at least one ID (external or internal)."}), 400
+                    {"result": "KO", "message": "Author must have at least one ID (external or internal)."}), 400
             authors.append({"id": a_id, "type": a_t})
 
         cursor.execute(f"""INSERT INTO series (id_mu, id_dex, id_bato, id_mal, id_line, title, type, description, vol_ch, is_md, status, year, timestamp_status)
@@ -263,7 +263,7 @@ def create_series() -> Tuple[jsonify, int]:
             if (k := next(iter(t.keys()))) in ["mu", "dex", "mal"]:
                 cursor.execute(f"UPDATE series SET timestamp_{k} = ? WHERE id = ?", (t[k], id_))
         elif len(data.get("timestamp")) > 1:
-            return jsonify({"status": "KO", "message": "Multiple timestamps provided, only one is allowed"}), 400
+            return jsonify({"result": "KO", "message": "Multiple timestamps provided, only one is allowed"}), 400
 
         r, s = download_thumbnail(id_, data["thumbnail"], cursor)
         if s != 201:
@@ -284,36 +284,36 @@ def create_series() -> Tuple[jsonify, int]:
         if s == 200:
             conn.commit()
             conn.close()
-            return jsonify({"status": "OK", "data": r}), 200
+            return jsonify({"result": "OK", "data": r}), 200
         else:
             conn.close()
-            return jsonify({"status": "KO", "message": "Error retrieving created series"}), 500
+            return jsonify({"result": "KO", "message": "Error retrieving created series"}), 500
     except Exception as e:
         app.logger.error(e)
-        return jsonify({"status": "KO", "message": "Internal server error"}), 500
+        return jsonify({"result": "KO", "message": "Internal error"}), 500
 
 
-@series_bp.route("/series/<int:id_>", methods=["GET"])
+@api_series_bp.route("/series/<int:id_>", methods=["GET"])
 def get_series_by_id(id_) -> Tuple[jsonify, int]:
     try:
-        conn = sqlite3.connect("instance/mml.sqlite3")
+        conn = sqlite3.connect("data/mml.sqlite3")
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         r, s = get_series_info(id_, cursor)
         conn.close()
         if s == 200:
-            return jsonify({"status": "OK", "data": r}), 200
+            return jsonify({"result": "OK", "data": r}), 200
         else:
             return jsonify(r), s
     except Exception as e:
         app.logger.error(e)
-        return jsonify({"status": "KO", "message": "Internal server error"}), 500
+        return jsonify({"result": "KO", "message": "Internal error"}), 500
 
 
-@series_bp.route("/series/<int:id_>", methods=["DELETE"])
+@api_series_bp.route("/series/<int:id_>", methods=["DELETE"])
 def delete_series(id_) -> Tuple[jsonify, int]:
     try:
-        conn = sqlite3.connect("instance/mml.sqlite3")
+        conn = sqlite3.connect("data/mml.sqlite3")
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         r, s = get_series_info(id_, cursor)
@@ -341,24 +341,24 @@ def delete_series(id_) -> Tuple[jsonify, int]:
 
     except Exception as e:
         app.logger.error(e)
-        return jsonify({"result": "KO", "error": "Internal server error"}), 500
+        return jsonify({"result": "KO", "error": "Internal error"}), 500
 
 
-@series_bp.route("/series/<int:id_>", methods=["PATCH"])
+@api_series_bp.route("/series/<int:id_>", methods=["PATCH"])
 def update_series(id_) -> Tuple[jsonify, int]:
     try:
         data = request.get_json()
         if not data:
-            return jsonify({"status": "KO", "message": "No data provided"}), 400
+            return jsonify({"result": "KO", "message": "No data provided"}), 400
 
-        conn = sqlite3.connect("instance/mml.sqlite3")
+        conn = sqlite3.connect("data/mml.sqlite3")
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
         r, s = get_series_info(id_, cursor)
         if s == 404:
             conn.close()
-            return jsonify({"status": "KO", "message": "Series not found"}), 404
+            return jsonify({"result": "KO", "message": "Series not found"}), 404
         elif s != 200:
             conn.close()
             return jsonify(r), s
@@ -367,24 +367,24 @@ def update_series(id_) -> Tuple[jsonify, int]:
         if "ids" in data:
             if not (ids := valid_ids(data.get("ids"))):
                 conn.close()
-                return jsonify({"status": "KO", "message": "IDs not valid"}), 400
+                return jsonify({"result": "KO", "message": "IDs not valid"}), 400
             for key, value in ids.items():
                 cursor.execute(f"SELECT id FROM series WHERE id_{key} = ? AND id != ?", (value, id_))
                 if cursor.fetchone():
                     conn.close()
-                    return jsonify({"status": "KO", "message": f"Series with {key} ID {value} already exists"}), 409
+                    return jsonify({"result": "KO", "message": f"Series with {key} ID {value} already exists"}), 409
 
         if "status" in data and not _valid_status(data["status"]):
             conn.close()
-            return jsonify({"status": "KO", "message": "Invalid status", "valid": allowed_statuses}), 400
+            return jsonify({"result": "KO", "message": "Invalid status", "valid": allowed_statuses}), 400
 
         if "type" in data and not _valid_type(data["type"]):
             conn.close()
-            return jsonify({"status": "KO", "message": "Invalid type", "valid": allowed_types}), 400
+            return jsonify({"result": "KO", "message": "Invalid type", "valid": allowed_types}), 400
 
         if "timestamp" in data and len(data["timestamp"]) != 1:
             conn.close()
-            return jsonify({"status": "KO", "message": "Multiple timestamps provided, only one is allowed"}), 400
+            return jsonify({"result": "KO", "message": "Multiple timestamps provided, only one is allowed"}), 400
 
         update_fields = []
         update_params = []
@@ -441,31 +441,31 @@ def update_series(id_) -> Tuple[jsonify, int]:
         if s == 200:
             conn.commit()
             conn.close()
-            return jsonify({"status": "OK", "data": r}), 200
+            return jsonify({"result": "OK", "data": r}), 200
         else:
             conn.close()
-            return jsonify({"status": "KO", "message": "Error retrieving updated series"}), 500
+            return jsonify({"result": "KO", "message": "Error retrieving updated series"}), 500
 
     except Exception as e:
         app.logger.error(e)
-        return jsonify({"status": "KO", "message": "Internal server error"}), 500
+        return jsonify({"result": "KO", "message": "Internal error"}), 500
 
 
-@series_bp.route("/series/<int:id_>/ratings", methods=["PATCH"])
+@api_series_bp.route("/series/<int:id_>/ratings", methods=["PATCH"])
 def update_series_ratings(id_):
     try:
         data = request.get_json()
         if not data:
-            return jsonify({"status": "KO", "message": "No data provided"}), 400
+            return jsonify({"result": "KO", "message": "No data provided"}), 400
 
-        conn = sqlite3.connect("instance/mml.sqlite3")
+        conn = sqlite3.connect("data/mml.sqlite3")
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
         r, s = get_series_info(id_, cursor)
         if s == 404:
             conn.close()
-            return jsonify({"status": "KO", "message": "Series not found"}), 404
+            return jsonify({"result": "KO", "message": "Series not found"}), 404
         elif s != 200:
             conn.close()
             return jsonify(r), s
@@ -474,7 +474,7 @@ def update_series_ratings(id_):
             if not isinstance(user_rating, (int, float)) or not (0 <= user_rating <= 10):
                 conn.close()
                 return jsonify(
-                    {"status": "KO", "message": "Invalid user rating, must be a number between 0 and 10"}), 400
+                    {"result": "KO", "message": "Invalid user rating, must be a number between 0 and 10"}), 400
             cursor.execute("SELECT user_rating FROM series WHERE id = ?", (id_,))
             old_rating = cursor.fetchone()[0]
             if old_rating != user_rating:
@@ -487,7 +487,7 @@ def update_series_ratings(id_):
                 votes = data.get(f"{i}_votes", 0)
                 if not (0 <= rating <= 10):
                     conn.close()
-                    return jsonify({"status": "KO", "message": f"Invalid {j}, must be a number between 0 and 10"}), 400
+                    return jsonify({"result": "KO", "message": f"Invalid {j}, must be a number between 0 and 10"}), 400
                 cursor.execute(f"SELECT rating, votes FROM series_ratings_{i} WHERE id = ?", (id_,))
                 old_rating, old_votes = cursor.fetchone()
                 if old_rating != rating:
@@ -499,4 +499,4 @@ def update_series_ratings(id_):
         return "", 204
     except Exception as e:
         app.logger.error(e)
-        return jsonify({"status": "KO", "message": "Internal server error"}), 500
+        return jsonify({"result": "KO", "message": "Internal error"}), 500

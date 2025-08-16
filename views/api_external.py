@@ -4,15 +4,15 @@ from utils.external import series_data_external
 from utils.common_code import valid_ids
 from typing import Tuple
 
-external_bp = Blueprint("external_api", __name__)
+api_external_bp = Blueprint("api_external", __name__)
 
 
-@external_bp.route("/external/series/id", methods=["GET"])
+@api_external_bp.route("/external/series/id", methods=["GET"])
 def get_series_id() -> Tuple[jsonify, int]:
     try:
         if not (ids := valid_ids(request.args.to_dict())):
             return jsonify({"result": "KO", "error": "Invalid or missing IDs"}), 400
-        conn = sqlite3.connect("instance/mml.sqlite3")
+        conn = sqlite3.connect("data/mml.sqlite3")
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM series WHERE " + " OR ".join([f"{key} = ?" for key in ids.keys()]), tuple(ids.values()))
         rows = cursor.fetchall()
@@ -24,9 +24,9 @@ def get_series_id() -> Tuple[jsonify, int]:
         return jsonify({"result": "OK", "series": rows[0]}), 200
     except Exception as e:
         app.logger.error(e)
-        return jsonify({"result": "KO", "error": "Internal server error"}), 500
+        return jsonify({"result": "KO", "error": "Internal error"}), 500
 
-@external_bp.route('/external/series/data', methods=['GET'])
+@api_external_bp.route('/external/series/data', methods=['GET'])
 def series_data_external_api() -> Tuple[jsonify, int]:
     try:
         if not (ids := valid_ids(request.args.to_dict())):
@@ -40,9 +40,9 @@ def series_data_external_api() -> Tuple[jsonify, int]:
             return jsonify({"result": "KO", "error": "Failed to fetch data from external sources"}), 502
     except Exception as e:
         app.logger.error(e)
-    return jsonify({"result": "KO", "error": "Internal server error"}), 500
+    return jsonify({"result": "KO", "error": "Internal error"}), 500
 
-@external_bp.route("/external/series/ratings", methods=["PUT"])
+@api_external_bp.route("/external/series/ratings", methods=["PUT"])
 def update_series_ratings() -> Tuple[jsonify, int]:
     try:
         data = request.get_json()
@@ -51,7 +51,7 @@ def update_series_ratings() -> Tuple[jsonify, int]:
         if not data or not isinstance(data, dict):
             return jsonify({"result": "KO", "error": "Invalid or missing data"}), 400
 
-        conn = sqlite3.connect("instance/mml.sqlite3")
+        conn = sqlite3.connect("data/mml.sqlite3")
         cursor = conn.cursor()
         not_exist = []
         to_create = {}
@@ -78,4 +78,4 @@ def update_series_ratings() -> Tuple[jsonify, int]:
         return  jsonify({"result": "OK", "message": "Ratings updated successfully", "not_exist": not_exist}), 200
     except Exception as e:
         app.logger.error(e)
-        return jsonify({"result": "KO", "error": "Internal server error"}), 500
+        return jsonify({"result": "KO", "error": "Internal error"}), 500

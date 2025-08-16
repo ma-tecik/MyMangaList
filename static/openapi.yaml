@@ -26,16 +26,14 @@ servers:
   - url: "https://dev.mat.tr.eu.org/api/v1"
     description: Development Server (DNS record may be deleted any time)
 tags:
+  - name: Misc
+    description: Other operations
   - name: Series
     description: Operations related to series.
   - name: Authors
     description: Operations related to authors.
-  - name: Merge
-    description: Operations related to merge series and authors.
   - name: H
     description: Operations related to hentai.
-  - name: Misc
-    description: Other operations
 paths:
   /ping:
     get:
@@ -44,7 +42,6 @@ paths:
       description: Returns a plaintext response containing only the word 'pong' if the API is healthy
       tags:
         - Misc
-      security: [ ]
       responses:
         '200':
           description: Pong
@@ -53,6 +50,120 @@ paths:
               schema:
                 type: string
                 default: pong
+
+  /status:
+    get:
+      operationId: getStatus
+      summary: Your reading status
+      description: Returns your reding status.
+      tags:
+        - Misc
+      responses:
+        '200':
+          description: Your reading status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    default: OK
+                  data:
+                    type: object
+                    properties:
+                      series_total:
+                        type: integer
+                      series_by_status:
+                        type: object
+                        properties:
+                          plan_to_read:
+                            type: integer
+                          reading:
+                            type: integer
+                          completed:
+                            type: integer
+                          one_shots:
+                            type: integer
+                          dropped:
+                            type: integer
+                          ongoing:
+                            type: integer
+                      series_by_type:
+                        type: object
+                        properties:
+                          manga:
+                            type: integer
+                          manwha:
+                            type: integer
+                          manhua:
+                            type: integer
+                          oel:
+                            type: integer
+                          vietnamese:
+                            type: integer
+                          malaysian:
+                            type: integer
+                          indonesian:
+                            type: integer
+                          novel:
+                            type: integer
+                          artbook:
+                            type: integer
+                          other:
+                            type: integer
+                      authors:
+                        type: integer
+                      h:
+                        type: integer
+                      mu_integration:
+                        type: boolean
+                      dex_integration:
+                        type: boolean
+                      mal_integration:
+                        type: boolean
+
+  /settings:
+    get:
+      operationId: getSettings
+      summary: Retrieve settings
+      description: Returns settings
+      tags:
+        - Misc
+      responses:
+        200:
+          description: Settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseSettings'
+        500:
+          description: Internal error, check logs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+    put:
+      operationId: updateSettings
+      summary: Update settings
+      description: Updates settings
+      tags:
+        - Misc
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/settings'
+      responses:
+        204:
+          description: Settings updated
+        500:
+          description: Internal error, check logs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
 
   /series:
     get:
@@ -220,12 +331,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Series'
-        400:
-          description: Bad request (invalid or missing data)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/responseKO'
         404:
           description: Not found
           content:
@@ -621,13 +726,276 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseKO'
 
+  /authors:
+    get:
+      operationId: getAuthorList
+      summary: Retrieve authors list
+      description: Returns the list of of authors in db with the count of their series
+      tags:
+        - Authors
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+      responses:
+        200:
+          description: Author list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    default: OK
+                  page:
+                    type: string
+                    default: 1
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          description: internal author id
+                        name:
+                          type: string
+                        series:
+                          type: integer
+                          description: Total count of his/her series
+        500:
+          description: Internal error, check logs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
 
+  /authors/{id}:
+    get:
+      operationId: getAuthorById
+      summary: Get an author by author_id
+      description: Returns author's details for the given author_id.
+      tags:
+        - Authors
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Internal author ID
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Author details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseAuthor'
+        404:
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+        500:
+          description: Internal error, check logs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+    patch:
+      operationId: updateAuthor
+      summary: Update an author by author_id
+      description: |-
+        Updates an author by given author_id  
+        Note: IDs will be merged, name will be overwriten
+      tags:
+        - Authors
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Internal author ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ids:
+                  $ref: '#/components/schemas/AuthorIDs'
+                name:
+                  type: string
+      responses:
+        200:
+          description: Author updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseAuthor'
+        404:
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+        500:
+          description: Internal error, check logs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
 
+  /authors/merge:
+    post:
+      operationId: mergeAuthors
+      summary: Merge 2 or more authors by author_ids
+      description: |-
+        Merges 2 or more authors by given author_ids 
+        Note: external IDs will be merged, internal id and name will become the
+      tags:
+        - Authors
+      parameters:
+        - name: ids
+          in: query
+          style: form
+          explode: false
+          description: Internal author ID
+          required: true
+          schema:
+            type: array
+            items:
+              type: integer
+      responses:
+        200:
+          description: Author updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseAuthor'
+        400:
+          description: Bad request (invalid query)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+        404:
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+        409:
+          description: Conflict in external IDs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+        500:
+          description: Internal error, check logs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
 
+  /h:
+    post:
+      operationId: addHentai
+      summary: Add a hentai
+      description: Adds a hentai
+      tags:
+        - H
+      parameters:
+        - name: id
+          in: query
+          required: true
+          description: nHentai id or SchaleNetwork id/key
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Added or already exist in db. We don't check.
+        '400':
+          description: Bad request (invalid query)
+        '500':
+          description: Internal error, check logs.
+    delete:
+      operationId: deleteHentai
+      summary: Delete a hentai
+      description: Deletes a hentai
+      tags:
+        - H
+      parameters:
+        - name: id
+          in: query
+          required: true
+          description: nHentai id or SchaleNetwork id/key
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted or not exist in db. We don't check.
+        '400':
+          description: Bad request (invalid query)
+        '500':
+          description: Internal error, check logs.
 
+  /h/{id}:
+    get:
+      operationId: isNhentaiInDB
+      summary: Check if an Hentai is in DB
+      description: Checks if an Hentai is in DB or not
+      tags:
+        - H
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: nHentai id
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: It is.
+        '404':
+          description: It is not.
+        '500':
+          description: Internal error, check logs.
 
-
-
+  /h/{id}/{key}:
+    get:
+      operationId: isSchaleInDB
+      summary: Check if an Hentai is in DB
+      description: Checks if an Hentai is in DB or not
+      tags:
+        - H
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: SchaleNetwork id
+          schema:
+            type: integer
+        - name: key
+          in: path
+          required: true
+          description: SchaleNetwork key
+          schema:
+            type: string
+      responses:
+        '204':
+          description: It is.
+        '404':
+          description: It is not.
+        '500':
+          description: Internal error, check logs.
 
 components:
   schemas:
@@ -890,6 +1258,55 @@ components:
         required:
           - type
 
+    settings:
+      type: object
+      properties:
+        main_rating:
+          type: string
+          enum: [mu, dex, mal]
+        title_languages:
+          type: string
+          description: 'Comma-separated ISO 639-1 codes. Example: "en,tr,de"'
+        mu_integration:
+          type: boolean
+        mu_username:
+          type: string
+        mu_password:
+          type: string
+        dex_integration:
+          type: boolean
+        dex_token:
+          type: string
+        mal_integration:
+          type: boolean
+    responseSettings:
+      type: object
+      properties:
+        result:
+          type: string
+          default: OK
+        data:
+          type: object
+          properties:
+            main_rating:
+              type: string
+              enum: [mu, dex, mal]
+            title_languages:
+              type: string
+              description: 'Comma-separated ISO 639-1 codes. Example: "en,tr,de"'
+            mu_integration:
+              type: boolean
+            mu_username:
+              type: string
+            mu_password:
+              type: boolean
+            dex_integration:
+              type: boolean
+            dex_token:
+              type: boolean
+            mal_integration:
+              type: boolean
+
 
     response200:
       type: object
@@ -965,3 +1382,29 @@ components:
                   user_rating:
                     type: number
                     format: float
+    responseAuthor:
+      type: object
+      properties:
+        result:
+          type: string
+          default: OK
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+              description: internal author id
+            ids:
+              $ref: '#/components/schemas/AuthorIDs'
+            name:
+              type: string
+            series:
+              type: object
+              description: Count of his/her series
+              properties:
+                as_author:
+                  type: integer
+                as_artist:
+                  type: integer
+                as_both:
+                  type: integer

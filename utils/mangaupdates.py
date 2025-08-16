@@ -63,8 +63,7 @@ def series(id_mu36: str) -> Tuple[Dict[str, Any], int]:
 
     data = response.json()
 
-    accepted_languages = ["en"]
-    accepted_languages.extend(app.config["TITLE_LANGUAGES"])
+    accepted_languages = app.config["TITLE_LANGUAGES"]
 
     type_map = {"Manga": ["ja"], "Manhwa": ["ko"], "Manhua": ["zh-CN"], "OEL": [],
                 "Vietnamese": ["vi"], "Malaysian": ["ms"], "Indonesian": ["id"],

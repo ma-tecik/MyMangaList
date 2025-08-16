@@ -12,7 +12,7 @@ def download_thumbnail(series_id: int, thumbnail: str, cursor: sqlite3.Cursor) -
             app.logger.error(f"Failed to download image from {thumbnail}, status code: {response.status_code}")
             return {"result": "KO", "error": "Failed to download thumbnail"}, 502
         ext = response.headers.get("Content-Type").split("/")[-1]
-        with open(f"static/images/{series_id}.{ext}", "wb") as f:
+        with open(f"data/thumbnails/{series_id}.{ext}", "wb") as f:
             f.write(response.content)
         cursor.execute("INSERT INTO series_thumbnails (series_id, extension) VALUES (?, ?)", (series_id, ext))
         return {"result": "OK"}, 201
@@ -24,7 +24,7 @@ def download_thumbnail(series_id: int, thumbnail: str, cursor: sqlite3.Cursor) -
 #     try:
 #         cursor.execute("DELETE FROM series_thumbnails WHERE series_id = ? RETURNING extension", (series_id,))
 #         ext = cursor.fetchone()[0]
-#         with open(f'static/images/{series_id}.{ext}', 'wb') as image_file:
+#         with open(f'data/thumbnails/{series_id}.{ext}', 'wb') as image_file:
 #             image_file.write(b'')
 #         return {"result": "OK"}, 204
 #     except Exception as e:
@@ -42,9 +42,9 @@ def update_thumbnail(series_id: int, thumbnail: str, cursor: sqlite3.Cursor) -> 
         old_ext = cursor.fetchone()[0]
         if old_ext != ext:
             cursor.execute(f"UPDATE series_thumbnails SET extension = ? WHERE series_id = ?", (ext, series_id))
-        with open(f"static/images/{series_id}.{old_ext}", "wb") as f:
+        with open(f"data/thumbnails/{series_id}.{old_ext}", "wb") as f:
             f.write(b"")
-        with open(f"static/images/{series_id}.{ext}", "wb") as f:
+        with open(f"data/thumbnails/{series_id}.{ext}", "wb") as f:
             f.write(response.content)
         return {"result": "OK"}, 201
     except Exception as e:
@@ -142,4 +142,4 @@ def get_series_info(id_: int, cursor: sqlite3.Cursor) -> Tuple[Dict[str, Any], i
 
     except Exception as e:
         app.logger.error(e)
-        return {"status": "KO", "error": "Internal server error"}, 500
+        return {"status": "KO", "error": "Internal error"}, 500

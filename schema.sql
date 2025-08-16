@@ -11,15 +11,6 @@ create table authors
     name   TEXT
 );
 
-create table authors_names
-(
-    id   INTEGER not null
-        references authors
-            on delete cascade,
-    name TEXT    not null,
-    unique (id, name)
-);
-
 create table genres
 (
     id    INTEGER
@@ -69,15 +60,17 @@ create table series
     automation        BOOLEAN default 1,
     automation_genres BOOLEAN default 0,
     user_rating       REAL,
-        check (status in ('Plan to Read', 'Reading', 'Completed', 'One-shot', 'Dropped', 'Ongoing')),
-        check ( type in ('Manga', 'Manhwa', 'Manhua', 'OEL', 'Vietnamese', 'Malaysian', 'Indonesian',
-                         'Novel', 'Artbook', 'Other') )
+    check (status in ('Plan to Read', 'Reading', 'Completed', 'One-shot', 'Dropped', 'Ongoing')),
+    check (type in ('Manga', 'Manhwa', 'Manhua', 'OEL', 'Vietnamese', 'Malaysian', 'Indonesian',
+                    'Novel', 'Artbook', 'Other'))
 );
 
 create index idx_series_status
     on series (status);
+
 create index idx_series_type
     on series (type);
+
 create index idx_status_time
     on series (timestamp_status);
 
@@ -110,15 +103,6 @@ create table series_genres
 
 create index idx_series_genres
     on series_genres (series_id);
-
-create table series_thumbnails
-(
-    extension TEXT    not null,
-    series_id integer not null
-        primary key
-        references series
-            on delete cascade
-);
 
 create table series_nhentai_ids
 (
@@ -179,6 +163,15 @@ create table series_schale_ids
         references schale_ids
             on delete cascade,
     primary key (series_id, schale_id)
+);
+
+create table series_thumbnails
+(
+    extension TEXT    not null,
+    series_id integer not null
+        primary key
+        references series
+            on delete cascade
 );
 
 create table series_titles

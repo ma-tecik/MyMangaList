@@ -21,7 +21,6 @@ wheels/
 *.egg
 
 # Flask
-instance/
 .webassets-cache
 
 # Environment variables

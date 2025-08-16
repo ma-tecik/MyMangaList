@@ -14,7 +14,7 @@ def proxy_image():
             resp = requests.get(url, timeout=10)
             if resp.status_code == 200:
                 app.logger.error(f"for {url}, upstream returned {resp.status_code}")
-                return jsonify({"status": "KO", 'message': "Upstream error"}), 502
+                return jsonify({"result": "KO", 'message': "Upstream error"}), 502
             return Response(resp.content, mimetype=resp.headers.get("content-type", "image/jpeg")), 200
         except Exception as e:
             app.logger.error(f"for {url}, {e}")
@@ -26,7 +26,7 @@ def proxy_image():
             app.logger.error(f"for {url}, {e}")
             return jsonify({"result": "KO", "error": "Unexpected error"}), 500
     else:
-        return jsonify({"status": "KO", "error": "Invalid URL"}), 400
+        return jsonify({"result": "KO", "error": "Invalid URL"}), 400
 
 @misc_bp.route("/api/openapi.yaml" , methods=["GET"])
 def openapi_spec():
@@ -35,4 +35,4 @@ def openapi_spec():
             return Response(f.read(), mimetype="application/x-yaml")
     except Exception as e:
         app.logger.error(f"Failed to return openapi.yaml, {e}")
-        return jsonify({"result": "KO", "error": "Internal server error"}), 500
+        return jsonify({"result": "KO", "error": "Internal error"}), 500
