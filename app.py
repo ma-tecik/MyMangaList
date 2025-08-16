@@ -13,8 +13,6 @@ if not app.config.get("MAIN_SERIES_RATING") or app.config["MAIN_SERIES_RATING"] 
     app.config["MAIN_SERIES_RATING"] = "mu"
 if not app.config.get("TITLE_LANGUAGES"):
     app.config["TITLE_LANGUAGES"] = []
-if not app.config.get("SECRET_KEY"):
-    raise ValueError("SECRET_KEY must be set in config.json")
 
 # Configure logging
 logging.getLogger().handlers.clear()

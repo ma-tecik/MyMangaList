@@ -53,7 +53,7 @@ create table series
         unique,
     id_bato           INTEGER
         unique,
-    id_line           INTEGER
+    id_line           TEXT
         unique,
     title             TEXT    not null,
     type              TEXT    not null,

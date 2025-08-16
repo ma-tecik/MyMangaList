@@ -64,7 +64,9 @@ def valid_ids(ids: Dict[str, Any], reduced: bool = False) -> Dict[str, Any]:
     ids = {k: v for k, v in ids.items() if k in valid_keys and v is not None}
     if not ids:
         return {}
-    if any(not value.isdigit() for value in [ids[k] for k in ["mal", "bato", "line"] if k in ids]):
+    if any(not value.isdigit() for value in [ids[k] for k in ["mal", "bato"] if k in ids]):
+        return {}
+    if "line" in ids and not (re.fullmatch(r"[o]{1}:[0-9]{4}", ids["line"]) or re.fullmatch(r"[c]{1}:[0-9]{6}", ids["line"])):
         return {}
     if "mu" in ids and not re.fullmatch(r"[0-9a-z]+", ids["mu"]):
         return {}
