@@ -24,13 +24,22 @@ def status():
         conn = sqlite3.connect("data/mml.sqlite3")
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        data = {"series_by_status": {}, "series_by_type": {}}
+        data = {
+            "series_total": 0,
+            "series_by_status": {},
+            "series_by_type": {},
+            "authors": 0,
+            "h": 0,
+            "mu_integration": False,
+            "dex_integration": False,
+            "mal_integration": False,
+        }
 
         cursor.execute("SELECT COUNT(*) FROM series")
         data["series_total"] = cursor.fetchone()[0]
 
         for k, v in {"Plan to Read": "plan_to_read", "Reading": "reading", "Completed": "completed",
-                     "One-shot": "one_shots", "Dropped": "dropped", "Ongoing": "ongoing"}.items():
+                     "One-shot": "one_shots", "Dropped": "dropped", "On hold": "on_hold", "Ongoing": "ongoing"}.items():
             cursor.execute("SELECT COUNT(*) FROM series WHERE status = ?", (k,))
             data["series_by_status"][v] = cursor.fetchone()[0]
 
@@ -47,17 +56,16 @@ def status():
         cursor.execute("SELECT COUNT(*) FROM schale_ids")
         data["h"] = c + cursor.fetchone()[0]
 
-        data["mu_integration"] = app.config["MU_INTEGRATION"]
-        data["dex_integration"] = app.config["DEX_INTEGRATION"]
-        data["mal_integration"] = app.config["MAL_INTEGRATION"]
+        data["mu_integration"] = bool(app.config.get("MU_INTEGRATION"))
+        data["dex_integration"] = bool(app.config.get("DEX_INTEGRATION"))
+        data["mal_integration"] = bool(app.config.get("MAL_INTEGRATION"))
 
-
+        conn.close()
+        return jsonify({"result": "OK", "data": data}), 200
 
     except Exception as e:
         app.logger.error(e)
-        return jsonify({"result": "ko", "message": "Internal error"}), 500
-
-    return jsonify({"result": "ko", "message": "not implemented"}), 501
+        return jsonify({"result": "KO", "error": "Internal error"}), 500
 
 @api_bp.route("/settings", methods=["GET"])
 def get_settings():
@@ -69,14 +77,15 @@ def get_settings():
         data = {
             "main_rating": db["main_rating"],
             "title_languages": db["title_languages"],
-            "mu_integration": db["mu_integration"],
+            "mu_integration": bool(int(db.get("mu_integration", 0))),
             "mu_username": db.get("mu_username"),
             "mu_password": bool(db.get("mu_password")),
-            "dex_integration": db["dex_integration"],
+            "dex_integration": bool(int(db.get("dex_integration", 0))),
             "dex_token": bool(db.get("dex_token")),
-            "mal_integration": db["mal_integration"],
+            "mal_integration": bool(int(db.get("mal_integration", 0))),
         }
+        conn.close()
         return jsonify({"result": "OK", "data": data}), 200
     except Exception as e:
         app.logger.error(e)
-        return jsonify({"result": "ko", "message": "Internal error"}), 500
+        return jsonify({"result": "KO", "error": "Internal error"}), 500

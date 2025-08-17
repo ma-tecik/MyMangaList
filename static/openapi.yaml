@@ -21,7 +21,7 @@ info:
     url: https://www.gnu.org/licenses/agpl-3.0.html
   version: 1.0.0
 servers:
-  - url: "http://localhost:5000/api/v1"
+  - url: "http://127.0.0.1:5000/api/v1"
     description: Localhost Server (for development purposes)
   - url: "https://dev.mat.tr.eu.org/api/v1"
     description: Development Server (DNS record may be deleted any time)
@@ -39,7 +39,7 @@ paths:
     get:
       operationId: getPing
       summary: Ping healthcheck
-      description: Returns a plaintext response containing only the word 'pong' if the API is healthy
+      description: Returns a plaintext response containing only the word 'pong' if the API is healthy.
       tags:
         - Misc
       responses:
@@ -55,7 +55,7 @@ paths:
     get:
       operationId: getStatus
       summary: Your reading status
-      description: Returns your reding status.
+      description: Returns your reading status.
       tags:
         - Misc
       responses:
@@ -87,6 +87,8 @@ paths:
                             type: integer
                           dropped:
                             type: integer
+                          on_hold:
+                            type: integer
                           ongoing:
                             type: integer
                       series_by_type:
@@ -94,7 +96,7 @@ paths:
                         properties:
                           manga:
                             type: integer
-                          manwha:
+                          manhwa:
                             type: integer
                           manhua:
                             type: integer
@@ -158,6 +160,12 @@ paths:
       responses:
         204:
           description: Settings updated
+        400:
+          description: Bad request (missing or invalid body)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
         500:
           description: Internal error, check logs.
           content:
@@ -193,15 +201,21 @@ paths:
             $ref: '#/components/schemas/Status'
         - name: type
           in: query
-          description: other for all series except manga, manhwa, and manhua.
+          description: Filters by exact series type; use 'all' to include all types.
           schema:
             type: string
             enum:
               - all
-              - manga
-              - manwha
-              - manhua
-              - other
+              - Manga
+              - Manhwa
+              - Manhua
+              - OEL
+              - Vietnamese
+              - Malaysian
+              - Indonesian
+              - Novel
+              - Artbook
+              - Other
             default: all
         - name: included
           in: query
@@ -231,7 +245,7 @@ paths:
               - rating-dex
               - rating-mal
               - name
-              - id
+              - time
             default: rating-mu
       responses:
         200:
@@ -330,7 +344,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Series'
+                type: object
+                properties:
+                  result:
+                    type: string
+                    default: OK
+                  data:
+                    $ref: '#/components/schemas/Series'
         404:
           description: Not found
           content:
@@ -392,7 +412,7 @@ paths:
       summary: Update a series by series_id
       description: |-
         Updates a series by given series_id  
-        Note: All provided fields will be overwrited except IDs included titles, alt_titles, genres... Only IDs will be merged.
+        Note: All provided fields will be overwritten. External IDs are merged; titles, alt_titles and genres are fully replaced.
       tags:
         - Series
       parameters:
@@ -598,7 +618,7 @@ paths:
     get:
       operationId: externalSeriesID
       summary: Get the series_id of a series by external IDs
-      description: Returns the series_id of a series based on given one or more MU, Dex, MAL, Bato, Line IDs
+      description: Returns the series_id of a series based on given one or more MU, Dex, MAL, Bato, line IDs.
       tags:
         - Series
       parameters:
@@ -621,7 +641,7 @@ paths:
         - name: line
           in: query
           schema:
-            type: integer
+            type: string
       responses:
         200:
           description: series_id
@@ -648,7 +668,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseKO'
         409:
-          description: Series conflict, use merge endpoint. Or possibly author problem.
+          description: Series conflict; manual merge required.
           content:
             application/json:
               schema:
@@ -664,7 +684,7 @@ paths:
     get:
       operationId: externalSeriesData
       summary: Get the series details from external sources
-      description: Retrieves and returns series details from external sources  based on given one or more MU, Dex, MAL, Bato, line IDs
+      description: Retrieves and returns series details from external sources based on given one or more MU, Dex, MAL, Bato, or line IDs.
       tags:
         - Series
       parameters:
@@ -687,7 +707,7 @@ paths:
         - name: line
           in: query
           schema:
-            type: integer
+            type: string
       responses:
         200:
           description: Series data
@@ -730,7 +750,7 @@ paths:
     get:
       operationId: getAuthorList
       summary: Retrieve authors list
-      description: Returns the list of of authors in db with the count of their series
+      description: Returns the list of authors in the DB with the count of their series.
       tags:
         - Authors
       parameters:
@@ -752,7 +772,7 @@ paths:
                     type: string
                     default: OK
                   page:
-                    type: string
+                    type: integer
                     default: 1
                   data:
                     type: array
@@ -812,7 +832,7 @@ paths:
       summary: Update an author by author_id
       description: |-
         Updates an author by given author_id  
-        Note: IDs will be merged, name will be overwriten
+        Note: IDs will be merged, name will be overwritten
       tags:
         - Authors
       parameters:
@@ -858,8 +878,8 @@ paths:
       operationId: mergeAuthors
       summary: Merge 2 or more authors by author_ids
       description: |-
-        Merges 2 or more authors by given author_ids 
-        Note: external IDs will be merged, internal id and name will become the
+        Merges 2 or more authors by the given author_ids.
+        Note: External IDs will be merged; the smallest internal ID will be kept, and the author's name of the kept record will remain.
       tags:
         - Authors
       parameters:
@@ -948,10 +968,10 @@ paths:
           description: Internal error, check logs.
 
   /h/{id}:
-    get:
+    head:
       operationId: isNhentaiInDB
-      summary: Check if an Hentai is in DB
-      description: Checks if an Hentai is in DB or not
+      summary: Check if a hentai is in DB
+      description: Checks if a hentai is in the database.
       tags:
         - H
       parameters:
@@ -970,10 +990,10 @@ paths:
           description: Internal error, check logs.
 
   /h/{id}/{key}:
-    get:
+    head:
       operationId: isSchaleInDB
-      summary: Check if an Hentai is in DB
-      description: Checks if an Hentai is in DB or not
+      summary: Check if a hentai is in DB
+      description: Checks if a hentai is in the database.
       tags:
         - H
       parameters:
@@ -1112,8 +1132,9 @@ components:
           type: integer
           description: Bato.to ID
         line:
-          type: integer
-          description: Line Webtoon ID
+          type: string
+          pattern: '^(o:[0-9]{4}|c:[0-9]{6})$'
+          description: 'Line Webtoon ID (original: o:NNNN, canvas: c:NNNNNN)'
     Type:
       type: string
       description: Series type
@@ -1163,25 +1184,49 @@ components:
           - Seinen
           - Shoujo
           - Shounen
-          - Yaoi
-          - Yuri
-          - Shounen Ai
-          - Shoujo Ai
+          - GL
+          - BL
           - Lolicon
           - Shotacon
           - Hentai
           - Smut
+          - Borderline H
           - Adult
           - Mature
+          - Ecchi
           - Doujinshi
+          - 4-Koma
+          - Anthology
+          - Harlequin
+          - Webtoon
+          - Old-Style
+          - Award
+          - Cancel
+          - Rushed
+          - European
+          - Asian
+          - isekai
+          - Reverse isekai
+          - Time Rewind
+          - Villainess
+          - Revenge
+          - Modern
+          - Childhood F.
+          - Con. Marr.
+          - Arranged Marr.
+          - Sensei
+          - Age Gap
+          - Office
+          - Boss-Sub
+          - Showbiz
           - Action
           - Adventure
           - Comedy
           - Drama
-          - Ecchi
           - Fantasy
           - Gender Bender
           - Harem
+          - Reverse Harem
           - Historical
           - Horror
           - Martial Arts
@@ -1195,6 +1240,9 @@ components:
           - Sports
           - Supernatural
           - Tragedy
+          - Incest
+          - Yandere
+          - Toxic Rel.
     GenresSearch:
       allOf:
         - type: array
@@ -1332,7 +1380,7 @@ components:
         - result
         - error
     responseMerge:
-      description: 'Duplicate entry, use merge endpoint'
+      description: 'Duplicate entry, use merge endpoint (if available) or merge manually.'
       type: object
       properties:
         result:
@@ -1344,7 +1392,7 @@ components:
           default: 'Manual merge required for ...'
         url:
           type: string
-          format: uri
+          format: uri-reference
           description: 'URL to trigger manual merge for conflicting entries'
       required:
         - result
@@ -1378,7 +1426,7 @@ components:
                   rating:
                     type: number
                     format: float
-                    description: Average rating of the series
+                    description: Average rating of the series (based on selected or joined source)
                   user_rating:
                     type: number
                     format: float

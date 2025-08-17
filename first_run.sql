@@ -68,7 +68,7 @@ INSERT OR IGNORE INTO settings VALUES
 ('title_languages', 'en'),
 ('mu_integration', 0),
 ('mu_username', NULL),
-('mu_pasword', NULL),
+('mu_password', NULL),
 ('mu_list_plan_to_read', 1),
 ('mu_list_reading', 0),
 ('mu_list_completed',2),

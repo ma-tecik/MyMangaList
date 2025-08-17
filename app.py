@@ -1,9 +1,8 @@
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, jsonify, request
 from views.api import api_bp
 from views.misc import misc_bp
-from utils.settings import get_settings, first_run
+from utils.settings import first_run, get_settings, update_settings
 import logging
-import sqlite3
 import os
 
 app = Flask(__name__)
@@ -25,6 +24,7 @@ app.logger.addHandler(console_handler)
 app.logger.addHandler(file_handler)
 
 if not os.path.isfile("data/mml.sqlite3"):
+    os.makedirs("data/thumbnails", exist_ok=True)
     first_run()
 
 get_settings(app)
@@ -35,36 +35,16 @@ app.register_blueprint(misc_bp)
 
 
 @app.route("/api/v1/settings", methods=["PUT"])
-def set_settings():
+def api_update_settings():
     try:
         data = request.get_json()
-        conn = sqlite3.connect("data/mml.sqlite3")
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM settings")
-        db = {i[0]: i[1] for i in cursor.fetchall()}
-
-        params_to_add = []
-        params_to_update = []
-        for k, v in data.items():
-            if k in db:
-                if v == db[k]:
-                    continue
-                params_to_update.append((k, v))
-            else:
-                params_to_add.append((k, v))
-            app.config[k] = v
-
-        if params_to_add:
-            cursor.executemany("INSERT INTO settings VALUES (?, ?)", params_to_add)
-            conn.commit()
-        if params_to_update:
-            cursor.executemany("UPDATE settings SET value = ? WHERE key = ? ", params_to_update)
-            conn.commit()
-        conn.close()
+        if not data:
+            return jsonify({"result": "KO", "error": "Missing data"}), 400
+        update_settings(data, app)
         return "", 204
     except Exception as e:
         app.logger.error(e)
-        return jsonify({"result": "ko", "message": "Internal error"}), 500
+        return jsonify({"result": "KO", "error": "Internal error"}), 500
 
 # @app.route("/", methods=["GET"])
 # def index():

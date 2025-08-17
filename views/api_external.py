@@ -14,14 +14,20 @@ def get_series_id() -> Tuple[jsonify, int]:
             return jsonify({"result": "KO", "error": "Invalid or missing IDs"}), 400
         conn = sqlite3.connect("data/mml.sqlite3")
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM series WHERE " + " OR ".join([f"{key} = ?" for key in ids.keys()]), tuple(ids.values()))
+        where = " OR ".join([f"id_{key} = ?" for key in ids.keys()])
+        cursor.execute(f"SELECT id FROM series WHERE {where}", tuple(ids.values()))
         rows = cursor.fetchall()
         conn.close()
         if not rows:
-            return jsonify({"result": "KO", "error": "No series found"}), 404
+            return jsonify({"result": "KO", "error": "Not found"}), 404
         if len(rows) > 1:
-            return jsonify({"result": "MERGE_REQUIRED", "error": "Merge required for series with multiple IDs", "merge_url": "/series/merge?" + "&".join(str(i[0]) for i in rows)}), 409
-        return jsonify({"result": "OK", "series": rows[0]}), 200
+            # multiple matches, manual merge may be needed
+            return jsonify({
+                "result": "MERGE_REQUIRED",
+                "error": "Manual merge required for series with multiple IDs",
+                "url": "/series/merge?ids=" + ",".join(str(r[0]) for r in rows)
+            }), 409
+        return jsonify({"result": "OK", "data": rows[0][0]}), 200
     except Exception as e:
         app.logger.error(e)
         return jsonify({"result": "KO", "error": "Internal error"}), 500
@@ -35,7 +41,7 @@ def series_data_external_api() -> Tuple[jsonify, int]:
         if s == 200:
             return jsonify({"result": "OK", "data": r}), 200
         elif s == 404:
-            return jsonify({"result": "KO", "error": "No data found for the provided IDs"}), 404
+            return jsonify({"result": "KO", "error": "Not found"}), 404
         elif s == 502:
             return jsonify({"result": "KO", "error": "Failed to fetch data from external sources"}), 502
     except Exception as e:
@@ -45,37 +51,62 @@ def series_data_external_api() -> Tuple[jsonify, int]:
 @api_external_bp.route("/external/series/ratings", methods=["PUT"])
 def update_series_ratings() -> Tuple[jsonify, int]:
     try:
-        data = request.get_json()
-        if type_ := data.get("id_type") not in ("mu", "dex", "mal"):
+        body = request.get_json() or {}
+        type_ = body.get("id_type")
+        if type_ not in ("mu", "dex", "mal"):
             return jsonify({"result": "KO", "error": "Invalid or missing id_type"}), 400
-        if not data or not isinstance(data, dict):
+        data = body.get("data")
+        if not isinstance(data, list):
             return jsonify({"result": "KO", "error": "Invalid or missing data"}), 400
 
         conn = sqlite3.connect("data/mml.sqlite3")
         cursor = conn.cursor()
         not_exist = []
-        to_create = {}
-        to_update = {}
-        for i in data:
-            if not (id_ := data[i].get("id")) or not isinstance(r := data[i].get("rating"), (int, float)) or not isinstance(v := data[i].get("votes"), int):
+        to_create = []
+        to_update = []
+
+        for item in data:
+            if not isinstance(item, dict):
                 continue
-            cursor.execute(f"SELECT * FROM series WHERE id_{type_} = ?", (id_,))
-            if not cursor.fetchone():
-                not_exist.append(id_)
+            id_ = item.get("id")
+            rating = item.get("rating")
+            votes = item.get("votes")
+            if id_ is None or rating is None or votes is None:
                 continue
+            try:
+                rating_f = float(rating)
+                votes_i = int(votes)
+            except Exception:
+                continue
+            if not (1 <= rating_f <= 10) or votes_i < 1:
+                continue
+            cursor.execute(f"SELECT 1 FROM series WHERE id_{type_} = ?", (id_,))
+            if cursor.fetchone() is None:
+                not_exist.append(str(id_))
+                continue
+
             cursor.execute(f"SELECT rating, votes FROM series_ratings_{type_} WHERE id_{type_} = ?", (id_,))
-            if not (row := cursor.fetchone()):
-                to_create[id_] = {"rating": r, "votes": v}
-            elif row[0] != r or row[1] != v:
-                to_update[id_] = {"rating": r, "votes": v}
+            row = cursor.fetchone()
+            if row is None:
+                to_create.append((id_, rating_f, votes_i))
+            else:
+                old_r, old_v = row
+                if old_r != rating_f or old_v != votes_i:
+                    to_update.append((rating_f, votes_i, id_))
 
         if to_create:
-            cursor.executemany(f"INSERT INTO series_ratings_{type_} (id_{type_}, rating, votes) VALUES (?, ?, ?)", [(i, j["rating"], j["votes"]) for i, j in to_create.items()])
+            cursor.executemany(
+                f"INSERT INTO series_ratings_{type_} (id_{type_}, rating, votes) VALUES (?, ?, ?)",
+                to_create,
+            )
         if to_update:
-            cursor.executemany(f"UPDATE series_ratings_{type_} SET rating = ?, votes = ? WHERE id_{type_} = ?", [(j["rating"], j["votes"], i) for i, j in to_update.items()])
+            cursor.executemany(
+                f"UPDATE series_ratings_{type_} SET rating = ?, votes = ? WHERE id_{type_} = ?",
+                to_update,
+            )
         conn.commit()
         conn.close()
-        return  jsonify({"result": "OK", "message": "Ratings updated successfully", "not_exist": not_exist}), 200
+        return jsonify({"result": "OK", "not_exist": not_exist}), 200
     except Exception as e:
         app.logger.error(e)
         return jsonify({"result": "KO", "error": "Internal error"}), 500

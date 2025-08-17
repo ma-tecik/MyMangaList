@@ -1,6 +1,6 @@
 from flask import Blueprint, request, current_app as app
 import sqlite3
-from typing import Tuple, Any
+from typing import Tuple
 
 api_h_bp = Blueprint('api_h', __name__)
 
@@ -78,8 +78,8 @@ def get_nhentai(id_: int) -> Tuple[str, int]:
         app.logger.error(e)
         return "", 500
 
-@api_h_bp.route("/h/<int:id_>/<path:subpath>", methods=["GET"])
-def get_h(id_: int, subpath: Any) -> Tuple[str, int]:
+@api_h_bp.route("/h/<int:id_>/<key>", methods=["GET"])
+def get_h(id_: int, key: str) -> Tuple[str, int]:
     try:
         conn = sqlite3.connect("data/mml.sqlite3")
         cursor = conn.cursor()

@@ -22,13 +22,13 @@ def _valid_type(type_: str) -> bool:
 
 def _valid_genres(genres: List[str]) -> List[str]:
     allowed_genres = ["nsfw", "Josei", "Seinen", "Shoujo", "Shounen", "GL", "BL", "Lolicon", "Shotacon", "Hentai",
-                      "Smut", "Adult", "Mature", "Ecchi", "Doujinshi", "'4-Koma", "Anthology", "Harlequin", "Webtoon",
+                      "Smut", "Adult", "Mature", "Ecchi", "Doujinshi", "4-Koma", "Anthology", "Harlequin", "Webtoon",
                       "Old-Style", "Award", "Cancel", "Rushed", "European", "Asian", "isekai", "Reverse isekai",
                       "Time Rewind", "Villainess", "Revenge", "Modern", "Childhood F.", "Con. Marr.", "Arranged Marr.",
                       "Sensei", "Age Gap", "Office", "Boss-Sub", "Showbiz", "Action", "Adventure", "Comedy", "Drama",
                       "Fantasy", "Gender Bender", "Harem", "Reverse Harem", "Historical", "Horror", "Martial Arts",
-                      "Mecha", "Mystery", "Psychological", "Romance", "School Life", "Sci-fi'", "Slice of Life",
-                      "Sports", "Supernatural", "Tragedy", "Incest", "Yandere", "Toxic Rel."]
+                      "Mecha", "Mystery", "Psychological", "Romance", "School Life", "Sci-fi", "Slice of Life",
+                      "Sports", "Supernatural", "Tragedy", "Incest", "Yandere", "Toxic Rel.", "Borderline H"]
     return [genre for genre in genres if genre in allowed_genres]
 
 
@@ -66,7 +66,7 @@ def get_series_list() -> Tuple[jsonify, int]:
             return jsonify({"result": "KO", "error": "Invalid status", "valid": allowed_statuses}), 400
         if not (type_ == "all" or _valid_type(type_)):
             return jsonify({"result": "KO", "error": "Invalid type", "valid": ["all"] + allowed_types}), 400
-        valid_sorts = ["rating-mu", "rating-dex", "rating-mal", "name", "id"]
+        valid_sorts = ["rating-mu", "rating-dex", "rating-mal", "name", "time"]
         if sort_by not in valid_sorts:
             return jsonify({"result": "KO", "error": "Invalid sort_by parameter", "valid": valid_sorts}), 400
         genres_included = _valid_genres(genres_included)
@@ -77,22 +77,25 @@ def get_series_list() -> Tuple[jsonify, int]:
         conn = sqlite3.connect("data/mml.sqlite3")
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        query = """
-                SELECT DISTINCT s.*, si.extension
-                FROM series s
-                         LEFT JOIN series_thumbnails si ON s.id = si.series_id \
-                """
+
+        select_clause = "SELECT DISTINCT s.*, si.extension"
+        from_clause = " FROM series s LEFT JOIN series_thumbnails si ON s.id = si.series_id "
+
+
+        order_clause = ""
         if sort_by.startswith("rating-") and (by := sort_by.split('-')[1]) in ("mu", "dex", "mal"):
-            query += f"""
-            LEFT JOIN series_ratings_{by} sr ON sr.id_{by} = s.id_{by}
-            ORDER BY sr.rating DESC, s.title ASC
-            """
+            from_clause += f"LEFT JOIN series_ratings_{by} sr ON sr.id_{by} = s.id_{by} "
+            select_clause += ", COALESCE(sr.rating, 0) AS rating"
+            order_clause = "ORDER BY sr.rating DESC, s.title ASC "
         else:
-            query += f"LEFT JOIN series_ratings_{sr} sr ON sr.id_{sr} = s.id_{sr}"
-            if sort_by == "date":
-                query += "ORDER BY s.timestamp_status ASC"
+            from_clause += f"LEFT JOIN series_ratings_{sr} sr ON sr.id_{sr} = s.id_{sr} "
+            select_clause += ", COALESCE(sr.rating, 0) AS rating"
+            if sort_by == "name":
+                order_clause = "ORDER BY s.title ASC "
+            elif sort_by == "time":
+                order_clause = "ORDER BY s.timestamp_status ASC "
             else:
-                query += "ORDER BY s.title ASC"
+                order_clause = "ORDER BY s.title ASC "
 
         params = []
         where_conditions = []
@@ -108,8 +111,8 @@ def get_series_list() -> Tuple[jsonify, int]:
         if genres_included:
             subquery = """
             s.id IN (
-                SELECT sg.series_id FROM series_genres sg 
-                JOIN genres g ON sg.genre_id = g.id 
+                SELECT sg.series_id FROM series_genres sg
+                JOIN genres g ON sg.genre_id = g.id
                 WHERE g.genre IN ({})
                 GROUP BY sg.series_id
                 HAVING COUNT(DISTINCT g.genre) = ?
@@ -122,19 +125,21 @@ def get_series_list() -> Tuple[jsonify, int]:
         if genres_excluded:
             subquery = """
             s.id NOT IN (
-                SELECT sg.series_id FROM series_genres sg 
-                JOIN genres g ON sg.genre_id = g.id 
+                SELECT sg.series_id FROM series_genres sg
+                JOIN genres g ON sg.genre_id = g.id
                 WHERE g.genre IN ({})
             )
             """.format(','.join('?' * len(genres_excluded)))
             where_conditions.append(subquery)
             params.extend(genres_excluded)
 
+        query = select_clause + from_clause
         if where_conditions:
-            query += " WHERE " + " AND ".join(where_conditions)
+            query += "WHERE " + " AND ".join(where_conditions) + " "
 
         offset = (page - 1) * per_page
-        query += f" LIMIT ? OFFSET ?"
+        query += order_clause
+        query += "LIMIT ? OFFSET ?"
         params.extend([per_page, offset])
 
         cursor.execute(query, params)
@@ -179,16 +184,17 @@ def get_series_list() -> Tuple[jsonify, int]:
                 "status": row["status"],
                 "year": row["year"],
                 "authors": authors,
+                "rating": row["rating"],
                 "user_rating": row["user_rating"],
             }
             series.append(series_data)
 
         conn.close()
-        return jsonify({"result": "OK", "series": series, "page": page}), 200
+        return jsonify({"result": "OK", "data": series, "page": page}), 200
 
     except Exception as e:
         app.logger.error(e)
-        return jsonify({"result": "KO", "message": "Internal error"}), 500
+        return jsonify({"result": "KO", "error": "Internal error"}), 500
 
 
 @api_series_bp.route("/series", methods=["POST"])
@@ -197,14 +203,14 @@ def create_series() -> Tuple[jsonify, int]:
         data = request.get_json()
         # Validate parameters
         if not data:
-            return jsonify({"result": "KO", "message": "No data provided"}), 400
+            return jsonify({"result": "KO", "error": "No data provided"}), 400
         if not all(field in data and data.get(field) for field in
                    ["ids", "title", "type", "status", "authors", "thumbnail"]):
-            return jsonify({"result": "KO", "message": "Missing required fields"}), 400
+            return jsonify({"result": "KO", "error": "Missing required fields"}), 400
         if not _valid_status(data["status"]):
-            return jsonify({"result": "KO", "message": "Invalid status", "valid": allowed_statuses}), 400
+            return jsonify({"result": "KO", "error": "Invalid status", "valid": allowed_statuses}), 400
         if not _valid_type(data["type"]):
-            return jsonify({"result": "KO", "message": "Invalid type", "valid": allowed_types}), 400
+            return jsonify({"result": "KO", "error": "Invalid type", "valid": allowed_types}), 400
         if not (ids := valid_ids(data.get("ids"))):
             return {"result": "KO", "error": "At least one valid ID is required"}, 400
 
@@ -218,18 +224,18 @@ def create_series() -> Tuple[jsonify, int]:
         if len(row) > 1:
             return {"result": "MERGE_REQUIRED",
                     "error": "Manual merge required for series with multiple IDs: " + ", ".join(str(i[0]) for i in row),
-                    "url": f"/series/merge?ids={",".join(str(r[0]) for r in row)}"}, 409
+                    "url": f"/series/merge?ids={','.join(str(r[0]) for r in row)}"}, 409
         elif len(row) == 1:
-            data["id"] = row[0][0]
-            return {"result": "USE_UPDATE", "error": "Series with these IDs already exists, please use update.",
-                    "url": f"/series/update?data={data}"}, 409
+            sid = row[0][0]
+            return {"result": "MERGE_REQUIRED", "error": "Series with these IDs already exists, please use update.",
+                    "url": f"/series/{sid}"}, 409
 
         authors = []
         for author in data["authors"]:
             if author.get("type") in ["Author", "Artist", "Both"]:
                 a_t = author["type"]
             else:
-                return jsonify({"result": "KO", "message": "Missing or invalid author info"}), 400
+                return jsonify({"result": "KO", "error": "Missing or invalid author info"}), 400
 
             if author.get("id"):
                 a_id = author["id"]
@@ -242,13 +248,13 @@ def create_series() -> Tuple[jsonify, int]:
                         {"result": "MERGE_REQUIRED",
                          "error": "Manual merge required for authors with multiple IDs: " + ", ".join(
                              str(i) for i in r),
-                         "merge_url": f"/author/merge?ids={",".join(str(i) for i in r)}"}), 409
+                         "merge_url": f"/author/merge?ids={','.join(str(i) for i in r)}"}), 409
                 else:
                     app.logger.info(f"Error getting author ID for {author}")
-                    return jsonify({"result": "KO", "message": "Internal error"}), 500
+                    return jsonify({"result": "KO", "error": "Internal error"}), 500
             else:
                 return jsonify(
-                    {"result": "KO", "message": "Author must have at least one ID (external or internal)."}), 400
+                    {"result": "KO", "error": "Author must have at least one ID (external or internal)."}), 400
             authors.append({"id": a_id, "type": a_t})
 
         cursor.execute(f"""INSERT INTO series (id_mu, id_dex, id_bato, id_mal, id_line, title, type, description, vol_ch, is_md, status, year, timestamp_status)
@@ -258,12 +264,13 @@ def create_series() -> Tuple[jsonify, int]:
                         data.get("is_md", False), data.get("status"), data.get("year"), int(time.time())))
         id_ = cursor.fetchone()[0]
 
-        if len(data.get("timestamp")) == 1:
-            t = data["timestamp"]
-            if (k := next(iter(t.keys()))) in ["mu", "dex", "mal"]:
-                cursor.execute(f"UPDATE series SET timestamp_{k} = ? WHERE id = ?", (t[k], id_))
-        elif len(data.get("timestamp")) > 1:
-            return jsonify({"result": "KO", "message": "Multiple timestamps provided, only one is allowed"}), 400
+        if data.get("timestamp"):
+            if len(data.get("timestamp")) == 1:
+                t = data["timestamp"]
+                if (k := next(iter(t.keys()))) in ["mu", "dex", "mal"]:
+                    cursor.execute(f"UPDATE series SET timestamp_{k} = ? WHERE id = ?", (t[k], id_))
+            elif len(data.get("timestamp")) > 1:
+                return jsonify({"result": "KO", "error": "Multiple timestamps provided, only one is allowed"}), 400
 
         r, s = download_thumbnail(id_, data["thumbnail"], cursor)
         if s != 201:
@@ -284,13 +291,13 @@ def create_series() -> Tuple[jsonify, int]:
         if s == 200:
             conn.commit()
             conn.close()
-            return jsonify({"result": "OK", "data": r}), 200
+            return jsonify({"result": "OK", "data": r}), 201
         else:
             conn.close()
-            return jsonify({"result": "KO", "message": "Error retrieving created series"}), 500
+            return jsonify({"result": "KO", "error": "Error retrieving created series"}), 500
     except Exception as e:
         app.logger.error(e)
-        return jsonify({"result": "KO", "message": "Internal error"}), 500
+        return jsonify({"result": "KO", "error": "Internal error"}), 500
 
 
 @api_series_bp.route("/series/<int:id_>", methods=["GET"])
@@ -307,7 +314,7 @@ def get_series_by_id(id_) -> Tuple[jsonify, int]:
             return jsonify(r), s
     except Exception as e:
         app.logger.error(e)
-        return jsonify({"result": "KO", "message": "Internal error"}), 500
+        return jsonify({"result": "KO", "error": "Internal error"}), 500
 
 
 @api_series_bp.route("/series/<int:id_>", methods=["DELETE"])
@@ -349,7 +356,7 @@ def update_series(id_) -> Tuple[jsonify, int]:
     try:
         data = request.get_json()
         if not data:
-            return jsonify({"result": "KO", "message": "No data provided"}), 400
+            return jsonify({"result": "KO", "error": "No data provided"}), 400
 
         conn = sqlite3.connect("data/mml.sqlite3")
         conn.row_factory = sqlite3.Row
@@ -358,7 +365,7 @@ def update_series(id_) -> Tuple[jsonify, int]:
         r, s = get_series_info(id_, cursor)
         if s == 404:
             conn.close()
-            return jsonify({"result": "KO", "message": "Series not found"}), 404
+            return jsonify({"result": "KO", "error": "Series not found"}), 404
         elif s != 200:
             conn.close()
             return jsonify(r), s
@@ -367,24 +374,24 @@ def update_series(id_) -> Tuple[jsonify, int]:
         if "ids" in data:
             if not (ids := valid_ids(data.get("ids"))):
                 conn.close()
-                return jsonify({"result": "KO", "message": "IDs not valid"}), 400
+                return jsonify({"result": "KO", "error": "IDs not valid"}), 400
             for key, value in ids.items():
                 cursor.execute(f"SELECT id FROM series WHERE id_{key} = ? AND id != ?", (value, id_))
                 if cursor.fetchone():
                     conn.close()
-                    return jsonify({"result": "KO", "message": f"Series with {key} ID {value} already exists"}), 409
+                    return jsonify({"result": "KO", "error": f"Series with {key} ID {value} already exists"}), 409
 
         if "status" in data and not _valid_status(data["status"]):
             conn.close()
-            return jsonify({"result": "KO", "message": "Invalid status", "valid": allowed_statuses}), 400
+            return jsonify({"result": "KO", "error": "Invalid status", "valid": allowed_statuses}), 400
 
         if "type" in data and not _valid_type(data["type"]):
             conn.close()
-            return jsonify({"result": "KO", "message": "Invalid type", "valid": allowed_types}), 400
+            return jsonify({"result": "KO", "error": "Invalid type", "valid": allowed_types}), 400
 
         if "timestamp" in data and len(data["timestamp"]) != 1:
             conn.close()
-            return jsonify({"result": "KO", "message": "Multiple timestamps provided, only one is allowed"}), 400
+            return jsonify({"result": "KO", "error": "Multiple timestamps provided, only one is allowed"}), 400
 
         update_fields = []
         update_params = []
@@ -444,11 +451,11 @@ def update_series(id_) -> Tuple[jsonify, int]:
             return jsonify({"result": "OK", "data": r}), 200
         else:
             conn.close()
-            return jsonify({"result": "KO", "message": "Error retrieving updated series"}), 500
+            return jsonify({"result": "KO", "error": "Error retrieving updated series"}), 500
 
     except Exception as e:
         app.logger.error(e)
-        return jsonify({"result": "KO", "message": "Internal error"}), 500
+        return jsonify({"result": "KO", "error": "Internal error"}), 500
 
 
 @api_series_bp.route("/series/<int:id_>/ratings", methods=["PATCH"])
@@ -456,7 +463,7 @@ def update_series_ratings(id_):
     try:
         data = request.get_json()
         if not data:
-            return jsonify({"result": "KO", "message": "No data provided"}), 400
+            return jsonify({"result": "KO", "error": "No data provided"}), 400
 
         conn = sqlite3.connect("data/mml.sqlite3")
         conn.row_factory = sqlite3.Row
@@ -465,38 +472,63 @@ def update_series_ratings(id_):
         r, s = get_series_info(id_, cursor)
         if s == 404:
             conn.close()
-            return jsonify({"result": "KO", "message": "Series not found"}), 404
+            return jsonify({"result": "KO", "error": "Series not found"}), 404
         elif s != 200:
             conn.close()
             return jsonify(r), s
 
-        if user_rating := data.get("user_rating"):
-            if not isinstance(user_rating, (int, float)) or not (0 <= user_rating <= 10):
+        if (user_rating := data.get("user_rating")) is not None:
+            if not isinstance(user_rating, (int, float)) or not (1 <= float(user_rating) <= 10):
                 conn.close()
                 return jsonify(
-                    {"result": "KO", "message": "Invalid user rating, must be a number between 0 and 10"}), 400
+                    {"result": "KO", "error": "Invalid user rating, must be a number between 1 and 10"}), 400
             cursor.execute("SELECT user_rating FROM series WHERE id = ?", (id_,))
             old_rating = cursor.fetchone()[0]
             if old_rating != user_rating:
                 cursor.execute("UPDATE series SET user_rating = ? WHERE id = ?", (user_rating, id_))
 
+        ids_map = r.get("ids", {})
         for i in ["mu", "dex", "mal"]:
-            j = f"{i}_rating"
-            if j in data:
-                rating = data[j]
-                votes = data.get(f"{i}_votes", 0)
-                if not (0 <= rating <= 10):
+            rating_key = f"{i}_rating"
+            votes_key = f"{i}_votes"
+            if votes_key in data and data[votes_key] is not None:
+                try:
+                    if int(data[votes_key]) < 1:
+                        conn.close()
+                        return jsonify({"result": "KO", "error": f"Invalid {votes_key}, must be >= 1"}), 400
+                except Exception:
                     conn.close()
-                    return jsonify({"result": "KO", "message": f"Invalid {j}, must be a number between 0 and 10"}), 400
-                cursor.execute(f"SELECT rating, votes FROM series_ratings_{i} WHERE id = ?", (id_,))
-                old_rating, old_votes = cursor.fetchone()
-                if old_rating != rating:
-                    cursor.execute(f"UPDATE series_ratings_{i} SET rating = ? WHERE id = ?", (rating, id_))
-                if votes and old_votes != votes:
-                    cursor.execute(f"UPDATE series_ratings_{i} SET votes = ? WHERE id = ?", (votes, id_))
+                    return jsonify({"result": "KO", "error": f"Invalid {votes_key}, must be an integer"}), 400
+            if rating_key in data:
+                rating = data[rating_key]
+                votes = data.get(votes_key)
+                if rating is None or not (1 <= float(rating) <= 10):
+                    conn.close()
+                    return jsonify({"result": "KO", "error": f"Invalid {rating_key}, must be between 1 and 10"}), 400
+                ext_id = ids_map.get(i)
+                if not ext_id:
+                    # cannot update without external id for that source
+                    continue
+                # check existing
+                cursor.execute(f"SELECT rating, votes FROM series_ratings_{i} WHERE id_{i} = ?", (ext_id,))
+                row = cursor.fetchone()
+                if row is None:
+                    # insert
+                    cursor.execute(
+                        f"INSERT INTO series_ratings_{i} (id_{i}, rating, votes) VALUES (?, ?, ?)",
+                        (ext_id, float(rating), int(votes) if votes is not None else 0),
+                    )
+                else:
+                    old_rating, old_votes = row[0], row[1]
+                    if old_rating != float(rating):
+                        cursor.execute(f"UPDATE series_ratings_{i} SET rating = ? WHERE id_{i} = ?",
+                                       (float(rating), ext_id))
+                    if votes is not None and old_votes != int(votes):
+                        cursor.execute(f"UPDATE series_ratings_{i} SET votes = ? WHERE id_{i} = ?",
+                                       (int(votes), ext_id))
         conn.commit()
         conn.close()
         return "", 204
     except Exception as e:
         app.logger.error(e)
-        return jsonify({"result": "KO", "message": "Internal error"}), 500
+        return jsonify({"result": "KO", "error": "Internal error"}), 500

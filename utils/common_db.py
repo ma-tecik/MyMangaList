@@ -31,6 +31,7 @@ def download_thumbnail(series_id: int, thumbnail: str, cursor: sqlite3.Cursor) -
 #         app.logger.error(f"Failed to delete the image for series {series_id}: {e}")
 #         return {"result": "KO", "error": "Failed to delete image"}, 500
 #
+
 def update_thumbnail(series_id: int, thumbnail: str, cursor: sqlite3.Cursor) -> Tuple[Dict[str, str], int]:
     try:
         response = requests.get(thumbnail)
@@ -97,7 +98,7 @@ def get_series_info(id_: int, cursor: sqlite3.Cursor) -> Tuple[Dict[str, Any], i
                        """, (id_,))
         row = cursor.fetchone()
         if not row:
-            return {"status": "KO", "error": "Series not found"}, 404
+            return {"result": "KO", "error": "Series not found"}, 404
         cursor.execute("SELECT alt_title FROM series_titles WHERE series_id = ?", (id_,))
         alt_titles = [t[0] for t in cursor.fetchall()]
         cursor.execute(
@@ -109,11 +110,14 @@ def get_series_info(id_: int, cursor: sqlite3.Cursor) -> Tuple[Dict[str, Any], i
             (id_,))
         authors = [{"id": a[0], "name": a[1], "type": a[2]} for a in cursor.fetchall()]
         ratings = {}
-        for i in ["mu", "dex", "mal"]:
-            cursor.execute(f"SELECT rating FROM series_ratings_{i} WHERE id_{i} = ?", (id_,))
-            r = cursor.fetchone()
-            if r:
-                ratings[i] = r[0]
+        # ratings tabloları external ID ile tutuluyor
+        ext_ids = {"mu": row["id_mu"], "dex": row["id_dex"], "mal": row["id_mal"]}
+        for i, ext_id in ext_ids.items():
+            if ext_id:
+                cursor.execute(f"SELECT rating FROM series_ratings_{i} WHERE id_{i} = ?", (ext_id,))
+                r = cursor.fetchone()
+                if r:
+                    ratings[i] = r[0]
 
         series_data = {
             "id": id_,
@@ -142,4 +146,4 @@ def get_series_info(id_: int, cursor: sqlite3.Cursor) -> Tuple[Dict[str, Any], i
 
     except Exception as e:
         app.logger.error(e)
-        return {"status": "KO", "error": "Internal error"}, 500
+        return {"result": "KO", "error": "Internal error"}, 500

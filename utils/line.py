@@ -17,7 +17,7 @@ def get_id(url: str) -> str:
 
 def series(id_line: str) -> Tuple[Dict[str, Any], int]: # TODO: Add support for canvas
     try:
-        if id_line.startswith("O:"):
+        if id_line.startswith("o:"):
             data = api.titleInfo(titleNo=id_line[2:], serviceZone="GLOBAL", language="en", platform="APP_ANDROID").get(
                 "titleInfo")
             if data["writingAuthorName"] == data["pictureAuthorName"]:

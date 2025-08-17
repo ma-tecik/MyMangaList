@@ -10,7 +10,7 @@ def _get_author(id_: int, cursor: sqlite3.Cursor) -> Tuple[Dict[str, Any], int]:
         cursor.execute(f"SELECT * FROM authors WHERE id = ?", (id_,))
         a = cursor.fetchone()
         if not a:
-            return {"status": "KO", "message": "No author found"}, 404
+            return {"result": "KO", "error": "No author found"}, 404
         author = {
             "id": a[0],
             "ids": {
@@ -27,20 +27,22 @@ def _get_author(id_: int, cursor: sqlite3.Cursor) -> Tuple[Dict[str, Any], int]:
         return author, 200
     except Exception as e:
         app.logger.error(e)
-        return {"status": "KO", "message": "Internal error"}, 500
+        return {"result": "KO", "error": "Internal error"}, 500
 
 @api_authors_bp.route("/authors", methods=["GET"])
 def get_authors():
     try:
         page = request.args.get("page", 1, type=int)
+        per_page = 100
+        offset = (page - 1) * per_page
         conn = sqlite3.connect("data/mml.sqlite3")
         cursor = conn.cursor()
-        cursor.execute(f"SELECT id, name FROM authors LIMIT 100 OFFSET {page - 1}")
+        cursor.execute("SELECT id, name FROM authors LIMIT ? OFFSET ?", (per_page, offset))
         _authors = cursor.fetchall()
 
         authors = []
         for a in _authors:
-            cursor.execute(f"SELECT COUNT(*) FROM series_authors WHERE author_id = ?", (a[0],))
+            cursor.execute("SELECT COUNT(*) FROM series_authors WHERE author_id = ?", (a[0],))
             authors.append({"id": a[0],
                             "name": a[1],
                             "series": cursor.fetchone()[0]})
@@ -70,7 +72,7 @@ def update_author(id_):
     try:
         data = request.get_json()
         if not data:
-            return jsonify({"result": "KO", "message": "No data provided"}), 400
+            return jsonify({"result": "KO", "error": "No data provided"}), 400
 
         conn = sqlite3.connect("data/mml.sqlite3")
         cursor = conn.cursor()
@@ -82,12 +84,12 @@ def update_author(id_):
         if "ids" in data:
             if not (ids := valid_ids(data.get("ids"), reduced=True)):
                 conn.close()
-                return jsonify({"result": "KO", "message": "IDs not valid"}), 400
+                return jsonify({"result": "KO", "error": "IDs not valid"}), 400
             for key, value in ids.items():
                 cursor.execute(f"SELECT id FROM authors WHERE id_{key} = ? AND id != ?", (value, id_))
                 if cursor.fetchone():
                     conn.close()
-                    return jsonify({"result": "KO", "message": f"Series with {key} ID {value} already exists"}), 409
+                    return jsonify({"result": "KO", "error": f"Author with {key} ID {value} already exists"}), 409
 
         update_fields = []
         update_params = []
@@ -115,7 +117,7 @@ def update_author(id_):
         conn.commit()
         conn.close()
 
-        return jsonify(r), 200
+        return jsonify({"result": "OK", "data": r}), 200
 
     except Exception as e:
         app.logger.error(e)
@@ -125,8 +127,8 @@ def update_author(id_):
 def merge_authors():
     try:
         ids = request.args.get("ids", "").split(",") if request.args.get("ids") else []
-        if len(ids) >> 2:
-            return jsonify({"result": "KO", "message": "You must provide at least 2 internal IDs"}), 400
+        if len(ids) < 2:
+            return jsonify({"result": "KO", "error": "You must provide at least 2 internal IDs"}), 400
         ids = [int(i) for i in ids]
         ids.sort()
         id_ = ids[0]
@@ -136,11 +138,13 @@ def merge_authors():
         external_ids = {}
         for i in ids:
             r, s = _get_author(i, cursor)
-            if s == 400:
-                return jsonify({"result": "KO", "message": f"No author found for id {i}"}), 404
+            if s == 404:
+                return jsonify({"result": "KO", "error": f"No author found for id {i}"}), 404
             for k, v in r["ids"].items():
-                if k in ids:
-                    return jsonify({"result": "KO", "message": f"Conflict in external IDs"}), 409
+                if v is None:
+                    continue
+                if k in external_ids and external_ids[k] != v:
+                    return jsonify({"result": "KO", "error": "Conflict in external IDs"}), 409
                 external_ids[k] = v
 
         series_to_merge = []

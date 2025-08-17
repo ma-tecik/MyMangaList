@@ -1,4 +1,19 @@
 import sqlite3
+from pyexpat.errors import messages
+
+
+def first_run():
+    with open("schema.sql") as f:
+        schema = f.read()
+    with open("first_run.sql") as f:
+        set_up = f.read()
+
+    conn = sqlite3.connect("data/mml.sqlite3")
+    cursor = conn.cursor()
+    cursor.executescript(schema)
+    cursor.executescript(set_up)
+    conn.commit()
+    conn.close()
 
 def iso_langs() -> list:
     iso639_1 = [
@@ -47,18 +62,15 @@ def get_settings(app):
         app.logger.warning(f"""{main_rating} is not a valid main_rating, "mu" will be used.""")
         params.append(("mu", "main_rating"))
 
-    _langs = settings["title_languages"]
-    langs = [l for l in _langs.split(",")]
+    langs = settings["title_languages"]
     iso639_1 = iso_langs()
-    if all(i in iso639_1 for i in langs):
-        if "en" not in langs:
-            langs.append("en")
-            params.append(("en," + _langs, "title_languages"))
-            app.logger.info("Don't remove English from title languages or you may break something.")
-        app.config["TITLE_LANGUAGES"] = langs
-    else:
-        app.config["TITLE_LANGUAGES"] = ["en"]
-        app.logger.warning(f"""{langs} is not a valid language, "en" will be used.""")
+    langs = [l for l in langs.split(",") if l in iso639_1]
+    langs = ",".join(langs)
+    if "en" not in langs:
+        langs = "en" + langs
+        params.append((langs, "title_languages"))
+        app.logger.info("Don't remove English from title languages or you may break something.")
+    app.config["TITLE_LANGUAGES"] = langs
 
     for i in ["mu", "dex", "mal"]:
         if settings[f"{i}_integration"] not in [0, 1]:
@@ -103,15 +115,38 @@ def get_settings(app):
         conn.commit()
     conn.close()
 
-def first_run():
-    with open("schema.sql") as f:
-        schema = f.read()
-    with open("first_run.sql") as f:
-        set_up = f.read()
-
+def update_settings(data, app):
     conn = sqlite3.connect("data/mml.sqlite3")
     cursor = conn.cursor()
-    cursor.executescript(schema)
-    cursor.executescript(set_up)
-    conn.commit()
+    cursor.execute("SELECT * FROM settings")
+    in_db = {r[0]: r[1] for r in cursor.fetchall()}
+    params = []
+    bools = ("mu_integration", "dex_integration", "mal_integration")
+    accepted = bools + ("main_rating", "title_languages")
+    for k, v in data.items():
+        if not k in accepted:
+            continue
+        if k in bools:
+            v = 1 if v == True else 0
+        if v == in_db[k]:
+            continue
+        if k == "main_rating":
+            if v not in ["mu", "dex", "mal"]:
+                continue
+        if k == "title_languages":
+            if not isinstance(v, str):
+                continue
+            langs = [l for l in v.split(",")]
+            iso639_1 = iso_langs()
+            v_ = [i for i in langs if i in iso639_1]
+            v = ",".join(v_)
+            if "en" not in v:
+                v = "en" + v
+                app.logger.info("Don't remove English from title languages or you may break something.")
+        params.append((v, k))
+        app.config[k] = v
+
+    if params:
+        cursor.executemany("UPDATE settings SET value = ? WHERE key = ? ", params)
+        conn.commit()
     conn.close()

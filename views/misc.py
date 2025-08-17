@@ -12,7 +12,7 @@ def proxy_image():
     if url.startswith("https://uploads.mangadex.org/"):
         try:
             resp = requests.get(url, timeout=10)
-            if resp.status_code == 200:
+            if resp.status_code != 200:
                 app.logger.error(f"for {url}, upstream returned {resp.status_code}")
                 return jsonify({"result": "KO", 'message': "Upstream error"}), 502
             return Response(resp.content, mimetype=resp.headers.get("content-type", "image/jpeg")), 200
@@ -21,7 +21,7 @@ def proxy_image():
             return jsonify({"result": "KO", "error": "Unexpected error"}), 500
     elif url.startswith("line://"):
         try:
-            return Response(line_thumbnail(url [6:]), mimetype="image/jpeg"), 200
+            return Response(line_thumbnail(url[7:]), mimetype="image/jpeg"), 200
         except Exception as e:
             app.logger.error(f"for {url}, {e}")
             return jsonify({"result": "KO", "error": "Unexpected error"}), 500

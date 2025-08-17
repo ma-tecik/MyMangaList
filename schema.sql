@@ -143,7 +143,7 @@ create index idx_series_ratings_mal
 
 create table series_ratings_mu
 (
-    id_mu  INTEGER not null
+    id_mu  TEXT not null
         primary key
         references series (id_mu)
             on delete cascade,
