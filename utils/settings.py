@@ -37,84 +37,81 @@ def get_settings(app):
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM settings")
     settings = {r[0]: r[1] for r in cursor.fetchall()}
-    params_to_add = []
-    params_to_update = []
+    params = []
 
-    if main_rating := settings.get("main_rating"):
-        if main_rating in ["mu", "dex", "mal"]:
-            app.config["MAIN_RATING"] = main_rating
-        else:
-            app.config["MAIN_RATING"] = "mu"
-            app.logger.warning(f"""{main_rating} is not a valid main_rating, "mu" will be used.""")
+    main_rating = settings["main_rating"]
+    if main_rating in ["mu", "dex", "mal"]:
+        app.config["MAIN_RATING"] = main_rating
     else:
         app.config["MAIN_RATING"] = "mu"
-        params_to_add.append(("main_rating", "mu"))
+        app.logger.warning(f"""{main_rating} is not a valid main_rating, "mu" will be used.""")
+        params.append(("mu", "main_rating"))
 
-    if _langs := settings["title_languages"]:
-        langs = [l for l in _langs.split(",")]
-        iso639_1 = iso_langs()
-        if all(i in iso639_1 for i in langs):
-            if "en" not in langs:
-                langs.append("en")
-                params_to_update.append(("en," + _langs, "title_languages"))
-                app.logger.info("Don't remove English from title languages or you may break something.")
-            app.config["TITLE_LANGUAGES"] = langs
-        else:
-            app.config["TITLE_LANGUAGES"] = ["en"]
-            app.logger.warning(f"""{langs} is not a valid language, "en" will be used.""")
+    _langs = settings["title_languages"]
+    langs = [l for l in _langs.split(",")]
+    iso639_1 = iso_langs()
+    if all(i in iso639_1 for i in langs):
+        if "en" not in langs:
+            langs.append("en")
+            params.append(("en," + _langs, "title_languages"))
+            app.logger.info("Don't remove English from title languages or you may break something.")
+        app.config["TITLE_LANGUAGES"] = langs
     else:
         app.config["TITLE_LANGUAGES"] = ["en"]
-        params_to_add.append(("title_languages", "en"))
+        app.logger.warning(f"""{langs} is not a valid language, "en" will be used.""")
 
+    for i in ["mu", "dex", "mal"]:
+        if settings[f"{i}_integration"] not in [0, 1]:
+            settings[f"{i}_integration"] = 0
+            params.append((0, f"{i}_integration"))
 
-    if mu_integration := settings.get("mu_integration"):
-        if not mu_integration in ["yes", "no"]:
-            app.config["MU_INTEGRATION"] = "no"
-            params_to_update.append(("no", "mu_integration"))
-            app.logger.warning("""mu_integration is not valid, "no" will be used.""")
-        if mu_integration == "yes":
-            if settings.get("mu_username") and settings.get("mu_password"):
-                app.config["MU_INTEGRATION"] = "yes"
-                app.config["MU_USERNAME"] = settings.get("mu_username")
-                app.config["MU_PASSWORD"] = settings.get("mu_password")
-            else:
-                app.config["MU_INTEGRATION"] = "no"
-                params_to_update.append(("no", "mu_integration"))
-                app.logger.warning("You must provide both mu_username and mu_password to use mu_integration")
+    mu_integration = settings["mu_integration"]
+    if mu_integration:
+        if settings["mu_username"] and settings["mu_password"]:
+            app.config["MU_INTEGRATION"] = "yes"
+            app.config["MU_USERNAME"] = settings["mu_username"]
+            app.config["MU_PASSWORD"] = settings["mu_password"]
+            for i in ("plan_to_read", "reading", "completed", "one_shots", "dropped", "on_hold", "ongoing"):
+                app.config[f"MU_LIST_{i.upper()}"] = settings[f"mu_list_{i}"]
+        else:
+            app.config["MU_INTEGRATION"] = 0
+            params.append((0, "mu_integration"))
+            app.logger.warning("You must provide both mu_username and mu_password to use mu_integration")
     else:
-        app.config["MU_INTEGRATION"] = "no"
-        params_to_add.append(("mu_integration", "no"))
+        app.config["MU_INTEGRATION"] = 0
 
-    if dex_integration := settings.get("dex_integration"):
-        if not dex_integration in ["yes", "no"]:
-            app.config["DEX_INTEGRATION"] = "no"
-            params_to_update.append(("no", "dex_integration"))
-            app.logger.warning("""dex_integration is not valid, "no" will be used.""")
-        if dex_integration == "yes":
-            if settings.get("dex_token"):
-                app.config["DEX_INTEGRATION"] = "yes"
-                app.config["DEX_TOKEN"] = settings.get("dex_token")
-            else:
-                app.config["DEX_INTEGRATION"] = "no"
-                params_to_update.append(("no", "dex_integration"))
-                app.logger.warning("You must provide dex_token to use dex_integration")
+    dex_integration = settings["dex_integration"]
+    if dex_integration:
+        if settings["dex_token"]:
+            app.config["DEX_INTEGRATION"] = 1
+            app.config["DEX_TOKEN"] = settings.get("dex_token")
+        else:
+            app.config["DEX_INTEGRATION"] = 0
+            params.append((0, "dex_integration"))
+            app.logger.warning("You must provide dex_token to use dex_integration")
     else:
-        app.config["DEX_INTEGRATION"] = "no"
-        params_to_add.append(("dex_integration", "no"))
+        app.config["DEX_INTEGRATION"] = 0
 
-    if mal_integration := settings.get("mal_integration"):
-        if not mal_integration in ["yes", "no"]:
-            app.logger.warning("""mal_integration is not valid, "no" will be used.""")
-        if mal_integration == "yes":
-            app.config["MAL_INTEGRATION"] = "no"  # TODO: Add mal integration
+    mal_integration = settings["mal_integration"]
+    if mal_integration:
+        app.config["MAL_INTEGRATION"] = 0  # TODO: Add mal integration
     else:
-        app.config["MAL_INTEGRATION"] = "no"
-        params_to_add.append(("mal_integration", "no"))
+        app.config["MAL_INTEGRATION"] = 0
 
-    if params_to_add:
-        cursor.executemany("INSERT INTO settings VALUES (?, ?)", params_to_add)
+    if params:
+        cursor.executemany("UPDATE settings SET value = ? WHERE key = ? ", params)
         conn.commit()
-    if params_to_update:
-        cursor.executemany("UPDATE settings SET value = ? WHERE key = ? ", params_to_update)
-        conn.commit()
+    conn.close()
+
+def first_run():
+    with open("schema.sql") as f:
+        schema = f.read()
+    with open("first_run.sql") as f:
+        set_up = f.read()
+
+    conn = sqlite3.connect("data/mml.sqlite3")
+    cursor = conn.cursor()
+    cursor.executescript(schema)
+    cursor.executescript(set_up)
+    conn.commit()
     conn.close()

@@ -36,7 +36,7 @@ def series_data_external(ids: dict) -> Tuple[Dict[str, Any], int]:
                 http_codes.append(s)
 
     # Priority order: mu > dex > mal > bato > line
-    priority_sources = ("mu", "dex", "mal", "bato", "line") # TODO: make this configurable
+    priority_sources = ("mu", "dex", "mal", "bato", "line")
     count = 1
     for primary_source in priority_sources:
         if primary_source in data_results:

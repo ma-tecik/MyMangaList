@@ -1,7 +1,7 @@
 from flask import Flask, render_template, jsonify, request
 from views.api import api_bp
 from views.misc import misc_bp
-from utils.settings import get_settings
+from utils.settings import get_settings, first_run
 import logging
 import sqlite3
 import os
@@ -23,6 +23,9 @@ console_handler.setFormatter(logging.Formatter("[%(asctime)s] %(levelname)s in %
 app.logger.setLevel(logging.INFO)
 app.logger.addHandler(console_handler)
 app.logger.addHandler(file_handler)
+
+if not os.path.isfile("data/mml.sqlite3"):
+    first_run()
 
 get_settings(app)
 

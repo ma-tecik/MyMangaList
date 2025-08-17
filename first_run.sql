@@ -1,4 +1,4 @@
-INSERT INTO genres (genre) VALUES
+INSERT OR IGNORE INTO genres (genre) VALUES
 ('Josei'),
 ('Seinen'),
 ('Shoujo'),
@@ -62,3 +62,20 @@ INSERT INTO genres (genre) VALUES
 ('Incest'),
 ('Yandere'),
 ('Toxic Rel.');
+
+INSERT OR IGNORE INTO settings VALUES
+('main_rating', 'mu'),
+('title_languages', 'en'),
+('mu_integration', 0),
+('mu_username', NULL),
+('mu_pasword', NULL),
+('mu_list_plan_to_read', 1),
+('mu_list_reading', 0),
+('mu_list_completed',2),
+('mu_list_one_shots', 101), -- TODO: Check this
+('mu_list_dropped', 3),
+('mu_list_on_hold', 4),
+('mu_list_ongoing', 102), -- TODO: Check this
+('dex_integration', 0),
+('dex_token', NULL),
+('mal_integration', 0);

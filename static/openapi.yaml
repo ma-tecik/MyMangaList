@@ -1137,6 +1137,7 @@ components:
         - Completed
         - One-shot
         - Dropped
+        - On hold
         - Ongoing
     Timestamp:
       type: object
@@ -1201,7 +1202,6 @@ components:
             type: string
             enum:
               - nsfw
-              - sfw
         - $ref: '#/components/schemas/Genres'
 
     AuthorTypes:

@@ -60,7 +60,7 @@ create table series
     automation        BOOLEAN default 1,
     automation_genres BOOLEAN default 0,
     user_rating       REAL,
-    check (status in ('Plan to Read', 'Reading', 'Completed', 'One-shot', 'Dropped', 'Ongoing')),
+    check (status in ('Plan to Read', 'Reading', 'Completed', 'One-shot', 'Dropped', 'On hold', 'Ongoing')),
     check (type in ('Manga', 'Manhwa', 'Manhua', 'OEL', 'Vietnamese', 'Malaysian', 'Indonesian',
                     'Novel', 'Artbook', 'Other'))
 );
@@ -192,5 +192,5 @@ create table settings
 (
     key   TEXT not null
         primary key,
-    value TEXT not null
+    value TEXT
 )
