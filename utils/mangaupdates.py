@@ -8,14 +8,14 @@ import requests
 import re
 
 
-def _extract_line_id(t: str) -> int:
+def _extract_line_id(t: str) -> str:
     match = re.search(r"(https?://)?www\.webtoons\.com\S*", t)
     if match:
         l = match.group(0)
         id_ = get_id_line(l)
         if id_:
             return id_
-    return 0
+    return ""
 
 
 def _id_from_old_url(old_url: str) -> str:

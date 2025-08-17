@@ -56,8 +56,7 @@ paths:
       operationId: getStatus
       summary: Your reading status
       description: Returns your reading status.
-      tags:
-        - Misc
+      tags: [Misc]
       responses:
         '200':
           description: Your reading status
@@ -130,8 +129,7 @@ paths:
       operationId: getSettings
       summary: Retrieve settings
       description: Returns settings
-      tags:
-        - Misc
+      tags: [Misc]
       responses:
         200:
           description: Settings
@@ -149,8 +147,7 @@ paths:
       operationId: updateSettings
       summary: Update settings
       description: Updates settings
-      tags:
-        - Misc
+      tags: [Misc]
       requestBody:
         required: true
         content:
@@ -173,13 +170,53 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseKO'
 
+  /integration/{provider}/{job}:
+    put:
+      operationId: integrationJob
+      summary: Start an integration job
+      description: Starts an integration job
+      tags: [Misc]
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - mu
+              - dex
+              - mal
+        - name: job
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - 'update-ratings'
+              - 'update-ongoing'
+              - 'sync-lists'
+      responses:
+        204:
+          description: Job completed
+        400:
+          description: Bad request (integration disabled)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+        500:
+          description: Internal error, check logs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+
   /series:
     get:
       operationId: getSeriesList
       summary: Retrieve series list
       description: Returns a list of series with optional filters for status, type, and tags.
-      tags:
-        - Series
+      tags: [Series]
       parameters:
         - name: page
           in: query
@@ -270,8 +307,7 @@ paths:
       operationId: createSeries
       summary: Add a series entry
       description: Adds a new series to your manga list.
-      tags:
-        - Series
+      tags: [Series]
       requestBody:
         required: true
         content:
@@ -329,8 +365,7 @@ paths:
       operationId: getSeriesById
       summary: Get a series by series_id
       description: Returns series details for a given series_id.
-      tags:
-        - Series
+      tags: [Series]
       parameters:
         - name: id
           in: path
@@ -473,8 +508,7 @@ paths:
       operationId: updateSeriesRatings
       summary: Update series ratings and vote counts
       description: Updates/overwrites ratings and vote counts of given series
-      tags:
-        - Series
+      tags: [Series]
       parameters:
         - name: id
           in: path
@@ -545,8 +579,7 @@ paths:
       operationId: externalUpdateSeriesRatings
       summary: Update a list of series' ratings and vote counts
       description: Updates/adds/overwrites or skips (if series not exist in db) ratings and vote counts of given list of series
-      tags:
-        - Series
+      tags: [Series]
       requestBody:
         required: true
         content:
@@ -619,8 +652,7 @@ paths:
       operationId: externalSeriesID
       summary: Get the series_id of a series by external IDs
       description: Returns the series_id of a series based on given one or more MU, Dex, MAL, Bato, line IDs.
-      tags:
-        - Series
+      tags: [Series]
       parameters:
         - name: mu
           in: query
@@ -685,8 +717,7 @@ paths:
       operationId: externalSeriesData
       summary: Get the series details from external sources
       description: Retrieves and returns series details from external sources based on given one or more MU, Dex, MAL, Bato, or line IDs.
-      tags:
-        - Series
+      tags: [Series]
       parameters:
         - name: mu
           in: query
@@ -751,8 +782,7 @@ paths:
       operationId: getAuthorList
       summary: Retrieve authors list
       description: Returns the list of authors in the DB with the count of their series.
-      tags:
-        - Authors
+      tags: [Authors]
       parameters:
         - name: page
           in: query
@@ -799,8 +829,7 @@ paths:
       operationId: getAuthorById
       summary: Get an author by author_id
       description: Returns author's details for the given author_id.
-      tags:
-        - Authors
+      tags: [Authors]
       parameters:
         - name: id
           in: path
@@ -833,8 +862,7 @@ paths:
       description: |-
         Updates an author by given author_id  
         Note: IDs will be merged, name will be overwritten
-      tags:
-        - Authors
+      tags: [Authors]
       parameters:
         - name: id
           in: path
@@ -880,8 +908,7 @@ paths:
       description: |-
         Merges 2 or more authors by the given author_ids.
         Note: External IDs will be merged; the smallest internal ID will be kept, and the author's name of the kept record will remain.
-      tags:
-        - Authors
+      tags: [Authors]
       parameters:
         - name: ids
           in: query
@@ -930,8 +957,7 @@ paths:
       operationId: addHentai
       summary: Add a hentai
       description: Adds a hentai
-      tags:
-        - H
+      tags: [H]
       parameters:
         - name: id
           in: query
@@ -950,8 +976,7 @@ paths:
       operationId: deleteHentai
       summary: Delete a hentai
       description: Deletes a hentai
-      tags:
-        - H
+      tags: [H]
       parameters:
         - name: id
           in: query
@@ -972,8 +997,7 @@ paths:
       operationId: isNhentaiInDB
       summary: Check if a hentai is in DB
       description: Checks if a hentai is in the database.
-      tags:
-        - H
+      tags: [H]
       parameters:
         - name: id
           in: path
@@ -994,8 +1018,7 @@ paths:
       operationId: isSchaleInDB
       summary: Check if a hentai is in DB
       description: Checks if a hentai is in the database.
-      tags:
-        - H
+      tags: [H]
       parameters:
         - name: id
           in: path

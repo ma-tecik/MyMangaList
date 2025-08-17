@@ -20,6 +20,7 @@ def download_thumbnail(series_id: int, thumbnail: str, cursor: sqlite3.Cursor) -
         app.logger.error(f"Failed to download the image from {thumbnail}: {e}")
         return {"result": "KO", "error": "Failed to download thumbnail"}, 500
 
+
 # def delete_thumbnail(series_id: int, cursor: sqlite3.Cursor) -> Tuple[Dict[str, str], int]:
 #     try:
 #         cursor.execute("DELETE FROM series_thumbnails WHERE series_id = ? RETURNING extension", (series_id,))
@@ -51,6 +52,14 @@ def update_thumbnail(series_id: int, thumbnail: str, cursor: sqlite3.Cursor) -> 
     except Exception as e:
         app.logger.error(f"Failed to update the image for series {series_id}: {e}")
         return {"result": "KO", "error": "Failed to update thumbnail"}, 500
+
+
+def add_genres(id_: int, genres: List[str], cursor: sqlite3.Cursor) -> None:
+    cursor.execute("SELECT id FROM genres WHERE genre IN ({})".format(", ".join("?" for _ in genres)), genres)
+    genre_ids = [row[0] for row in cursor.fetchall()]
+    genre_ids.sort()
+    cursor.executemany("INSERT INTO series_genres (series_id, genre_id) VALUES (?, ?)",
+                       [(id_, genre_id) for genre_id in genre_ids])
 
 
 def get_author_id(author: Dict[str, Union[str, int]], cursor: sqlite3.Cursor) -> Tuple[List[int], int]:
@@ -110,7 +119,7 @@ def get_series_info(id_: int, cursor: sqlite3.Cursor) -> Tuple[Dict[str, Any], i
             (id_,))
         authors = [{"id": a[0], "name": a[1], "type": a[2]} for a in cursor.fetchall()]
         ratings = {}
-        # ratings tabloları external ID ile tutuluyor
+
         ext_ids = {"mu": row["id_mu"], "dex": row["id_dex"], "mal": row["id_mal"]}
         for i, ext_id in ext_ids.items():
             if ext_id:
@@ -147,3 +156,18 @@ def get_series_info(id_: int, cursor: sqlite3.Cursor) -> Tuple[Dict[str, Any], i
     except Exception as e:
         app.logger.error(e)
         return {"result": "KO", "error": "Internal error"}, 500
+
+
+def series_move_batch(series_ids: list, type_: str, from_: str, to: str) -> None:
+    try:
+        conn = sqlite3.connect("data/mml.sqlite3")
+        cursor = conn.cursor()
+        query = f"SELECT id_{type_} FROM series WHERE status = ? and id_{type_} = ?"
+        cursor.executemany(query, [(from_, i) for i in series_ids])
+        series_ids = [r[0] for r in cursor.fetchall()]
+        query = f"UPDATE series SET status = ? WHERE id_{type_} = ?"
+        cursor.executemany(query, [(to, i) for i in series_ids])
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        app.logger.error(e)

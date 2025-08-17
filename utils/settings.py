@@ -83,7 +83,8 @@ def get_settings(app):
             app.config["MU_INTEGRATION"] = "yes"
             app.config["MU_USERNAME"] = settings["mu_username"]
             app.config["MU_PASSWORD"] = settings["mu_password"]
-            for i in ("plan_to_read", "reading", "completed", "one_shots", "dropped", "on_hold", "ongoing"):
+            app.config["MU_LAST_TIMESTAMP"] = settings["mu_last_timestamp"]
+            for i in ("plan_to_read", "reading", "completed", "one-shots", "dropped", "on_hold", "ongoing"):
                 app.config[f"MU_LIST_{i.upper()}"] = settings[f"mu_list_{i}"]
         else:
             app.config["MU_INTEGRATION"] = 0

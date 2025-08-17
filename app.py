@@ -45,29 +45,3 @@ def api_update_settings():
     except Exception as e:
         app.logger.error(e)
         return jsonify({"result": "KO", "error": "Internal error"}), 500
-
-# @app.route("/", methods=["GET"])
-# def index():
-#     return "", 301, {"Location": "/series/list/plan-to"}
-# @app.route("/series/list/<path>", methods=["GET"])
-# def series(path):
-#     try:
-#         if path not in {"plan-to", "reading", "completed", "one-shots", "dropped", "ongoing"}:
-#             return {"result": "KO", "error": "Invalid path"}, 404
-#         titles = {
-#             "plan-to": "Plan to Read",
-#             "reading": "Reading",
-#             "completed": "Completed",
-#             "one-shots": "One-shots",
-#             "dropped": "Dropped",
-#             "ongoing": "Ongoing",
-#         }
-#         page_title = titles.get(path)
-#         return render_template(
-#             "list.html",
-#             page_title=page_title,
-#             page=path,
-#         ), 200
-#     except Exception as e:
-#         app.logger.error(e)
-#         return jsonify({"result": "KO", "error": "Internal error"}), 500

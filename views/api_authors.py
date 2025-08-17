@@ -3,7 +3,7 @@ from utils.common_code import valid_ids
 import sqlite3
 from typing import Tuple, Dict, Any
 
-api_authors_bp = Blueprint("api_authors", __name__)
+api_authors_bp = Blueprint("api_authors", __name__, url_prefix="/authors")
 
 def _get_author(id_: int, cursor: sqlite3.Cursor) -> Tuple[Dict[str, Any], int]:
     try:
@@ -29,7 +29,7 @@ def _get_author(id_: int, cursor: sqlite3.Cursor) -> Tuple[Dict[str, Any], int]:
         app.logger.error(e)
         return {"result": "KO", "error": "Internal error"}, 500
 
-@api_authors_bp.route("/authors", methods=["GET"])
+@api_authors_bp.route("", methods=["GET"])
 def get_authors():
     try:
         page = request.args.get("page", 1, type=int)
@@ -52,7 +52,7 @@ def get_authors():
         app.logger.error(e)
         return jsonify({"result": "KO", "error": "Internal error"}), 500
 
-@api_authors_bp.route("/authors/<int:id_>", methods=["GET"])
+@api_authors_bp.route("/<int:id_>", methods=["GET"])
 def get_authors_by_id(id_):
     try:
         conn = sqlite3.connect("data/mml.sqlite3")
@@ -67,7 +67,7 @@ def get_authors_by_id(id_):
         app.logger.error(e)
         return jsonify({"result": "KO", "error": "Internal error"}), 500
 
-@api_authors_bp.route("/authors/<int:id_>", methods=["PATCH"])
+@api_authors_bp.route("/<int:id_>", methods=["PATCH"])
 def update_author(id_):
     try:
         data = request.get_json()
@@ -123,7 +123,7 @@ def update_author(id_):
         app.logger.error(e)
         return jsonify({"result": "KO", "error": "Internal error"}), 500
 
-@api_authors_bp.route("/authors/merge", methods=["POST"])
+@api_authors_bp.route("/merge", methods=["POST"])
 def merge_authors():
     try:
         ids = request.args.get("ids", "").split(",") if request.args.get("ids") else []
