@@ -14,7 +14,8 @@ def download_thumbnail(series_id: int, thumbnail: str, cursor: sqlite3.Cursor) -
         ext = response.headers.get("Content-Type").split("/")[-1]
         with open(f"data/thumbnails/{series_id}.{ext}", "wb") as f:
             f.write(response.content)
-        cursor.execute("INSERT INTO series_thumbnails (series_id, extension) VALUES (?, ?)", (series_id, ext))
+        cursor.execute("INSERT INTO series_thumbnails (series_id, extension, url) VALUES (?, ?, ?)",
+                       (series_id, ext, thumbnail))
         return {"result": "OK"}, 201
     except Exception as e:
         app.logger.error(f"Failed to download the image from {thumbnail}: {e}")
@@ -43,7 +44,8 @@ def update_thumbnail(series_id: int, thumbnail: str, cursor: sqlite3.Cursor) -> 
         cursor.execute("SELECT extension FROM series_thumbnails WHERE series_id = ?", (series_id,))
         old_ext = cursor.fetchone()[0]
         if old_ext != ext:
-            cursor.execute(f"UPDATE series_thumbnails SET extension = ? WHERE series_id = ?", (ext, series_id))
+            cursor.execute(f"UPDATE series_thumbnails SET extension = ?, url = ? WHERE series_id = ?",
+                           (ext, thumbnail, series_id))
         with open(f"data/thumbnails/{series_id}.{old_ext}", "wb") as f:
             f.write(b"")
         with open(f"data/thumbnails/{series_id}.{ext}", "wb") as f:

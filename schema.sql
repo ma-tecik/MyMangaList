@@ -143,7 +143,7 @@ create index idx_series_ratings_mal
 
 create table series_ratings_mu
 (
-    id_mu  TEXT not null
+    id_mu  TEXT    not null
         primary key
         references series (id_mu)
             on delete cascade,
@@ -171,7 +171,8 @@ create table series_thumbnails
     series_id integer not null
         primary key
         references series
-            on delete cascade
+            on delete cascade,
+    url       TEXT    not null
 );
 
 create table series_titles
