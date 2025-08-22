@@ -3,6 +3,7 @@ from views.api_external import api_external_bp
 from views.api_series import api_series_bp
 from views.api_authors import api_authors_bp
 from views.api_h import api_h_bp
+from views.api_integration import integration_bp
 import sqlite3
 
 # Blueprints
@@ -11,6 +12,7 @@ api_bp.register_blueprint(api_external_bp)
 api_bp.register_blueprint(api_series_bp)
 api_bp.register_blueprint(api_authors_bp)
 api_bp.register_blueprint(api_h_bp)
+api_bp.register_blueprint(integration_bp)
 
 
 @api_bp.route("/ping", methods=["GET"])
@@ -38,10 +40,9 @@ def status():
         cursor.execute("SELECT COUNT(*) FROM series")
         data["series_total"] = cursor.fetchone()[0]
 
-        for k, v in {"Plan to Read": "plan_to_read", "Reading": "reading", "Completed": "completed",
-                     "One-shot": "one_shots", "Dropped": "dropped", "On hold": "on_hold", "Ongoing": "ongoing"}.items():
-            cursor.execute("SELECT COUNT(*) FROM series WHERE status = ?", (k,))
-            data["series_by_status"][v] = cursor.fetchone()[0]
+        for i in ("Plan_to_read", "Reading", "Completed", "One-shot", "Dropped", "On_hold", "Ongoing"):
+            cursor.execute("SELECT COUNT(*) FROM series WHERE status = ?", (i,))
+            data["series_by_status"][i.lower()] = cursor.fetchone()[0]
 
         for i in ("Manga", "Manhwa", "Manhua", "OEL", "Vietnamese", "Malaysian", "Indonesian",
             "Novel", "Artbook", "Other"):

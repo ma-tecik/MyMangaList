@@ -1,13 +1,13 @@
 from flask import Blueprint, jsonify, request, current_app as app
-from utils.common_db import download_thumbnail, update_thumbnail, get_author_id, get_series_info
+from utils.common_db import download_thumbnail, update_thumbnail, add_genres, get_author_id, get_series_info
 from utils.common_code import valid_ids
 import sqlite3
 import time
 from typing import List, Tuple
 
-api_series_bp = Blueprint("api_series", __name__)
+api_series_bp = Blueprint("api_series", __name__, url_prefix="/series")
 
-allowed_statuses = ["Plan to Read", "Reading", "Completed", "One-shot", "Dropped", "On hold", "Ongoing"]
+allowed_statuses = ["Plan_to_read", "Reading", "Completed", "One-shot", "Dropped", "On_hold", "Ongoing"]
 allowed_types = ["Manga", "Manhwa", "Manhua", "OEL", "Vietnamese", "Malaysian", "Indonesian",
                  "Novel", "Artbook", "Other"]
 
@@ -32,15 +32,7 @@ def _valid_genres(genres: List[str]) -> List[str]:
     return [genre for genre in genres if genre in allowed_genres]
 
 
-def _add_genres(id_: int, genres: List[str], cursor: sqlite3.Cursor) -> None:
-    cursor.execute("SELECT id FROM genres WHERE genre IN ({})".format(", ".join("?" for _ in genres)), genres)
-    genre_ids = [row[0] for row in cursor.fetchall()]
-    genre_ids.sort()
-    cursor.executemany("INSERT INTO series_genres (series_id, genre_id) VALUES (?, ?)",
-                       [(id_, genre_id) for genre_id in genre_ids])
-
-
-@api_series_bp.route("/series", methods=["GET"])
+@api_series_bp.route("", methods=["GET"])
 def get_series_list() -> Tuple[jsonify, int]:
     try:
         sr = app.config["MAIN_RATING"]
@@ -81,8 +73,6 @@ def get_series_list() -> Tuple[jsonify, int]:
         select_clause = "SELECT DISTINCT s.*, si.extension"
         from_clause = " FROM series s LEFT JOIN series_thumbnails si ON s.id = si.series_id "
 
-
-        order_clause = ""
         if sort_by.startswith("rating-") and (by := sort_by.split('-')[1]) in ("mu", "dex", "mal"):
             from_clause += f"LEFT JOIN series_ratings_{by} sr ON sr.id_{by} = s.id_{by} "
             select_clause += ", COALESCE(sr.rating, 0) AS rating"
@@ -197,7 +187,7 @@ def get_series_list() -> Tuple[jsonify, int]:
         return jsonify({"result": "KO", "error": "Internal error"}), 500
 
 
-@api_series_bp.route("/series", methods=["POST"])
+@api_series_bp.route("", methods=["POST"])
 def create_series() -> Tuple[jsonify, int]:
     try:
         data = request.get_json()
@@ -257,7 +247,8 @@ def create_series() -> Tuple[jsonify, int]:
                     {"result": "KO", "error": "Author must have at least one ID (external or internal)."}), 400
             authors.append({"id": a_id, "type": a_t})
 
-        cursor.execute(f"""INSERT INTO series (id_mu, id_dex, id_bato, id_mal, id_line, title, type, description, vol_ch, is_md, status, year, timestamp_status)
+        cursor.execute(f"""INSERT INTO series
+        (id_mu, id_dex, id_bato, id_mal, id_line, title, type, description, vol_ch, is_md, status, year, timestamp_status)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id""",
                        (ids.get("mu"), ids.get("dex"), ids.get("bato"), ids.get("mal"), ids.get("line"),
                         data.get("title"), data.get("type"), data.get("description"), data.get("vol_ch"),
@@ -281,7 +272,7 @@ def create_series() -> Tuple[jsonify, int]:
                                [(id_, a["id"], a["type"]) for a in authors])
 
         if genres := _valid_genres(data.get("genres", [])):
-            _add_genres(id_, genres, cursor)
+            add_genres(id_, genres, cursor)
 
         if alt_titles := data.get("alt_titles"):
             cursor.executemany("INSERT INTO series_titles (series_id, alt_title) VALUES (?, ?)",
@@ -300,7 +291,7 @@ def create_series() -> Tuple[jsonify, int]:
         return jsonify({"result": "KO", "error": "Internal error"}), 500
 
 
-@api_series_bp.route("/series/<int:id_>", methods=["GET"])
+@api_series_bp.route("/<int:id_>", methods=["GET"])
 def get_series_by_id(id_) -> Tuple[jsonify, int]:
     try:
         conn = sqlite3.connect("data/mml.sqlite3")
@@ -317,7 +308,7 @@ def get_series_by_id(id_) -> Tuple[jsonify, int]:
         return jsonify({"result": "KO", "error": "Internal error"}), 500
 
 
-@api_series_bp.route("/series/<int:id_>", methods=["DELETE"])
+@api_series_bp.route("/<int:id_>", methods=["DELETE"])
 def delete_series(id_) -> Tuple[jsonify, int]:
     try:
         conn = sqlite3.connect("data/mml.sqlite3")
@@ -351,7 +342,7 @@ def delete_series(id_) -> Tuple[jsonify, int]:
         return jsonify({"result": "KO", "error": "Internal error"}), 500
 
 
-@api_series_bp.route("/series/<int:id_>", methods=["PATCH"])
+@api_series_bp.route("/<int:id_>", methods=["PATCH"])
 def update_series(id_) -> Tuple[jsonify, int]:
     try:
         data = request.get_json()
@@ -393,6 +384,10 @@ def update_series(id_) -> Tuple[jsonify, int]:
             conn.close()
             return jsonify({"result": "KO", "error": "Multiple timestamps provided, only one is allowed"}), 400
 
+        if "integration" in data and not isinstance(data["integration"], bool):
+            conn.close()
+            return jsonify({"result": "KO", "error": "Invalid integration value, must be boolean"}), 400
+
         update_fields = []
         update_params = []
 
@@ -422,6 +417,11 @@ def update_series(id_) -> Tuple[jsonify, int]:
                 else:
                     update_fields.append(f"timestamp_{i} = NULL")
 
+        if "integration" in data:
+            if isinstance(data["integration"], bool):
+                update_fields.append("integration = ?")
+                update_params.append(1 if data["integration"] else 0)
+
         if update_fields:
             query = f"UPDATE series SET {', '.join(update_fields)} WHERE id = ?"
             update_params.append(id_)
@@ -430,7 +430,8 @@ def update_series(id_) -> Tuple[jsonify, int]:
         if "genres" in data:
             cursor.execute("DELETE FROM series_genres WHERE series_id = ?", (id_,))
             if genres := _valid_genres(data["genres"]):
-                _add_genres(id_, genres, cursor)
+                add_genres(id_, genres, cursor)
+            cursor.execute("UPDATE series SET integration_genres = 0 WHERE id = ?", (id_,))
 
         if "alt_titles" in data:
             cursor.execute("DELETE FROM series_titles WHERE series_id = ?", (id_,))
@@ -443,6 +444,7 @@ def update_series(id_) -> Tuple[jsonify, int]:
             if s != 201:
                 conn.close()
                 return jsonify(r), s
+            cursor.execute("UPDATE series_thumbnails SET integration = 0 WHERE series_id = ?", (id_,))
 
         r, s = get_series_info(id_, cursor)
         if s == 200:
@@ -458,7 +460,7 @@ def update_series(id_) -> Tuple[jsonify, int]:
         return jsonify({"result": "KO", "error": "Internal error"}), 500
 
 
-@api_series_bp.route("/series/<int:id_>/ratings", methods=["PATCH"])
+@api_series_bp.route("/<int:id_>/ratings", methods=["PATCH"])
 def update_series_ratings(id_):
     try:
         data = request.get_json()
@@ -496,7 +498,7 @@ def update_series_ratings(id_):
                     if int(data[votes_key]) < 1:
                         conn.close()
                         return jsonify({"result": "KO", "error": f"Invalid {votes_key}, must be >= 1"}), 400
-                except Exception:
+                except ValueError:
                     conn.close()
                     return jsonify({"result": "KO", "error": f"Invalid {votes_key}, must be an integer"}), 400
             if rating_key in data:

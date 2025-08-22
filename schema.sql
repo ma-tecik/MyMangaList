@@ -34,33 +34,33 @@ create table schale_ids
 
 create table series
 (
-    id                INTEGER
+    id                 INTEGER
         primary key autoincrement,
-    id_mu             TEXT
+    id_mu              TEXT
         unique,
-    id_dex            TEXT
+    id_dex             TEXT
         unique,
-    id_mal            INTEGER
+    id_mal             INTEGER
         unique,
-    id_bato           INTEGER
+    id_bato            INTEGER
         unique,
-    id_line           TEXT
+    id_line            TEXT
         unique,
-    title             TEXT    not null,
-    type              TEXT    not null,
-    description       TEXT,
-    vol_ch            TEXT,
-    is_md             BOOLEAN default 0,
-    status            TEXT    not null,
-    year              INTEGER,
-    timestamp_status  INTEGER not null,
-    timestamp_mu      INTEGER,
-    timestamp_dex     INTEGER,
-    timestamp_mal     INTEGER,
-    automation        BOOLEAN default 1,
-    automation_genres BOOLEAN default 0,
-    user_rating       REAL,
-    check (status in ('Plan to Read', 'Reading', 'Completed', 'One-shot', 'Dropped', 'On hold', 'Ongoing')),
+    title              TEXT    not null,
+    type               TEXT    not null,
+    description        TEXT,
+    vol_ch             TEXT,
+    is_md              BOOLEAN default 0,
+    status             TEXT    not null,
+    year               INTEGER,
+    timestamp_status   INTEGER not null,
+    timestamp_mu       INTEGER,
+    timestamp_dex      INTEGER,
+    timestamp_mal      INTEGER,
+    integration        BOOLEAN default 1,
+    integration_genres BOOLEAN default 0,
+    user_rating        REAL,
+    check (status in ('Plan_to_read', 'Reading', 'Completed', 'One-shot', 'Dropped', 'On_hold', 'Ongoing')),
     check (type in ('Manga', 'Manhwa', 'Manhua', 'OEL', 'Vietnamese', 'Malaysian', 'Indonesian',
                     'Novel', 'Artbook', 'Other'))
 );
@@ -143,7 +143,7 @@ create index idx_series_ratings_mal
 
 create table series_ratings_mu
 (
-    id_mu  TEXT not null
+    id_mu  TEXT    not null
         primary key
         references series (id_mu)
             on delete cascade,
@@ -167,11 +167,13 @@ create table series_schale_ids
 
 create table series_thumbnails
 (
-    extension TEXT    not null,
-    series_id integer not null
+    extension   TEXT    not null,
+    series_id   integer not null
         primary key
         references series
-            on delete cascade
+            on delete cascade,
+    url         TEXT    not null,
+    integration BOOLEAN not null default 1
 );
 
 create table series_titles

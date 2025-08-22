@@ -2,10 +2,10 @@ from flask import Blueprint, request, current_app as app
 import sqlite3
 from typing import Tuple
 
-api_h_bp = Blueprint('api_h', __name__)
+api_h_bp = Blueprint('api_h', __name__, url_prefix="/h")
 
 
-@api_h_bp.route("/h", methods=["POST"])
+@api_h_bp.route("", methods=["POST"])
 def add_h() -> Tuple[str, int]:
     try:
         id_ = request.args.get("id")
@@ -34,7 +34,7 @@ def add_h() -> Tuple[str, int]:
         app.logger.error(e)
         return "", 500
 
-@api_h_bp.route("/h", methods=["DELETE"])
+@api_h_bp.route("", methods=["DELETE"])
 def delete_h() -> Tuple[str, int]:
     try:
         id_ = request.args.get("id")
@@ -63,7 +63,7 @@ def delete_h() -> Tuple[str, int]:
         return "", 500
 
 
-@api_h_bp.route("/h/<int:id_>", methods=["GET"])
+@api_h_bp.route("/<int:id_>", methods=["GET"])
 def get_nhentai(id_: int) -> Tuple[str, int]:
     try:
         conn = sqlite3.connect("data/mml.sqlite3")
@@ -78,7 +78,7 @@ def get_nhentai(id_: int) -> Tuple[str, int]:
         app.logger.error(e)
         return "", 500
 
-@api_h_bp.route("/h/<int:id_>/<key>", methods=["GET"])
+@api_h_bp.route("/<int:id_>/<key>", methods=["GET"])
 def get_h(id_: int, key: str) -> Tuple[str, int]:
     try:
         conn = sqlite3.connect("data/mml.sqlite3")

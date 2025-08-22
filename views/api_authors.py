@@ -3,7 +3,8 @@ from utils.common_code import valid_ids
 import sqlite3
 from typing import Tuple, Dict, Any
 
-api_authors_bp = Blueprint("api_authors", __name__)
+api_authors_bp = Blueprint("api_authors", __name__, url_prefix="/authors")
+
 
 def _get_author(id_: int, cursor: sqlite3.Cursor) -> Tuple[Dict[str, Any], int]:
     try:
@@ -29,7 +30,8 @@ def _get_author(id_: int, cursor: sqlite3.Cursor) -> Tuple[Dict[str, Any], int]:
         app.logger.error(e)
         return {"result": "KO", "error": "Internal error"}, 500
 
-@api_authors_bp.route("/authors", methods=["GET"])
+
+@api_authors_bp.route("", methods=["GET"])
 def get_authors():
     try:
         page = request.args.get("page", 1, type=int)
@@ -52,13 +54,65 @@ def get_authors():
         app.logger.error(e)
         return jsonify({"result": "KO", "error": "Internal error"}), 500
 
-@api_authors_bp.route("/authors/<int:id_>", methods=["GET"])
+
+@api_authors_bp.route("", methods=["POST"])
+def create_author():
+    try:
+        name = request.get_json().get("name")
+        if not name:
+            return jsonify({"result": "KO", "error": "No name provided"}), 400
+        conn = sqlite3.connect("data/mml.sqlite3")
+        cursor = conn.cursor()
+        cursor.execute(f"INSERT INTO authors (name) VALUES (?) RETURNING id", (name,))
+        id_ = cursor.fetchone()[0]
+        conn.commit()
+        conn.close()
+        r, s = _get_author(id_, cursor)
+        if s == 200:
+            return jsonify({"result": "OK", "data": r}), 201
+    except Exception as e:
+        app.logger.error(e)
+    return jsonify({"result": "KO", "error": "Internal error"}), 500
+
+
+@api_authors_bp.route("/search", methods=["GET"])
+def search_authors():
+    try:
+        name = request.args.get("name")
+        conn = sqlite3.connect("data/mml.sqlite3")
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM authors WHERE name = ?", (name,))
+        rows = cursor.fetchall()
+        conn.close()
+        authors = []
+        for a in rows:
+            author_data = {
+                "id": a["id"],
+                "ids": {
+                    "mu": a["id_mu"],
+                    "dex": a["id_dex"],
+                    "mal": a["id_mal"],
+                },
+                "name": a["name"],
+            }
+            authors.append(author_data)
+        if not authors:
+            return jsonify({"result": "KO", "error": "No author found"}), 404
+        return jsonify({"result": "OK", "data": authors}), 200
+    except Exception as e:
+        app.logger.error(e)
+        return jsonify({"result": "KO", "error": "Internal error"}), 500
+
+
+@api_authors_bp.route("/<int:id_>", methods=["GET"])
 def get_authors_by_id(id_):
     try:
         conn = sqlite3.connect("data/mml.sqlite3")
         cursor = conn.cursor()
 
         r, s = _get_author(id_, cursor)
+        conn.close()
         if s != 200:
             return jsonify(r), s
         author = r
@@ -67,7 +121,8 @@ def get_authors_by_id(id_):
         app.logger.error(e)
         return jsonify({"result": "KO", "error": "Internal error"}), 500
 
-@api_authors_bp.route("/authors/<int:id_>", methods=["PATCH"])
+
+@api_authors_bp.route("/<int:id_>", methods=["PATCH"])
 def update_author(id_):
     try:
         data = request.get_json()
@@ -112,6 +167,7 @@ def update_author(id_):
 
         r, s = _get_author(id_, cursor)
         if s != 200:
+            conn.close()
             return jsonify({"result": "KO", "error": "Internal error"}), 500
 
         conn.commit()
@@ -123,7 +179,8 @@ def update_author(id_):
         app.logger.error(e)
         return jsonify({"result": "KO", "error": "Internal error"}), 500
 
-@api_authors_bp.route("/authors/merge", methods=["POST"])
+
+@api_authors_bp.route("/merge", methods=["POST"])
 def merge_authors():
     try:
         ids = request.args.get("ids", "").split(",") if request.args.get("ids") else []
@@ -139,11 +196,13 @@ def merge_authors():
         for i in ids:
             r, s = _get_author(i, cursor)
             if s == 404:
+                conn.close()
                 return jsonify({"result": "KO", "error": f"No author found for id {i}"}), 404
             for k, v in r["ids"].items():
                 if v is None:
                     continue
                 if k in external_ids and external_ids[k] != v:
+                    conn.close()
                     return jsonify({"result": "KO", "error": "Conflict in external IDs"}), 409
                 external_ids[k] = v
 
@@ -160,6 +219,7 @@ def merge_authors():
 
         r, s = _get_author(id_, cursor)
         if s != 200:
+            conn.close()
             return jsonify({"result": "KO", "error": "Internal error"}), 500
 
         conn.commit()
