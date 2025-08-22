@@ -471,6 +471,9 @@ paths:
                       format: uri
                     timestamp:
                       $ref: '#/components/schemas/Timestamp'
+                    integration:
+                      type: boolean
+                      description: Whether to update series_data from external sources (if enabled in settings)
       responses:
         200:
           description: Series updated

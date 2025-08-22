@@ -384,6 +384,10 @@ def update_series(id_) -> Tuple[jsonify, int]:
             conn.close()
             return jsonify({"result": "KO", "error": "Multiple timestamps provided, only one is allowed"}), 400
 
+        if "integration" in data and not isinstance(data["integration"], bool):
+            conn.close()
+            return jsonify({"result": "KO", "error": "Invalid integration value, must be boolean"}), 400
+
         update_fields = []
         update_params = []
 
@@ -413,6 +417,11 @@ def update_series(id_) -> Tuple[jsonify, int]:
                 else:
                     update_fields.append(f"timestamp_{i} = NULL")
 
+        if "integration" in data:
+            if isinstance(data["integration"], bool):
+                update_fields.append("integration = ?")
+                update_params.append(1 if data["integration"] else 0)
+
         if update_fields:
             query = f"UPDATE series SET {', '.join(update_fields)} WHERE id = ?"
             update_params.append(id_)
@@ -422,6 +431,7 @@ def update_series(id_) -> Tuple[jsonify, int]:
             cursor.execute("DELETE FROM series_genres WHERE series_id = ?", (id_,))
             if genres := _valid_genres(data["genres"]):
                 add_genres(id_, genres, cursor)
+            cursor.execute("UPDATE series SET integration_genres = 0 WHERE id = ?", (id_,))
 
         if "alt_titles" in data:
             cursor.execute("DELETE FROM series_titles WHERE series_id = ?", (id_,))
@@ -434,6 +444,7 @@ def update_series(id_) -> Tuple[jsonify, int]:
             if s != 201:
                 conn.close()
                 return jsonify(r), s
+            cursor.execute("UPDATE series_thumbnails SET integration = 0 WHERE series_id = ?", (id_,))
 
         r, s = get_series_info(id_, cursor)
         if s == 200:

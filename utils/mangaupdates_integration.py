@@ -8,6 +8,8 @@ import requests
 import sqlite3
 from typing import List, Tuple, Dict
 
+from views.api_integration import integration_mu
+
 base_url = "https://api.mangaupdates.com/v1/"
 
 
@@ -329,7 +331,7 @@ def mu_update_series(to_update: List[str], cursor) -> bool:
             if s != 200:
                 continue
             cursor.execute(
-                "SELECT title, type, description, vol_ch, year, id, id_line, automation_genres from series WHERE id_mu = ?",
+                "SELECT title, type, description, vol_ch, year, id, id_line, integration_genres from series WHERE id_mu = ?",
                 (m,))
             row = cursor.fetchone()
             id_ = row[5]
@@ -349,8 +351,9 @@ def mu_update_series(to_update: List[str], cursor) -> bool:
                 vals = list(to_update.values()) + [id_]
                 cursor.execute(f"UPDATE series SET {cols} WHERE id = ?", vals)
 
-            cursor.execute("SELECT url FROM series_thumbnails WHERE series_id = ?", (id_,))
-            if r["thumbnail"] != cursor.fetchone()[0]:
+            cursor.execute("SELECT url, integration FROM series_thumbnails WHERE series_id = ?", (id_,))
+            integration, url = cursor.fetchone()
+            if integration and r["thumbnail"] != url:
                 update_thumbnail(id_, r["thumbnail"], cursor)
 
             cursor.execute("""SELECT a.id_mu, sa.author_type

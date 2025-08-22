@@ -73,7 +73,7 @@ def mu_series():
 
         conn = sqlite3.connect("data/mml.sqlite3")
         cursor = conn.cursor()
-        cursor.execute("SELECT id_mu, timestamp_mu FROM series WHERE timestamp_mu IS NOT NULL and automation = 1")
+        cursor.execute("SELECT id_mu, timestamp_mu FROM series WHERE timestamp_mu IS NOT NULL and integration = 1")
 
         to_update = []
         for m in cursor.fetchall():
