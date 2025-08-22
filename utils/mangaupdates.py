@@ -38,12 +38,14 @@ def get_id_url(url: str) -> str:
         return ""
     return id_
 
+
 def get_id_old(id_: Union[str, int]) -> str:
     if id_.isdigit():
         return _id_from_old_url("https://www.mangaupdates.com/series.html?id=" + str(id_))
     elif isinstance(id_, str):
         return id_
     return ""
+
 
 def series(id_mu36: str) -> Tuple[Dict[str, Any], int]:
     id_mu = int(id_mu36, 36)
@@ -89,8 +91,9 @@ def series(id_mu36: str) -> Tuple[Dict[str, Any], int]:
 
     authors = []
     for author in data["authors"]:
+        a_id = author.get("author_id") or 0
         author_info = {
-            "ids": {"mu": base36(author.get("author_id"))},
+            "ids": {"mu": base36(a_id)},
             "name": author.get('name'),
             "type": author.get('type')
         }
@@ -125,67 +128,3 @@ def series(id_mu36: str) -> Tuple[Dict[str, Any], int]:
         "timestamp": {"mu": data["last_updated"]["timestamp"], }
     }
     return data_final, 200
-
-
-# def search(text_: str) -> list:
-#     response = requests.post("https://api.mangaupdates.com/v1/series/search", json={"search": text_, "perpage": 5})
-#     response = response.json()
-#
-#     results = []
-#     for item in response['results']:
-#         data = item['record']
-#
-#         url = data['url']
-#         id_mu36 = url.split("/series/")[1].split("/")[0]
-#
-#         alt_names = []
-#         if item['hit_title'] != data['title']:
-#             alt_names.append(data['hit_title'])
-#
-#         data_final = {
-#             'ids': {'mu': id_mu36},
-#             'title': data['title'],
-#             'alt_names': alt_names,
-#             'type': data['type'],
-#             'description': data['description'],
-#             'md': True,
-#             'year': data['year'],
-#             'rating': data['bayesian_rating'],
-#             'timestamp_mu': data['last_updated']['timestamp'],
-#             'os_a': False,
-#             'image_url': data['image']['url']['original'],
-#         }
-#
-#         results.append(data_final)
-#
-#     return results
-#
-#
-#
-# def author(author_id: str) -> Dict[str, Any]:
-#     response = requests.get(f"https://api.mangaupdates.com/v1/author/{author_id}")
-#     data = response.json()
-#
-#     if 'error' in data:
-#         raise ValueError(f"Author not found: {author_id}")
-#
-#     author_data = {
-#         'ids': {'mu': author_id},
-#         'name': data['name'],
-#         'type': data['type'],
-#         'image_url': data['image']['url']['original'],
-#         'description': data['description'],
-#         'timestamp': data['last_updated']['timestamp'],
-#         'md': True,
-#     }
-#     return author_data
-
-
-if __name__ == "__main__":
-    # Test the series function
-    text = "One Piece"
-    # results = search(text)
-    # id_mu_ = results[0]['id']['mu']
-    id_mu_ = "vy4abhh"
-    manga_data = series(id_mu_)
-    print(manga_data)

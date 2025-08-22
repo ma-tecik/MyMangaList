@@ -4,6 +4,8 @@ import re
 
 
 def base36(num: int) -> str:
+    if num == 0:
+        return ""
     alphabet = "0123456789abcdefghijklmnopqrstuvwxyz"
     result = ""
     if 0 <= num < 36:
@@ -66,7 +68,8 @@ def valid_ids(ids: Dict[str, Any], reduced: bool = False) -> Dict[str, Any]:
         return {}
     if any(not value.isdigit() for value in [ids[k] for k in ["mal", "bato"] if k in ids]):
         return {}
-    if "line" in ids and not (re.fullmatch(r"[o]{1}:[0-9]{4}", ids["line"]) or re.fullmatch(r"[c]{1}:[0-9]{6}", ids["line"])):
+    if "line" in ids and not (
+            re.fullmatch(r"[o]{1}:[0-9]{4}", ids["line"]) or re.fullmatch(r"[c]{1}:[0-9]{6}", ids["line"])):
         return {}
     if "mu" in ids and not re.fullmatch(r"[0-9a-z]+", ids["mu"]):
         return {}

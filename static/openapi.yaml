@@ -824,6 +824,92 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseKO'
 
+    post:
+      operationId: createAuthor
+      summary: Add an author entry
+      description: |-
+        Adds an author with only name.
+        Note: Use this endpoint for only authors of Bato and Line series.
+      tags: [Authors]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required: [name]
+      responses:
+        201:
+          description: Author details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseAuthor'
+        400:
+          description: Bad request (missing or invalid body)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+        500:
+          description: Internal error, check logs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+
+  /authors/search:
+    get:
+      operationId: searchAuthor
+      summary: Search authors by name
+      description: Returns authors matching the given name.
+      tags: [Authors]
+      parameters:
+        - name: name
+          in: query
+          description: Name or partial name to search for
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: List of matching authors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    default: OK
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          description: internal author id
+                        ids:
+                          $ref: '#/components/schemas/AuthorIDs'
+                        name:
+                          type: string
+        404:
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+        500:
+          description: Internal error, check logs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+
   /authors/{id}:
     get:
       operationId: getAuthorById
@@ -1460,22 +1546,24 @@ components:
           type: string
           default: OK
         data:
-          type: object
-          properties:
-            id:
-              type: integer
-              description: internal author id
-            ids:
-              $ref: '#/components/schemas/AuthorIDs'
-            name:
-              type: string
-            series:
-              type: object
-              description: Count of his/her series
-              properties:
-                as_author:
-                  type: integer
-                as_artist:
-                  type: integer
-                as_both:
-                  type: integer
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                description: internal author id
+              ids:
+                $ref: '#/components/schemas/AuthorIDs'
+              name:
+                type: string
+              series:
+                type: object
+                description: Count of his/her series
+                properties:
+                  as_author:
+                    type: integer
+                  as_artist:
+                    type: integer
+                  as_both:
+                    type: integer

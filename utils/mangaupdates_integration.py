@@ -359,11 +359,20 @@ def mu_update_series(to_update: List[str], cursor) -> bool:
                               WHERE sa.series_id = ?""", (id_,))
             authors = {i[0]: i[1] for i in cursor.fetchall()}
             for a in r["authors"]:
-                a_id = a["ids"].get("mu")
+                a_id = a.get("ids", {}).get("mu")
+                if not a_id:
+                    app.logger.warning(f"""For series: {id_} skipping author: {a}.
+                    ID_MU not found, please add the author to the MangaUpdates database.""")
+                    continue
+                if a_id not in authors or a["type"] != authors[a_id]:
+                    r, s = get_author_id(a, cursor)
+                    if s != 200:
+                        app.logger.warning(f"For series: {id_} skipping author: {a}.")
+                        continue
                 if a_id not in authors:
-                    authors_to_add.append((id_, a))  # TODO: may be change
+                    authors_to_add.append((a["type"], id_, r[0]))
                 elif a["type"] != authors[a_id]:
-                    authors_to_update.append((a["type"], id_, a_id))
+                    authors_to_update.append((a["type"], id_, r[0]))
 
             cursor.execute("SELECT alt_title FROM series_titles WHERE series_id = ?", (id_,))
             titles_db = {i[0] for i in cursor.fetchall()}
@@ -380,7 +389,8 @@ def mu_update_series(to_update: List[str], cursor) -> bool:
                 genres_to_delete.extend([id_, g] for g in genres_db - genres_mu)
 
         if authors_to_add:
-            pass  # TODO
+            cursor.executemany("INSERT INTO series_authors (author_type, series_id, author_id) VALUES (?, ?, ?)",
+                               authors_to_add)
         if authors_to_update:
             cursor.executemany("UPDATE series_authors SET author_type = (?) WHERE series_id = ? AND author_id  = ?",
                                authors_to_update)
@@ -388,12 +398,10 @@ def mu_update_series(to_update: List[str], cursor) -> bool:
             cursor.executemany("INSERT INTO series_titles (series_id, alt_title) VALUES (?, ?)", titles_to_add)
         if titles_to_delete:
             cursor.execute("DELETE FROM series_titles WHERE series_id = ? AND alt_title = ?", titles_to_delete)
-
         if genres_to_add:
             cursor.executemany("INSERT INTO series_genres (series_id, genre_id) VALUES (?, ?)", genres_to_add)
         if genres_to_delete:
             cursor.executemany("DELETE FROM series_genres WHERE series_id = ? AND genre_id = ?", genres_to_delete)
-
         return True
     except Exception as e:
         app.logger.error(e)

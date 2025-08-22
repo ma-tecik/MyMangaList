@@ -7,9 +7,6 @@ from typing import Tuple
 api_external_bp = Blueprint("api_external", __name__, url_prefix="/external")
 
 
-
-
-
 @api_external_bp.route("/series/id", methods=["GET"])
 def get_series_id() -> Tuple[jsonify, int]:
     try:
