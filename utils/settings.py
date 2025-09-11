@@ -1,6 +1,5 @@
 import sqlite3
 from idlelib.configdialog import is_int
-from pyexpat.errors import messages
 
 
 def first_run():
@@ -62,6 +61,19 @@ def iso_langs() -> list:
         "za", "zh", "zu"
     ]
     return iso639_1
+
+
+def is_mal_id_valid(mal_id: str) -> bool:
+    if not mal_id:
+        return False
+    import requests
+    try:
+        response = requests.get("https://api.myanimelist.net/v2/forum/boards", headers={"X-MAL-CLIENT-ID": mal_id})
+        if response.status_code == 200:
+            return True
+    except Exception:
+        pass
+    return False
 
 
 def get_settings(app):
@@ -135,6 +147,25 @@ def get_settings(app):
         app.config["DEX_INTEGRATION"] = 0
 
     mal_integration = settings["mal_integration"]
+    if is_int(mal_integration):
+        mal_integration = int(mal_integration)
+    else:
+        mal_integration = 0
+        params.append((0, "mal_integration"))
+
+    # Why "publicly available information" require authentication?
+    # https://web.archive.org/web/20250514000339/https://myanimelist.net/forum/?topicid=1973141
+    f_mal = settings.get("mal_client_id")
+    f = is_mal_id_valid(f_mal) if f_mal else False
+    if f:
+        app.config["MAL_CLIENT_ID"] = f_mal
+    else:
+        app.logger.warning("You must provide a MAL Client ID to get any data from MyAnimeList.")
+        app.config["MAL_CLIENT_ID"] = ""
+        if mal_integration:
+            mal_integration = 0
+            params.append((0, "mal_integration"))
+
     if mal_integration:
         app.config["MAL_INTEGRATION"] = 0  # TODO: Add mal integration
     else:
