@@ -76,7 +76,8 @@ def series(id_dex: str) -> Tuple[Dict[str, Any], int]:
         "authors": authors,
         "os_a": os_a,
         "thumbnail": thumbnail,
-        'timestamp': {"dex": timestamp},
+        "timestamp": {"dex": timestamp},
+        "dex_status": data["attributes"].get("status"),
     }
     if id_mu := data["attributes"]["links"].get("mu"):
         data_final["ids"]["mu"] = get_id_mu(id_mu)

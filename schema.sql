@@ -167,13 +167,13 @@ create table series_schale_ids
 
 create table series_thumbnails
 (
-    extension   TEXT    not null,
-    series_id   integer not null
+    extension   TEXT              not null,
+    series_id   integer           not null
         primary key
         references series
             on delete cascade,
-    url         TEXT    not null,
-    integration BOOLEAN not null default 1
+    url         TEXT              not null,
+    integration BOOLEAN default 1 not null
 );
 
 create table series_titles

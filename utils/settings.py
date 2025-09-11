@@ -1,4 +1,5 @@
 import sqlite3
+from idlelib.configdialog import is_int
 from pyexpat.errors import messages
 
 
@@ -14,6 +15,22 @@ def first_run():
     cursor.executescript(set_up)
     conn.commit()
     conn.close()
+
+    conn = sqlite3.connect("data/detect_language.sqlite3")
+    cursor = conn.cursor()
+    cursor.execute("""
+                   CREATE TABLE titles
+                   (
+                       title      TEXT
+                           primary key,
+                       lang       TEXT,
+                       confidence REAL,
+                       timestamp  INTEGER
+                   )
+                   """)
+    conn.commit()
+    conn.close()
+
 
 def iso_langs() -> list:
     iso639_1 = [
@@ -67,25 +84,29 @@ def get_settings(app):
     langs = [l for l in langs.split(",") if l in iso639_1]
     if "en" not in langs:
         langs.append("en")
-        langs_ = ",".join(langs)
-        params.append((langs_, "title_languages"))
+        params.append((",".join(langs), "title_languages"))
         app.logger.info("Don't remove English from title languages or you may break something.")
     app.config["TITLE_LANGUAGES"] = langs
 
     for i in ["mu", "dex", "mal"]:
-        if settings[f"{i}_integration"] not in [0, 1]:
+        if settings[f"{i}_integration"] not in ["0", "1"]:
             settings[f"{i}_integration"] = 0
             params.append((0, f"{i}_integration"))
 
     mu_integration = settings["mu_integration"]
+    if is_int(mu_integration):
+        mu_integration = int(mu_integration)
+    else:
+        mu_integration = 0
+        params.append((0, "mu_integration"))
     if mu_integration:
-        if settings["mu_username"] and settings["mu_password"]:
+        l = ("plan_to_read", "reading", "completed", "one-shots", "dropped", "on_hold", "ongoing")
+        s = ["mu_username", "mu_password"]
+        s.extend([f"mu_list_{i}" for i in l])
+        if all(settings.get(i) for i in s):
             app.config["MU_INTEGRATION"] = "yes"
-            app.config["MU_USERNAME"] = settings["mu_username"]
-            app.config["MU_PASSWORD"] = settings["mu_password"]
-            app.config["MU_LAST_TIMESTAMP"] = settings["mu_last_timestamp"]
-            for i in ("plan_to_read", "reading", "completed", "one-shots", "dropped", "on_hold", "ongoing"):
-                app.config[f"MU_LIST_{i.upper()}"] = settings[f"mu_list_{i}"]
+            for i in s:
+                app.config[i.upper()] = settings[i]
         else:
             app.config["MU_INTEGRATION"] = 0
             params.append((0, "mu_integration"))
@@ -94,14 +115,22 @@ def get_settings(app):
         app.config["MU_INTEGRATION"] = 0
 
     dex_integration = settings["dex_integration"]
+    if is_int(dex_integration):
+        dex_integration = int(dex_integration)
+    else:
+        dex_integration = 0
+        params.append((0, "dex_integration"))
     if dex_integration:
-        if settings["dex_token"]:
+        s = ["dex_username", "dex_password", "dex_client_id", "dex_secret", "dex_integration_forced"]
+        if all(settings.get(i) for i in s):
             app.config["DEX_INTEGRATION"] = 1
-            app.config["DEX_TOKEN"] = settings.get("dex_token")
+            for i in s:
+                app.config[i.upper()] = settings[i]
         else:
             app.config["DEX_INTEGRATION"] = 0
             params.append((0, "dex_integration"))
-            app.logger.warning("You must provide dex_token to use dex_integration")
+            app.logger.warning(
+                "You must provide dex_username, dex_password, dex_client_id, dex_secret and dex_integration_forced to use dex_integration")
     else:
         app.config["DEX_INTEGRATION"] = 0
 
@@ -115,6 +144,7 @@ def get_settings(app):
         cursor.executemany("UPDATE settings SET value = ? WHERE key = ? ", params)
         conn.commit()
     conn.close()
+
 
 def update_settings(data, app):
     conn = sqlite3.connect("data/mml.sqlite3")

@@ -43,3 +43,8 @@ wheels/
 venv/
 env/
 ENV/
+
+data
+
+static/*.js
+static/*.css

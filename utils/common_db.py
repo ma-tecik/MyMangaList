@@ -173,3 +173,117 @@ def series_move_batch(series_ids: list, type_: str, from_: str, to: str) -> None
         conn.close()
     except Exception as e:
         app.logger.error(e)
+
+
+def update_ratings(type_: str, data: List[Dict[str, Union[int, str, float]]]) -> Tuple[list, int]:
+    try:
+        not_exist = []
+        to_create = []
+        to_update = []
+
+        conn = sqlite3.connect("data/mml.sqlite3")
+        cursor = conn.cursor()
+
+        for item in data:
+            if not isinstance(item, dict):
+                continue
+            id_: Union[int, str] = item.get("id")
+            rating = item.get("rating")
+            if id_ is None or rating is None:
+                continue
+
+            try:
+                rating = float(rating)
+            except Exception:
+                continue
+            if not (1 <= rating <= 10):
+                continue
+            cursor.execute(f"SELECT 1 FROM series WHERE id_{type_} = ?", (id_,))
+            if cursor.fetchone() is None:
+                not_exist.append(str(id_))
+                continue
+
+            cursor.execute(f"SELECT rating FROM series_ratings_{type_} WHERE id_{type_} = ?", (id_,))
+            row = cursor.fetchone()
+            if row is None:
+                to_create.append((id_, rating))
+            else:
+                if rating != row[0]:
+                    to_update.append((rating, id_))
+
+        if to_create:
+            cursor.executemany(f"INSERT INTO series_ratings_{type_} (id_{type_}, rating) VALUES (?, ?)", to_create)
+            conn.commit()
+        if to_update:
+            cursor.executemany(f"UPDATE series_ratings_{type_} SET rating = ? WHERE id_{type_} = ?", to_update)
+            conn.commit()
+
+        cursor.close()
+        app.logger.info(f"{type_} ratings updated")
+        return not_exist, 200
+    except Exception as e:
+        app.logger.error(e)
+        return [], 500
+
+
+def update_user_ratings(type_: str, data: List[Dict[str, Union[int, str, float]]]) -> bool:
+    try:
+        to_update = []
+
+        conn = sqlite3.connect("data/mml.sqlite3")
+        cursor = conn.cursor()
+
+        for item in data:
+            if not isinstance(item, dict):
+                continue
+            id_: Union[int, str] = item.get("id")
+            rating = item.get("rating")
+            if id_ is None or rating is None:
+                continue
+
+            try:
+                rating = float(rating)
+            except Exception:
+                continue
+            if not (1 <= rating <= 10):
+                continue
+            cursor.execute(f"SELECT user_rating FROM series WHERE id_{type_} = ?", (id_,))
+            row = cursor.fetchone()
+            if row is None:
+                continue
+            if row[0] != rating:
+                to_update.append((id_, rating))
+
+        if to_update:
+            cursor.executemany(f"UPDATE series SET user_rating = ? WHERE id_{type_} = ?", to_update)
+            conn.commit()
+
+        cursor.close()
+        app.logger.info("User ratings updated")
+        return True
+    except Exception as e:
+        app.logger.error(e)
+        return False
+
+
+def add_series_data(id_:int, data:Dict[str, Any], cursor: sqlite3.Cursor) ->bool:
+    try:
+        _, s = download_thumbnail(id_, data["thumbnail"], cursor)
+        if s != 201:
+            return False
+        authors = []
+        for author in data["authors"]:
+            p, s = get_author_id(author, cursor)
+            if s != 200:
+                return False
+            authors.append({"id": p[0], "type": author["type"]})
+            cursor.executemany(
+                "INSERT INTO series_authors (series_id, author_id, author_type) VALUES (?, ?, ?)",
+                [(id_, a["id"], a["type"]) for a in authors])
+        add_genres(id_, data.get("genres"), cursor)
+        cursor.executemany("INSERT INTO series_titles (series_id, alt_title) VALUES (?, ?)",
+                           [(id_, title) for title in data["alt_titles"]])
+        return True
+    except Exception as e:
+        app.logger.error(e)
+        return False

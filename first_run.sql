@@ -72,12 +72,14 @@ INSERT OR IGNORE INTO settings VALUES
 ('mu_list_plan_to_read', 1),
 ('mu_list_reading', 0),
 ('mu_list_completed',2),
-('mu_list_one-shots', 101), -- TODO: Check this
+('mu_list_one-shots', 101),
 ('mu_list_dropped', 3),
 ('mu_list_on_hold', 4),
-('mu_list_ongoing', 102), -- TODO: Check this
-('mu_last_timestamp', 1),
+('mu_list_ongoing', 102),
 ('dex_integration', 0),
-('dex_token', NULL),
-('dex_last_timestamp', 1)
+('dex_integration_forced', 0),
+('dex_username', NULL),
+('dex_password', NULL),
+('dex_client_id', NULL),
+('dex_secret', NULL),
 ('mal_integration', 0);

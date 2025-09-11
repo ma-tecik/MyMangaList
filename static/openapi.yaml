@@ -471,9 +471,14 @@ paths:
                       format: uri
                     timestamp:
                       $ref: '#/components/schemas/Timestamp'
-                    integration:
+                    integation:
                       type: boolean
-                      description: Whether to update series_data from external sources (if enabled in settings)
+                      description: Whether to update series data from external sources (if enabled in settings)
+                      default: True
+                    integration_genres:
+                      type: boolean
+                      description: Whether to update series genres from external sources (if enabled in settings)
+                      default: True
       responses:
         200:
           description: Series updated
@@ -1198,6 +1203,14 @@ components:
         - $ref: '#/components/schemas/SeriesData'
         - type: object
           properties:
+            integation:
+              type: boolean
+              description: Whether to update series data from external sources (if enabled in settings)
+              default: True
+            integration_genres:
+              type: boolean
+              description: Whether to update series genres from external sources (if enabled in settings)
+              default: False
             ratings:
               type: object
               description: Average (Bayesian) ratings of the series

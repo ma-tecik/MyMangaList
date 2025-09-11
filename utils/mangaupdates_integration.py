@@ -1,19 +1,17 @@
 from flask import current_app as app
-from utils.external import update_ratings, update_user_ratings
 from utils.common_code import base36
-from utils.common_db import series_move_batch, download_thumbnail, get_author_id, add_genres, update_thumbnail
+from utils.common_db import series_move_batch, get_author_id, update_thumbnail, update_ratings, update_user_ratings, \
+    add_series_data
 from utils.mangaupdates import series
 from time import sleep
 import requests
 import sqlite3
 from typing import List, Tuple, Dict
 
-from views.api_integration import integration_mu
-
 base_url = "https://api.mangaupdates.com/v1/"
 
 
-def get_headers() -> dict:
+def mu_get_headers() -> dict:
     try:
         url = base_url
         w = True
@@ -53,7 +51,7 @@ def get_headers() -> dict:
 
 
 # !!! /lists/{list_id}/search and /series/search return different responses !!!
-def get_list(list_id: str, headers) -> List[dict]:
+def mu_get_list(list_id: str, headers) -> List[dict]:
     try:
         url = base_url + f"lists/{list_id}/search"
         data = []
@@ -102,7 +100,7 @@ def _get_ids_scanlated(list_id: str, headers) -> List[int]:
 
 
 def _get_ids_not_scanlated(list_id: str, headers) -> List[int]:
-    series_all = get_list(list_id, headers)
+    series_all = mu_get_list(list_id, headers)
     series_scanlated = _get_ids_scanlated(list_id, headers)
     if not series_all or not series_scanlated:
         return []
@@ -181,19 +179,19 @@ def mu_update_ratings(data: Dict[str, List[dict]]) -> bool:
 
 def mu_get_data_for_all() -> Tuple[Dict[str, List[dict]], dict]:
     try:
-        headers = get_headers()
+        headers = mu_get_headers()
         if not headers:
             return {}, {}
 
         data = {}
         for i in ("Plan_to_read", "Reading", "Completed", "One-shot", "Dropped", "On_hold", "Ongoing"):
             list_id = app.config[f"MU_LIST_{i.upper()}"]
-            data_ = get_list(list_id, headers)
+            data_ = mu_get_list(list_id, headers)
             if data_:
                 data[i] = data_
 
         if not data:
-            return {}, headers  # or {} TODO: is headers necessary?
+            return {}, headers
         return data, headers
     except Exception as e:
         app.logger.error(e)
@@ -202,7 +200,7 @@ def mu_get_data_for_all() -> Tuple[Dict[str, List[dict]], dict]:
 
 def mu_update_ongoing() -> bool:
     try:
-        headers = get_headers()
+        headers = mu_get_headers()
         if not headers:
             return False
         ongoing = app.config.get(f"MU_LIST_ONGOING")
@@ -289,21 +287,7 @@ def mu_sync_lists(data: Dict[str, List[dict]], headers) -> bool:
                                 r.get("description"), r.get("vol_ch"), True, add_to_db[i][0], r.get("year"),
                                 add_to_db[i][1], r["timestamp"]["mu"]))
                 id_ = cursor.fetchone()[0]
-                _, s = download_thumbnail(id_, r["thumbnail"], cursor)
-                if s != 201:
-                    continue
-                authors = []
-                for author in r["authors"]:
-                    p, s = get_author_id(author, cursor)
-                    if s != 200:
-                        continue
-                    authors.append({"id": p[0], "type": author["type"]})
-                    cursor.executemany(
-                        "INSERT INTO series_authors (series_id, author_id, author_type) VALUES (?, ?, ?)",
-                        [(id_, a["id"], a["type"]) for a in authors])
-                add_genres(id_, r.get("genres"), cursor)
-                cursor.executemany("INSERT INTO series_titles (series_id, alt_title) VALUES (?, ?)",
-                                   [(id_, title) for title in r["alt_titles"]])
+                add_series_data(id_, r, cursor)
                 conn.commit()
             except Exception as e:
                 app.logger.error(e)
