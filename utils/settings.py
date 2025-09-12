@@ -154,17 +154,17 @@ def get_settings(app):
         params.append((0, "mal_integration"))
 
     # Why "publicly available information" require authentication?
-    # https://web.archive.org/web/20250514000339/https://myanimelist.net/forum/?topicid=1973141
+    # https://web.archive.org/web/20250514000339/https://myanimelist.net/forum/?topicid=1973141#:~:text=publicly%20available%20information
     f_mal = settings.get("mal_client_id")
-    f = is_mal_id_valid(f_mal) if f_mal else False
-    if f:
+    s = is_mal_id_valid(f_mal) if f_mal else False
+    if s:
         app.config["MAL_CLIENT_ID"] = f_mal
     else:
         app.logger.warning("You must provide a MAL Client ID to get any data from MyAnimeList.")
-        app.config["MAL_CLIENT_ID"] = ""
+        app.config["MAL_CLIENT_ID"] = None
         if mal_integration:
             mal_integration = 0
-            params.append((0, "mal_integration"))
+            params.append((None, "mal_integration"))
 
     if mal_integration:
         app.config["MAL_INTEGRATION"] = 0  # TODO: Add mal integration

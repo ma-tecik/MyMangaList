@@ -82,4 +82,5 @@ INSERT OR IGNORE INTO settings VALUES
 ('dex_password', NULL),
 ('dex_client_id', NULL),
 ('dex_secret', NULL),
-('mal_integration', 0);
+('mal_integration', 0),
+('mal_client_id', NULL);
