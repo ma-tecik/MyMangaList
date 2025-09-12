@@ -299,8 +299,28 @@ def mu_sync_lists(data: Dict[str, List[dict]], headers) -> bool:
         return False
 
 
-def mu_update_series(to_update: List[str], cursor) -> bool:
+def mu_update_series(data: Dict[str, List[dict]]) -> bool:
     try:
+        db = {}
+        for i in data:
+            for m in data[i]:
+                db[base36(m["record"]["id"])] = m["metadata"]["series"]["last_updated"]["timestamp"]
+
+        conn = sqlite3.connect("data/mml.sqlite3")
+        cursor = conn.cursor()
+        cursor.execute("SELECT id_mu, timestamp_mu FROM series WHERE timestamp_mu IS NOT NULL and integration = 1")
+
+        to_update = []
+        for m in cursor.fetchall():
+            if m[1] not in db or m[2] == db[m[1]]:
+                continue
+            to_update.append(m[1])
+
+        if not to_update:
+            conn.close()
+            return True
+
+
         authors_to_add = []
         authors_to_update = []
 
@@ -389,6 +409,8 @@ def mu_update_series(to_update: List[str], cursor) -> bool:
             cursor.executemany("INSERT INTO series_genres (series_id, genre_id) VALUES (?, ?)", genres_to_add)
         if genres_to_delete:
             cursor.executemany("DELETE FROM series_genres WHERE series_id = ? AND genre_id = ?", genres_to_delete)
+        conn.commit()
+        conn.close()
         return True
     except Exception as e:
         app.logger.error(e)

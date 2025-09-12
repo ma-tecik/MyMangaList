@@ -66,7 +66,9 @@ INSERT OR IGNORE INTO genres (genre) VALUES
 INSERT OR IGNORE INTO settings VALUES
 ('main_rating', 'mu'),
 ('title_languages', 'en'),
+-- MU
 ('mu_integration', 0),
+('mu_automation', 0),
 ('mu_username', NULL),
 ('mu_password', NULL),
 ('mu_list_plan_to_read', 1),
@@ -76,11 +78,15 @@ INSERT OR IGNORE INTO settings VALUES
 ('mu_list_dropped', 3),
 ('mu_list_on_hold', 4),
 ('mu_list_ongoing', 102),
+-- DEX
 ('dex_integration', 0),
+('dex_automation', 0),
 ('dex_integration_forced', 0),
 ('dex_username', NULL),
 ('dex_password', NULL),
 ('dex_client_id', NULL),
 ('dex_secret', NULL),
+-- MAL
 ('mal_integration', 0),
+('mal_automation', 0),
 ('mal_client_id', NULL);

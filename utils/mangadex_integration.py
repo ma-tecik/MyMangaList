@@ -172,9 +172,8 @@ def dex_update_ratings(lists, headers) -> bool:
         return False
 
 
-def dex_sync_lists(lists, headers, forced_sync=False) -> bool:
+def dex_sync_lists(lists) -> Dict[str, str]:
     try:
-        url = base_url + "manga/"
         conn = sqlite3.connect("data/mml.sqlite3")
         cursor = conn.cursor()
         ids = (i for sublist in lists.values() for i in sublist)
@@ -239,19 +238,29 @@ def dex_sync_lists(lists, headers, forced_sync=False) -> bool:
                 add_series_data(id_, r, cursor)
             conn.commit()
         conn.close()
-
-        if forced_sync:
-            for k, v in to_update.items():
-                for attempt in range(3):
-                    r = requests.put(url + k + "status", headers=headers, json={"status": v})
-                    if r.status_code == 200:
-                        break
-                    if r.status_code == 401 or attempt == 2:
-                        return False
-                    sleep(2)
-                sleep(1)
-
-        return True
+        return to_update
     except Exception as e:
         app.logger.error(e)
-        return False
+        return {}
+
+
+def dex_sync_lists_forced(tokens, headers, to_update: Dict[str, str], ) -> Tuple[Dict[str, str], Dict[str, str]]:
+    try:
+        url = base_url + "manga/"
+        for k, v in to_update.items():
+            w = True
+            for attempt in range(3):
+                r = requests.put(url + k + "status", headers=headers, json={"status": v})
+                if r.status_code == 200:
+                    break
+                elif r.status_code == 401 and w:
+                    w = False
+                    tokens, headers = dex_refresh_token(tokens)
+                    attempt -= 1
+                elif attempt == 2:
+                    return tokens, headers
+                sleep(2)
+            sleep(1)
+    except Exception as e:
+        app.logger.error(e)
+    return tokens, headers

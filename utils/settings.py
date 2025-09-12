@@ -100,18 +100,18 @@ def get_settings(app):
         app.logger.info("Don't remove English from title languages or you may break something.")
     app.config["TITLE_LANGUAGES"] = langs
 
+    # INTEGRATION BASE
     for i in ["mu", "dex", "mal"]:
-        if settings[f"{i}_integration"] not in ["0", "1"]:
-            settings[f"{i}_integration"] = 0
-            params.append((0, f"{i}_integration"))
+        j = f"{i}_integration"
+        if (k:=settings[j]) not in ["0", "1"]:
+            app.config[j.upper()] = 0
+            params.append((0, j))
+        else:
+            k = int(k)
+            app.config[j.upper()] = k
 
-    mu_integration = settings["mu_integration"]
-    if is_int(mu_integration):
-        mu_integration = int(mu_integration)
-    else:
-        mu_integration = 0
-        params.append((0, "mu_integration"))
-    if mu_integration:
+    # MU INTEGRATION
+    if app.config["MU_INTEGRATION"]:
         l = ("plan_to_read", "reading", "completed", "one-shots", "dropped", "on_hold", "ongoing")
         s = ["mu_username", "mu_password"]
         s.extend([f"mu_list_{i}" for i in l])
@@ -123,16 +123,9 @@ def get_settings(app):
             app.config["MU_INTEGRATION"] = 0
             params.append((0, "mu_integration"))
             app.logger.warning("You must provide both mu_username and mu_password to use mu_integration")
-    else:
-        app.config["MU_INTEGRATION"] = 0
 
-    dex_integration = settings["dex_integration"]
-    if is_int(dex_integration):
-        dex_integration = int(dex_integration)
-    else:
-        dex_integration = 0
-        params.append((0, "dex_integration"))
-    if dex_integration:
+    # DEX INTEGRATION
+    if app.config["DEX_INTEGRATION"]:
         s = ["dex_username", "dex_password", "dex_client_id", "dex_secret", "dex_integration_forced"]
         if all(settings.get(i) for i in s):
             app.config["DEX_INTEGRATION"] = 1
@@ -143,16 +136,8 @@ def get_settings(app):
             params.append((0, "dex_integration"))
             app.logger.warning(
                 "You must provide dex_username, dex_password, dex_client_id, dex_secret and dex_integration_forced to use dex_integration")
-    else:
-        app.config["DEX_INTEGRATION"] = 0
 
-    mal_integration = settings["mal_integration"]
-    if is_int(mal_integration):
-        mal_integration = int(mal_integration)
-    else:
-        mal_integration = 0
-        params.append((0, "mal_integration"))
-
+    # MAL INTEGRATION
     # Why "publicly available information" require authentication?
     # https://web.archive.org/web/20250514000339/https://myanimelist.net/forum/?topicid=1973141#:~:text=publicly%20available%20information
     f_mal = settings.get("mal_client_id")
@@ -162,14 +147,24 @@ def get_settings(app):
     else:
         app.logger.warning("You must provide a MAL Client ID to get any data from MyAnimeList.")
         app.config["MAL_CLIENT_ID"] = None
-        if mal_integration:
-            mal_integration = 0
-            params.append((None, "mal_integration"))
-
-    if mal_integration:
+        if app.config["MAL_INTEGRATION"]:
+            app.config["MAL_INTEGRATION"] = 0
+            params.append((0, "mal_integration"))
+    if app.config["MAL_INTEGRATION"]:
         app.config["MAL_INTEGRATION"] = 0  # TODO: Add mal integration
-    else:
-        app.config["MAL_INTEGRATION"] = 0
+
+    # AUTOMATION
+    for i in ["mu", "dex", "mal"]:
+        j = f"{i}_automation"
+        if (k:=settings[j]) not in ["0", "1"]:
+            app.config[j.upper()] = 0
+            params.append((0, j))
+        elif not app.config[f"{i.upper()}_INTEGRATION"]:
+            app.config[j.upper()] = 0
+        else:
+            k = int(k)
+            app.config[j.upper()] = k
+
 
     if params:
         cursor.executemany("UPDATE settings SET value = ? WHERE key = ? ", params)

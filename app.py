@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request
 from views.api import api_bp
 from views.misc import misc_bp
 from utils.settings import first_run, get_settings, update_settings
+from utils.scheduler import init_scheduler
 import logging
 import os
 
@@ -28,6 +29,7 @@ if not os.path.isfile("data/mml.sqlite3"):
     first_run()
 
 get_settings(app)
+init_scheduler(app)
 
 # Blueprints
 app.register_blueprint(api_bp)
