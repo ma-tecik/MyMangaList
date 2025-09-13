@@ -3,7 +3,7 @@ from typing import List, Tuple
 
 def worker(genres_: List[dict], demographic: str, content_rating: str, original_language: str) -> Tuple[List[str], str, bool, List[str]]:
     language_map_0 = {"ja": "Manga", "ko": "Manhwa", "zh": "Manhua", "zh-hk": "Manhua"}
-    accepted_languages_map = {"Manga": ["ja-ro", "ja"], "Manwha": ["ko"], "Manhua": ["zh", "zh-hk"]}
+    accepted_languages_map = {"Manga": ["ja-ro", "ja"], "Manhwa": ["ko"], "Manhua": ["zh", "zh-hk"]}
     language_map_1 = {"en": "OEL", "vi": "Vietnamese", "ms": "Malaysian", "id": "Indonesian"}
     genre_map = {
         "0a39b5a1-b235-4886-a747-1d05d216532d": "Award",

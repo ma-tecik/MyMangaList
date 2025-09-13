@@ -176,8 +176,9 @@ def dex_sync_lists(lists) -> Dict[str, str]:
     try:
         conn = sqlite3.connect("data/mml.sqlite3")
         cursor = conn.cursor()
-        ids = (i for sublist in lists.values() for i in sublist)
-        cursor.executemany("SELECT id_dex, status FROM series WHERE id_dex IS NOT NULL and integration = 1", ids)
+        ids = [i for sublist in lists.values() for i in sublist]
+        query = f"SELECT id_dex, status FROM series WHERE id_dex IS NOT NULL and integration = 1 AND id_dex IN ({','.join(['?']*len(ids))})"
+        cursor.execute(query, ids)
         db = {m[0]: m[1].lower() for m in cursor.fetchall()}
 
         add_to_db = {}

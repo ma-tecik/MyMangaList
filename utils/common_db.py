@@ -160,21 +160,6 @@ def get_series_info(id_: int, cursor: sqlite3.Cursor) -> Tuple[Dict[str, Any], i
         return {"result": "KO", "error": "Internal error"}, 500
 
 
-def series_move_batch(series_ids: list, type_: str, from_: str, to: str) -> None:
-    try:
-        conn = sqlite3.connect("data/mml.sqlite3")
-        cursor = conn.cursor()
-        query = f"SELECT id_{type_} FROM series WHERE status = ? and id_{type_} = ?"
-        cursor.executemany(query, [(from_, i) for i in series_ids])
-        series_ids = [r[0] for r in cursor.fetchall()]
-        query = f"UPDATE series SET status = ? WHERE id_{type_} = ?"
-        cursor.executemany(query, [(to, i) for i in series_ids])
-        conn.commit()
-        conn.close()
-    except Exception as e:
-        app.logger.error(e)
-
-
 def update_ratings(type_: str, data: List[Dict[str, Union[int, str, float]]]) -> Tuple[list, int]:
     try:
         not_exist = []
@@ -266,23 +251,43 @@ def update_user_ratings(type_: str, data: List[Dict[str, Union[int, str, float]]
         return False
 
 
-def add_series_data(id_:int, data:Dict[str, Any], cursor: sqlite3.Cursor) ->bool:
+def add_series_data(id_: int, data: Dict[str, Any], cursor: sqlite3.Cursor) -> bool:
     try:
-        _, s = download_thumbnail(id_, data["thumbnail"], cursor)
-        if s != 201:
-            return False
-        authors = []
+        download_thumbnail(id_, data["thumbnail"], cursor)
+        authors_ = []
         for author in data["authors"]:
             p, s = get_author_id(author, cursor)
             if s != 200:
                 return False
-            authors.append({"id": p[0], "type": author["type"]})
-            cursor.executemany(
-                "INSERT INTO series_authors (series_id, author_id, author_type) VALUES (?, ?, ?)",
-                [(id_, a["id"], a["type"]) for a in authors])
+            authors_.append({"id": p[0], "type": author["type"]})
+
+        authors = {}
+        for author in authors_:
+            a_id = author["id"]
+            a_type = author["type"]
+            if a_id not in authors:
+                authors[a_id] = a_type
+            else:
+                if a_type == "Both":
+                    authors[a_id] = "Both"
+                elif {authors[a_id], a_type} == {"Author", "Artist"}:
+                    authors[a_id] = "Both"
+        cursor.executemany("INSERT INTO series_authors (series_id, author_id, author_type) VALUES (?, ?, ?)",
+                           [(id_, a, t) for a, t in authors.items()])
         add_genres(id_, data.get("genres"), cursor)
         cursor.executemany("INSERT INTO series_titles (series_id, alt_title) VALUES (?, ?)",
                            [(id_, title) for title in data["alt_titles"]])
+
+        for i in ("mu", "dex", "mal"):
+            if data.get("timestamp", {}).get(i):
+                cursor.execute(f"UPDATE series SET timestamp_{i} = ? WHERE id = ?", (data["timestamp"][i], id_))
+                break
+        else:
+            for i in ("mu", "dex", "mal"):
+                if i in data["ids"]:
+                    cursor.execute(f"UPDATE series SET timestamp_{i} = 1 WHERE id = ?", (id_,))
+                    break
+
         return True
     except Exception as e:
         app.logger.error(e)

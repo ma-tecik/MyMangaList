@@ -3,7 +3,7 @@ from utils.common_code import base36
 from utils.mangaupdates_integration import mu_get_data_for_all, mu_update_ratings, mu_update_ongoing, mu_sync_lists, \
     mu_update_series
 from utils.mangadex_integration import dex_start, dex_update_ratings, dex_sync_lists, dex_sync_lists_forced
-import sqlite3
+from time import sleep
 
 integration_bp = Blueprint("api_integration", __name__, url_prefix="/integration")
 integration_mu = Blueprint("api_integration_mu", __name__, url_prefix="/mu")
@@ -36,6 +36,9 @@ def mu_ongoing():
         if not app.config["MU_INTEGRATION"]:
             return jsonify({"error": "MU_INTEGRATION is disabled"}), 400
         s = mu_update_ongoing()
+        if s == 2:
+            sleep(5)
+            mu_lists()
         if s:
             return "", 204
     except Exception as e:

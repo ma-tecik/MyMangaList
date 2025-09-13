@@ -112,13 +112,15 @@ def get_settings(app):
 
     # MU INTEGRATION
     if app.config["MU_INTEGRATION"]:
-        l = ("plan_to_read", "reading", "completed", "one-shots", "dropped", "on_hold", "ongoing")
-        s = ["mu_username", "mu_password"]
-        s.extend([f"mu_list_{i}" for i in l])
-        if all(settings.get(i) for i in s):
+        l = ("plan_to_read", "reading", "completed", "one-shot", "dropped", "on_hold", "ongoing")
+        l = tuple(f"mu_list_{i}" for i in l)
+        s = ("mu_username", "mu_password")
+        if all(settings.get(i) for i in s) and all(is_int(settings.get(i)) for i in l):
             app.config["MU_INTEGRATION"] = "yes"
             for i in s:
                 app.config[i.upper()] = settings[i]
+            for i in l:
+                app.config[i.upper()] = int(settings[i])
         else:
             app.config["MU_INTEGRATION"] = 0
             params.append((0, "mu_integration"))

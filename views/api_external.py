@@ -1,7 +1,8 @@
 from flask import Blueprint, jsonify, request, current_app as app
 import sqlite3
-from utils.external import series_data_external, update_ratings
+from utils.external import series_data_external
 from utils.common_code import valid_ids
+from utils.common_db import update_ratings
 from typing import Tuple
 
 api_external_bp = Blueprint("api_external", __name__, url_prefix="/external")
