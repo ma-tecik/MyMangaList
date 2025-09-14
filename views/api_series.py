@@ -8,8 +8,8 @@ from typing import List, Tuple
 api_series_bp = Blueprint("api_series", __name__, url_prefix="/series")
 
 allowed_statuses = ["Plan_to_read", "Reading", "Completed", "One-shot", "Dropped", "On_hold", "Ongoing"]
-allowed_types = ["Manga", "Manhwa", "Manhua", "OEL", "Vietnamese", "Malaysian", "Indonesian",
-                 "Novel", "Artbook", "Other"]
+allowed_types = ["all", "Manga", "Manhwa", "Manhua", "OEL", "Vietnamese", "Malaysian", "Indonesian",
+                 "Novel", "Artbook", "Other", "minor"]
 
 
 def _valid_status(status: str) -> bool:
@@ -80,7 +80,7 @@ def get_series_list() -> Tuple[jsonify, int]:
         else:
             from_clause += f"LEFT JOIN series_ratings_{sr} sr ON sr.id_{sr} = s.id_{sr} "
             select_clause += ", COALESCE(sr.rating, 0) AS rating"
-            if sort_by == "name":
+            if sort_by == "title":
                 order_clause = "ORDER BY s.title ASC "
             elif sort_by == "time":
                 order_clause = "ORDER BY s.timestamp_status ASC "
@@ -95,8 +95,13 @@ def get_series_list() -> Tuple[jsonify, int]:
             params.append(status)
 
         if type_ != "all":
-            where_conditions.append("s.type = ?")
-            params.append(type_)
+            if type_ == "minor":
+                where_conditions.append(
+                    "s.type = ? OR s.type = ? OR s.type = ? OR s.type = ? OR s.type = ? OR s.type = ? OR s.type = ?")
+                params.extend(["OEL", "Vietnamese", "Malaysian", "Indonesian", "Novel", "Artbook", "Other"])
+            else:
+                where_conditions.append("s.type = ?")
+                params.append(type_)
 
         if genres_included:
             subquery = """

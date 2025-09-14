@@ -124,7 +124,7 @@ paths:
               - rating-mu
               - rating-dex
               - rating-mal
-              - name
+              - title
               - time
             default: rating-mu
       responses:
@@ -1321,6 +1321,7 @@ components:
       type: string
       description: Series type
       enum:
+        - all
         - Manga
         - Manhwa
         - Manhua
@@ -1331,6 +1332,7 @@ components:
         - Novel
         - Artbook
         - Other
+        - minor
     Status:
       type: string
       description: Reading status
@@ -1628,3 +1630,4 @@ components:
                     type: integer
                   as_both:
                     type: integer
+

@@ -6,10 +6,11 @@ site_bp = Blueprint("site", __name__)
 @site_bp.route("/")
 def index():
     try:
-        return render_template("index.html") # TODO: May be change
+        return render_template("index.html")  # TODO: May be change
     except Exception as e:
         app.logger.error(f"Error in list_plan_to: {e}")
         return "Internal Server Error", 500
+
 
 @site_bp.route("/series/<status>")
 def list_plan_to(status):
@@ -29,11 +30,6 @@ def list_plan_to(status):
     except Exception as e:
         app.logger.error(f"Error in list_plan_to: {e}")
         return "Internal Server Error", 500
-
-
-@site_bp.route("/list/reading")
-def list_reading():
-    return render_template("list.html", page_title="Reading")
 
 
 @site_bp.route("/api", methods=["GET"])
