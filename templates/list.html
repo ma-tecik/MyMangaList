@@ -7,12 +7,25 @@
 {% block content %}
     <div class="filter-menu hidden" id="filterMenu">
         <div class="filter-menu__types">
-            <button class="type-button" data-type="all" onclick="selectType(this)">🌐</button>
+            <button class="type-button active" data-type="all" onclick="selectType(this)">🌐</button>
             <button class="type-button" data-type="manga" onclick="selectType(this)">🇯🇵</button>
             <button class="type-button" data-type="manhwa" onclick="selectType(this)">🇰🇷</button>
             <button class="type-button" data-type="manhua" onclick="selectType(this)">🇨🇳</button>
             <button class="type-button" data-type="minor" onclick="selectType(this)">🏳</button>
         </div>
+
+        <div class="sort-menu">
+            <label for="sortSelect">Sort by:</label>
+            <select class="sort-select" id="sortSelect" onchange="applySorting()">
+                <option value="">Default</option>
+                <option value="rating-mu">Rating (MU)</option>
+                <option value="rating-dex">Rating (Dex)</option>
+                <option value="rating-mal">Rating (MAL)</option>
+                <option value="title">Title</option>
+                <option value="time">Time</option>
+            </select>
+        </div>
+
         <div class="filter-menu__filters">
             <button class="genre-button" data-genre="Josei" onclick="toggleFilter(this)">Josei</button>
             <button class="genre-button" data-genre="Shoujo" onclick="toggleFilter(this)">Shoujo</button>
@@ -38,9 +51,10 @@
             <button class="genre-button" data-filter="Con. Marr.,Arranged Marr." onclick="toggleFilter(this)">Fake Marriage</button>
             <button class="genre-button" data-filter="Incest" onclick="toggleFilter(this)">inc.</button>
             <button class="genre-button" data-filter="Harem, Reverse Harem" onclick="toggleFilter(this)">Harem</button>
-            <button class="genre-button" data-filter="nsfw" onclick="toggleFilter(this)">NSFW</button>
-            <input class="genre-input" type="text" id="genreInput" onload="applyFilters()"
-                   placeholder="genre1, genre2, -genre3" onkeyup="applyFilters()">
+            <button class="genre-button excluded" data-filter="nsfw" onclick="toggleFilter(this)">NSFW</button>
+            <label for="genreInput" class="genre-input-label">Custom genres:</label>
+            <input class="genre-input" type="text" id="genreInput"
+                   placeholder="genre1, genre2, -genre3" onkeyup="handleGenreInput(event)">
         </div>
         <div class="filter-menu__actions">
             <button onclick="applyFilters()">Apply Filters</button>
@@ -50,10 +64,11 @@
     <main class="main-content" id="mainContent">
         <div class="table-container">
             <h2>{{ page_title }} List</h2>
+            <div id="loadingSpinner" class="loading-spinner hidden">Loading...</div>
             <table class="series-table" id="seriesTable">
                 <thead>
                 <tr>
-                    <th style="width: 110px;">Thumbnail</th>
+                    <th style="width: 150px;">Thumbnail</th>
                     <th>Titles & Rating & Links</th>
                     <th>Genres</th>
                     <th>Description</th>
@@ -61,7 +76,7 @@
                 </tr>
                 </thead>
                 <tbody id="seriesTableBody">
-                <!-- TODO: handle data -->
+                <!-- Data will be loaded here -->
                 </tbody>
             </table>
         </div>
@@ -69,6 +84,7 @@
 {% endblock %}
 
 {% block script %}
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="/static/series.js"></script>
     <script src="/static/list.js"></script>
 {% endblock %}
