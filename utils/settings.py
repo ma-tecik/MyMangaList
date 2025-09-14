@@ -1,5 +1,25 @@
 import sqlite3
-from idlelib.configdialog import is_int
+
+
+def _is_int(value):
+    try:
+        int(value)
+        return True
+    except (TypeError, ValueError):
+        return False
+
+
+def _is_mal_id_valid(mal_id: str) -> None | str:
+    if not mal_id:
+        return None
+    import requests
+    try:
+        response = requests.get("https://api.myanimelist.net/v2/forum/boards", headers={"X-MAL-CLIENT-ID": mal_id})
+        if response.status_code == 200:
+            return mal_id
+    except Exception:
+        pass
+    return None
 
 
 def first_run():
@@ -63,19 +83,6 @@ def iso_langs() -> list:
     return iso639_1
 
 
-def is_mal_id_valid(mal_id: str) -> bool:
-    if not mal_id:
-        return False
-    import requests
-    try:
-        response = requests.get("https://api.myanimelist.net/v2/forum/boards", headers={"X-MAL-CLIENT-ID": mal_id})
-        if response.status_code == 200:
-            return True
-    except Exception:
-        pass
-    return False
-
-
 def get_settings(app):
     conn = sqlite3.connect("data/mml.sqlite3")
     cursor = conn.cursor()
@@ -103,7 +110,7 @@ def get_settings(app):
     # INTEGRATION BASE
     for i in ["mu", "dex", "mal"]:
         j = f"{i}_integration"
-        if (k:=settings[j]) not in ["0", "1"]:
+        if (k := settings[j]) not in ["0", "1"]:
             app.config[j.upper()] = 0
             params.append((0, j))
         else:
@@ -113,9 +120,9 @@ def get_settings(app):
     # MU INTEGRATION
     if app.config["MU_INTEGRATION"]:
         l = ("plan_to_read", "reading", "completed", "one-shot", "dropped", "on_hold", "ongoing")
-        l = tuple(f"mu_list_{i}" for i in l)
+        l = [f"mu_list_{i}" for i in l]
         s = ("mu_username", "mu_password")
-        if all(settings.get(i) for i in s) and all(is_int(settings.get(i)) for i in l):
+        if all(settings.get(i) for i in s) and all(_is_int(settings.get(i)) for i in l):
             app.config["MU_INTEGRATION"] = "yes"
             for i in s:
                 app.config[i.upper()] = settings[i]
@@ -140,15 +147,11 @@ def get_settings(app):
                 "You must provide dex_username, dex_password, dex_client_id, dex_secret and dex_integration_forced to use dex_integration")
 
     # MAL INTEGRATION
-    # Why "publicly available information" require authentication?
+    # Why "publicly available information" require authentication? F MAL
     # https://web.archive.org/web/20250514000339/https://myanimelist.net/forum/?topicid=1973141#:~:text=publicly%20available%20information
-    f_mal = settings.get("mal_client_id")
-    s = is_mal_id_valid(f_mal) if f_mal else False
-    if s:
-        app.config["MAL_CLIENT_ID"] = f_mal
-    else:
+    app.config["MAL_CLIENT_ID"] = _is_mal_id_valid(settings.get("mal_client_id"))
+    if not app.config["MAL_CLIENT_ID"]:
         app.logger.warning("You must provide a MAL Client ID to get any data from MyAnimeList.")
-        app.config["MAL_CLIENT_ID"] = None
         if app.config["MAL_INTEGRATION"]:
             app.config["MAL_INTEGRATION"] = 0
             params.append((0, "mal_integration"))
@@ -158,7 +161,7 @@ def get_settings(app):
     # AUTOMATION
     for i in ["mu", "dex", "mal"]:
         j = f"{i}_automation"
-        if (k:=settings[j]) not in ["0", "1"]:
+        if (k := settings[j]) not in ["0", "1"]:
             app.config[j.upper()] = 0
             params.append((0, j))
         elif not app.config[f"{i.upper()}_INTEGRATION"]:
@@ -167,14 +170,14 @@ def get_settings(app):
             k = int(k)
             app.config[j.upper()] = k
 
-
     if params:
         cursor.executemany("UPDATE settings SET value = ? WHERE key = ? ", params)
         conn.commit()
     conn.close()
 
 
-def update_settings(data, app):
+def update_settings(data):
+    from flask import current_app as app
     conn = sqlite3.connect("data/mml.sqlite3")
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM settings")

@@ -14,6 +14,7 @@ INSERT OR IGNORE INTO genres (genre) VALUES
 ('Mature'),
 ('Ecchi'),
 ('Doujinshi'),
+('One-shot'),
 ('4-Koma'),
 ('Anthology'),
 ('Harlequin'),

@@ -1,11 +1,12 @@
 from typing import List, Tuple
 
 
-def worker(genres_: List[dict], demographic: str, content_rating: str, original_language: str) -> Tuple[List[str], str, bool, List[str]]:
+def worker(genres_: List[dict], demographic: str, content_rating: str, original_language: str) -> Tuple[List[str], str, List[str]]:
     language_map_0 = {"ja": "Manga", "ko": "Manhwa", "zh": "Manhua", "zh-hk": "Manhua"}
     accepted_languages_map = {"Manga": ["ja-ro", "ja"], "Manhwa": ["ko"], "Manhua": ["zh", "zh-hk"]}
     language_map_1 = {"en": "OEL", "vi": "Vietnamese", "ms": "Malaysian", "id": "Indonesian"}
     genre_map = {
+        "0234a31e-a729-4e28-9d6a-3f87c4966b9e": "One-shot",
         "0a39b5a1-b235-4886-a747-1d05d216532d": "Award",
         "256c8bd9-4904-4360-bf4f-508a76d67183": "Sci-fi",
         "292e862b-2d17-4062-90a2-0356caa4ae27": "Time Rewind",
@@ -48,7 +49,6 @@ def worker(genres_: List[dict], demographic: str, content_rating: str, original_
     accepted_languages = []
     genres = []
     type_ = "Other"
-    os_a = False
 
     if demographic:
         genres.append(demographic.capitalize())
@@ -57,9 +57,7 @@ def worker(genres_: List[dict], demographic: str, content_rating: str, original_
         genres.append("Hentai")
 
     for i in genres_:
-        if (genre_id := i["id"]) == "0234a31e-a729-4e28-9d6a-3f87c4966b9e": # Oneshot
-            os_a = True
-        elif genre_id in genre_map_1:
+        if (genre_id := i["id"]) in genre_map_1:
             if genre_map_1[genre_id] in genres:
                 continue
             genres.append(genre_map_1[genre_id])
@@ -75,4 +73,4 @@ def worker(genres_: List[dict], demographic: str, content_rating: str, original_
     else:
         accepted_languages.extend(original_language)
 
-    return genres, type_, os_a, accepted_languages
+    return genres, type_, accepted_languages

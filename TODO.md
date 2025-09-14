@@ -1,0 +1,5 @@
+- MAL integration will be implemented.  
+- Syncing user ratings with external services (MU and DEX for now) will be added.
+- More integrations with external services (AniList, Kitsu, etc.) will be considered.
+- More integration options will be considered.
+- Some short of thing will be added for /integration/dex/sync-lists endpoint if "DEX_INTEGRATION_FORCED" is disabled.

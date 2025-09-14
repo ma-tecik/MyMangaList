@@ -21,7 +21,6 @@ def series(id_mal: int) -> Tuple[Dict[str, Any], int]:
         return {}, 500
 
     data = response.json()
-    os_a = False
 
     alt_titles = data.get("alternative_titles", {}).get("synonyms", [])
     for lang in ["en", "ja"]:
@@ -43,7 +42,7 @@ def series(id_mal: int) -> Tuple[Dict[str, Any], int]:
         genres.append("Doujinshi")
     elif type_ == "one_shot":
         type_ = "Manga"
-        os_a = True
+        genres.append("One-shot")
     else:
         type_ = "Other"
 
@@ -108,7 +107,6 @@ def series(id_mal: int) -> Tuple[Dict[str, Any], int]:
         "genres": genres,
         "year": data.get("start_date", "")[:4],
         "authors": authors,
-        "os_a": os_a,
         "thumbnail": data.get("main_picture", {}).get("medium"),
         "timestamp": {"mal": timestamp},
     }

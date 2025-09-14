@@ -1,7 +1,8 @@
-from flask import Flask, jsonify, request
+from flask import Flask
 from views.api import api_bp
+from views.site import site_bp
 from views.misc import misc_bp
-from utils.settings import first_run, get_settings, update_settings
+from utils.settings import first_run, get_settings
 from utils.scheduler import init_scheduler
 import logging
 import os
@@ -33,17 +34,5 @@ init_scheduler(app)
 
 # Blueprints
 app.register_blueprint(api_bp)
+app.register_blueprint(site_bp)
 app.register_blueprint(misc_bp)
-
-
-@app.route("/api/v1/settings", methods=["PUT"])
-def api_update_settings():
-    try:
-        data = request.get_json()
-        if not data:
-            return jsonify({"result": "KO", "error": "Missing data"}), 400
-        update_settings(data, app)
-        return "", 204
-    except Exception as e:
-        app.logger.error(e)
-        return jsonify({"result": "KO", "error": "Internal error"}), 500

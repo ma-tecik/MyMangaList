@@ -1,9 +1,10 @@
-from flask import Blueprint, jsonify, current_app as app
+from flask import Blueprint, jsonify, request, current_app as app
 from views.api_external import api_external_bp
 from views.api_series import api_series_bp
 from views.api_authors import api_authors_bp
 from views.api_h import api_h_bp
 from views.api_integration import integration_bp
+from utils.settings import update_settings
 import sqlite3
 
 # Blueprints
@@ -45,7 +46,7 @@ def status():
             data["series_by_status"][i.lower()] = cursor.fetchone()[0]
 
         for i in ("Manga", "Manhwa", "Manhua", "OEL", "Vietnamese", "Malaysian", "Indonesian",
-            "Novel", "Artbook", "Other"):
+                  "Novel", "Artbook", "Other"):
             cursor.execute("SELECT COUNT(*) FROM series WHERE type = ?", (i,))
             data["series_by_type"][i.lower()] = cursor.fetchone()[0]
 
@@ -68,6 +69,7 @@ def status():
         app.logger.error(e)
         return jsonify({"result": "KO", "error": "Internal error"}), 500
 
+
 @api_bp.route("/settings", methods=["GET"])
 def get_settings():
     try:
@@ -87,6 +89,19 @@ def get_settings():
         }
         conn.close()
         return jsonify({"result": "OK", "data": data}), 200
+    except Exception as e:
+        app.logger.error(e)
+        return jsonify({"result": "KO", "error": "Internal error"}), 500
+
+
+@api_bp.route("/settings", methods=["PUT"])
+def api_update_settings():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"result": "KO", "error": "Missing data"}), 400
+        update_settings(data)
+        return "", 204
     except Exception as e:
         app.logger.error(e)
         return jsonify({"result": "KO", "error": "Internal error"}), 500

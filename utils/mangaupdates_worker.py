@@ -2,8 +2,8 @@ def worker(genres, data):
     valid_categories = [entry.get("category") for entry in data if
                         entry.get("votes_minus", 0) <= entry.get("votes_plus", 0)]
     genre_map = {
-        "Anthology": ["Anthology", "Collection of Stories", "Oneshot", "Promotional Oneshot", "Short Story",
-                       "Promotional Short Series"],
+        "Anthology": ["Anthology", "Collection of Stories", "Short Story", "Promotional Short Series"],
+        "One-shot": ["Oneshot", "Promotional Oneshot"],
         "Cancelled": ["Axed/Cancelled/Discontinued", "Incomplete Due to Author/Artist Death"],
         "Rushed": ["Rushed Ending / Not Axed"],
         "Webtoon": ["Full Color", "Manga with Webtoon Version", "Webtoon"],
@@ -78,6 +78,8 @@ def worker(genres, data):
             "High School", "Middle School", "Prestigious School", "Private School", "School",
             "School Club/s", "University/College"
         ]
+    if "Doujinshi" not in genres:
+        genre_map["Doujinshi"] = ["Original Doujinshi"]
 
     for genre, categories in genre_map.items():
         if any(entry in categories for entry in valid_categories):

@@ -42,8 +42,8 @@ paths:
       operationId: getPing
       summary: Ping healthcheck
       description: Returns a plaintext response containing only the word 'pong' if the API is healthy.
-      tags:
-        - Misc
+      tags: [Misc]
+      security: []
       responses:
         '200':
           description: Pong
@@ -59,6 +59,7 @@ paths:
       summary: Retrieve series list
       description: Returns a list of series with optional filters for status, type, and tags.
       tags: [Series]
+      security: []
       parameters:
         - name: page
           in: query
@@ -150,6 +151,7 @@ paths:
       summary: Add a series entry
       description: Adds a new series to your manga list.
       tags: [Series]
+      security: []
       requestBody:
         required: true
         content:
@@ -208,6 +210,7 @@ paths:
       summary: Get a series by series_id
       description: Returns series details for a given series_id.
       tags: [Series]
+      security: []
       parameters:
         - name: id
           in: path
@@ -244,8 +247,8 @@ paths:
       operationId: deleteSeries
       summary: Delete a series by series_id
       description: Deletes a series for given series_id.
-      tags:
-        - Series
+      tags: [Series]
+      security: []
       parameters:
         - name: id
           in: path
@@ -290,8 +293,8 @@ paths:
       description: |-
         Updates a series by given series_id  
         Note: All provided fields will be overwritten. External IDs are merged; titles, alt_titles and genres are fully replaced.
-      tags:
-        - Series
+      tags: [Series]
+      security: []
       parameters:
         - name: id
           in: path
@@ -359,6 +362,7 @@ paths:
       summary: Update series ratings and vote counts
       description: Updates/overwrites ratings and vote counts of given series
       tags: [Series]
+      security: []
       parameters:
         - name: id
           in: path
@@ -430,6 +434,7 @@ paths:
       summary: Update a list of series' ratings and vote counts
       description: Updates/adds/overwrites or skips (if series not exist in db) ratings and vote counts of given list of series
       tags: [Series]
+      security: []
       requestBody:
         required: true
         content:
@@ -503,6 +508,7 @@ paths:
       summary: Get the series_id of a series by external IDs
       description: Returns the series_id of a series based on given one or more MU, Dex, MAL, Bato, line IDs.
       tags: [Series]
+      security: []
       parameters:
         - name: mu
           in: query
@@ -568,6 +574,7 @@ paths:
       summary: Get the series details from external sources
       description: Retrieves and returns series details from external sources based on given one or more MU, Dex, MAL, Bato, or line IDs.
       tags: [Series]
+      security: []
       parameters:
         - name: mu
           in: query
@@ -633,6 +640,7 @@ paths:
       summary: Retrieve authors list
       description: Returns the list of authors in the DB with the count of their series.
       tags: [Authors]
+      security: []
       parameters:
         - name: page
           in: query
@@ -681,6 +689,7 @@ paths:
         Adds an author with only name.
         Note: Use this endpoint for only authors of Bato and Line series.
       tags: [Authors]
+      security: []
       requestBody:
         required: true
         content:
@@ -717,6 +726,7 @@ paths:
       summary: Search authors by name
       description: Returns authors matching the given name.
       tags: [Authors]
+      security: []
       parameters:
         - name: name
           in: query
@@ -766,6 +776,7 @@ paths:
       summary: Get an author by author_id
       description: Returns author's details for the given author_id.
       tags: [Authors]
+      security: []
       parameters:
         - name: id
           in: path
@@ -799,6 +810,7 @@ paths:
         Updates an author by given author_id  
         Note: IDs will be merged, name will be overwritten
       tags: [Authors]
+      security: []
       parameters:
         - name: id
           in: path
@@ -845,6 +857,7 @@ paths:
         Merges 2 or more authors by the given author_ids.
         Note: External IDs will be merged; the smallest internal ID will be kept, and the author's name of the kept record will remain.
       tags: [Authors]
+      security: []
       parameters:
         - name: ids
           in: query
@@ -894,6 +907,7 @@ paths:
       summary: Add a hentai
       description: Adds a hentai
       tags: [H]
+      security: []
       parameters:
         - name: id
           in: query
@@ -913,6 +927,7 @@ paths:
       summary: Delete a hentai
       description: Deletes a hentai
       tags: [H]
+      security: []
       parameters:
         - name: id
           in: query
@@ -934,6 +949,7 @@ paths:
       summary: Check if a hentai is in DB
       description: Checks if a hentai is in the database.
       tags: [H]
+      security: []
       parameters:
         - name: id
           in: path
@@ -955,6 +971,7 @@ paths:
       summary: Check if a hentai is in DB
       description: Checks if a hentai is in the database.
       tags: [H]
+      security: []
       parameters:
         - name: id
           in: path
@@ -982,6 +999,7 @@ paths:
       summary: Your reading status
       description: Returns your reading status.
       tags: [Misc]
+      security: []
       responses:
         '200':
           description: Your reading status
@@ -1055,6 +1073,7 @@ paths:
       summary: Retrieve settings
       description: Returns settings
       tags: [Misc]
+      security: []
       responses:
         '200':
           description: Settings
@@ -1073,6 +1092,7 @@ paths:
       summary: Update settings
       description: Updates settings
       tags: [Misc]
+      security: []
       requestBody:
         required: true
         content:
@@ -1106,6 +1126,7 @@ paths:
         - sync-lists: Sync lists. Works based on the latest changes (Thanks MU for "time_added" timestamp)
         - update-series: Updates series data.
       tags: [Integration]
+      security: []
       parameters:
         - name: job
           in: path
@@ -1142,6 +1163,7 @@ paths:
         - update-ratings: Updates ratings in the DB from MangaDex, both avarage and user ratings.
         - sync-lists: Sync lists. If "DEX_INTEGRATION_FORCED" is disabled practically does nothing.
       tags: [Integration]
+      security: []
       parameters:
         - name: job
           in: path

@@ -90,7 +90,7 @@ def series(id_bato: int) -> Tuple[Dict[str, str], int]:
         authors.append({"name": i, "type": "artist"})
     authors = author_type_merger(authors)
 
-    genres, type_, os_a, accepted_languages = worker(genres_, original_language)
+    genres, type_, accepted_languages = worker(genres_, original_language)
     accepted_languages.extend(app.config["TITLE_LANGUAGES"])
 
     alt_titles = []
@@ -133,7 +133,6 @@ def series(id_bato: int) -> Tuple[Dict[str, str], int]:
         "is_md": False,
         "genres": genres,
         "authors": authors,
-        "os_a": os_a,
         "thumbnail": thumbnail,
     }, 200
 

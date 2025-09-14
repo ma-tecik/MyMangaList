@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}MML{% endblock %}</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<nav class="navbar">
+    <a href="/plan-to" id="planTo">🦚</a>
+    <a href="/reading" id="reading">📖</a>
+    <a href="/completed" id="completed">✅</a>
+    <a href="/one-shots" id="oneShots">☑️</a>
+    <a href="/on-hold" id="onHold">⏸️</a>
+    <a href="/dropped" id="dropped">⏹️</a>
+    <a href="/ongoing" id="ongoing">▶️</a>
+    {% block main_menu %}{% endblock %}
+    <a href="/integrations">🔗</a>
+    <a href="/settings">⚙️</a>
+</nav>
+{% block content %}{% endblock %}
+<script src="/static/script.js"></script>
+{% block script %}{% endblock %}
+</body>
+</html>

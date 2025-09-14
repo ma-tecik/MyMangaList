@@ -89,6 +89,8 @@ def series(id_mu36: str) -> Tuple[Dict[str, Any], int]:
         if confidence and lang in accepted_languages:
             alt_titles.append(name)
 
+    # Author ID of Anthology = 6713743855
+    anthology = False
     authors = []
     for author in data["authors"]:
         a_id = author.get("author_id") or 0
@@ -98,15 +100,18 @@ def series(id_mu36: str) -> Tuple[Dict[str, Any], int]:
             "type": author.get('type')
         }
         authors.append(author_info)
+        if not anthology and a_id == "6713743855":
+            anthology = True
     authors = author_type_merger(authors)
 
     genres = worker([i['genre'] for i in data['genres']], data["categories"])
 
-    os_a = False
-    # Author ID of Anthology = 6713743855 (3316twv)
-    if ("Os Coll." in genres or data.get("type") == "Doujinshi" or
-            any(author_.get("author_id") == "3316twv" for author_ in authors)):
-        os_a = True
+    if anthology and "Anthology" not in genres:
+        genres.append("Anthology")
+
+    vol_ch = data.get("status", "")
+    if "One-shot" not in genres and vol_ch == "Oneshot (Complete)":
+        genres.append("One-shot")
 
     ids: Dict[str, Any] = {'mu': id_mu36}
     if id_line := _extract_line_id(data["title"]):
@@ -118,12 +123,11 @@ def series(id_mu36: str) -> Tuple[Dict[str, Any], int]:
         "alt_titles": alt_titles,
         "type": type_,
         "description": data["description"],
-        "vol_ch": data["status"],
+        "vol_ch": vol_ch,
         "is_md": True,
         "genres": genres,
         "year": data["year"],
         "authors": authors,
-        "os_a": os_a,
         "thumbnail": data["image"]["url"]["original"],
         "timestamp": {"mu": data["last_updated"]["timestamp"], }
     }

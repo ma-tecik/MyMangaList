@@ -44,7 +44,7 @@ def series(id_dex: str) -> Tuple[Dict[str, Any], int]:
             cover_filename = i["attributes"]["fileName"]
     authors = author_type_merger(authors)
 
-    genres, type_, os_a, accepted_languages = worker(data["attributes"].get("tags", []),
+    genres, type_, accepted_languages = worker(data["attributes"].get("tags", []),
                                                      data["attributes"]["publicationDemographic"],
                                                      data["attributes"]["contentRating"],
                                                      data["attributes"]["originalLanguage"])
@@ -74,7 +74,6 @@ def series(id_dex: str) -> Tuple[Dict[str, Any], int]:
         "genres": genres,
         "year": data["attributes"].get("year"),
         "authors": authors,
-        "os_a": os_a,
         "thumbnail": thumbnail,
         "timestamp": {"dex": timestamp},
         "dex_status": data["attributes"].get("status"),
