@@ -4,19 +4,19 @@ document.addEventListener('DOMContentLoaded', function () {
     const currentPath = window.location.pathname;
     let section = '';
 
-    if (currentPath.startsWith('/plan-to')) {
+    if (currentPath.startsWith('/series/plan-to')) {
         section = 'planTo';
-    } else if (currentPath.startsWith('/reading')) {
+    } else if (currentPath.startsWith('/series/reading')) {
         section = 'reading';
-    } else if (currentPath.startsWith('/completed')) {
+    } else if (currentPath.startsWith('/series/completed')) {
         section = 'completed';
-    } else if (currentPath.startsWith('/one-shots')) {
+    } else if (currentPath.startsWith('/series/one-shots')) {
         section = 'oneShots';
-    } else if (currentPath.startsWith('/on-hold')) {
+    } else if (currentPath.startsWith('/series/on-hold')) {
         section = 'onHold';
-    } else if (currentPath.startsWith('/dropped')) {
+    } else if (currentPath.startsWith('/series/dropped')) {
         section = 'dropped';
-    } else if (currentPath.startsWith('/ongoing')) {
+    } else if (currentPath.startsWith('/series/ongoing')) {
         section = 'ongoing';
     }
 

@@ -11,7 +11,7 @@ def index():
         app.logger.error(f"Error in list_plan_to: {e}")
         return "Internal Server Error", 500
 
-@site_bp.route("/list/<status>")
+@site_bp.route("/series/<status>")
 def list_plan_to(status):
     try:
         status_map = {"plan-to": "Plan to Read",
