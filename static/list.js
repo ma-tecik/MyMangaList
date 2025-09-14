@@ -9,7 +9,10 @@ let excludedGenres = ['nsfw']; // Default excluded
 let currentPage = 1;
 
 // Initialize when page loads
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
+    // Load saved state from session storage
+    loadStateFromStorage();
+
     // Get status from URL path
     const path = window.location.pathname;
     const statusMatch = path.match(/\/series\/(.+)/);
@@ -26,6 +29,31 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load data
     loadSeriesData();
 });
+
+function loadStateFromStorage() {
+    // Load sort preference
+    const savedSort = sessionStorage.getItem('currentSort');
+    if (savedSort) {
+        currentSort = savedSort;
+    }
+
+    // Load genre preferences
+    const savedIncluded = sessionStorage.getItem('includedGenres');
+    if (savedIncluded) {
+        includedGenres = JSON.parse(savedIncluded);
+    }
+
+    const savedExcluded = sessionStorage.getItem('excludedGenres');
+    if (savedExcluded) {
+        excludedGenres = JSON.parse(savedExcluded);
+    }
+}
+
+function saveStateToStorage() {
+    sessionStorage.setItem('currentSort', currentSort);
+    sessionStorage.setItem('includedGenres', JSON.stringify(includedGenres));
+    sessionStorage.setItem('excludedGenres', JSON.stringify(excludedGenres));
+}
 
 function parseURLParams() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -49,6 +77,18 @@ function initializeUI() {
     // Set sort dropdown
     const sortSelect = document.getElementById('sortSelect');
     sortSelect.value = currentSort;
+
+    // Initialize genre button states
+    document.querySelectorAll('.genre-button').forEach(btn => {
+        const filterValue = btn.dataset.filter || btn.dataset.genre;
+        btn.classList.remove('included', 'excluded');
+
+        if (includedGenres.includes(filterValue)) {
+            btn.classList.add('included');
+        } else if (excludedGenres.includes(filterValue)) {
+            btn.classList.add('excluded');
+        }
+    });
 
     // Initialize NSFW as excluded by default
     const nsfwButton = document.querySelector('[data-filter="nsfw"]');
@@ -147,12 +187,16 @@ function parseGenreInput() {
         }
     });
 
-    return { included: tempIncluded, excluded: tempExcluded };
+    return {included: tempIncluded, excluded: tempExcluded};
 }
 
 function applySorting() {
     const sortSelect = document.getElementById('sortSelect');
     currentSort = sortSelect.value;
+
+    // Save state to session storage
+    saveStateToStorage();
+
     loadSeriesData();
 }
 
@@ -164,6 +208,9 @@ function applyFilters() {
 
     // Reset to first page
     currentPage = 1;
+
+    // Save state to session storage
+    saveStateToStorage();
 
     // Load data with filters
     loadSeriesData();
@@ -192,6 +239,9 @@ function resetFilters() {
 
     // Reset sort
     document.getElementById('sortSelect').value = '';
+
+    // Save state to session storage
+    saveStateToStorage();
 
     // Load data
     loadSeriesData();
@@ -267,7 +317,7 @@ function buildAPIURL() {
     if (currentType !== 'all') {
         // Capitalize first letter for API
         const typeForAPI = currentType === 'minor' ? 'minor' :
-                          currentType.charAt(0).toUpperCase() + currentType.slice(1);
+            currentType.charAt(0).toUpperCase() + currentType.slice(1);
         params.append('type', typeForAPI);
     }
 
@@ -337,7 +387,7 @@ function createTitleSection(series) {
         ? `<button class="alt-titles-btn" onclick="showAltTitles(${JSON.stringify(series.alt_titles).replace(/"/g, '&quot;')})">A</button>`
         : '';
 
-    const rating =`<div class="rating">★ ${series.rating}</div>`;
+    const rating = `<div class="rating">★ ${series.rating}</div>`;
 
     const externalLinks = createExternalLinks(series.ids);
 
