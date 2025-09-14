@@ -49,6 +49,3 @@ env/
 ENV/
 
 data
-
-static/*.js
-static/*.css
