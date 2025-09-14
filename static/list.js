@@ -60,6 +60,8 @@ function initializeUI() {
 function toggleFilterMenu() {
     const filterMenu = document.getElementById('filterMenu');
     filterMenu.classList.toggle('hidden');
+    const mainContent = document.getElementById('mainContent');
+    mainContent.classList.toggle('with_filter-menu');
 }
 
 function selectType(button) {
@@ -332,10 +334,10 @@ function createSeriesRow(series) {
 
 function createTitleSection(series) {
     const altTitlesBtn = series.alt_titles && series.alt_titles.length > 0
-        ? `<button class="alt-titles-btn" onclick="showAltTitles(${JSON.stringify(series.alt_titles).replace(/"/g, '&quot;')})">...</button>`
+        ? `<button class="alt-titles-btn" onclick="showAltTitles(${JSON.stringify(series.alt_titles).replace(/"/g, '&quot;')})">A</button>`
         : '';
 
-    const rating = series.rating ? `<div class="rating">★ ${series.rating.toFixed(1)}</div>` : '';
+    const rating =`<div class="rating">★ ${series.rating}</div>`;
 
     const externalLinks = createExternalLinks(series.ids);
 
@@ -411,7 +413,7 @@ function createDescription(description, isMarkdown) {
         return marked.parse(description);
     }
 
-    return description.replace(/\n/g, '<br>');
+    return description;
 }
 
 function createVolCh(volCh, isMarkdown) {
@@ -421,7 +423,7 @@ function createVolCh(volCh, isMarkdown) {
         return marked.parse(volCh);
     }
 
-    return volCh.replace(/\n/g, '<br>');
+    return volCh;
 }
 
 function showAltTitles(altTitles) {
