@@ -37,6 +37,18 @@ function loadStateFromStorage() {
         currentSort = savedSort;
     }
 
+    // Load type preference
+    const savedType = sessionStorage.getItem('currentType');
+    if (savedType) {
+        currentType = savedType;
+        // Change the URL parameter to match saved type
+        if (currentType !== 'all') {
+            const url = new URL(window.location);
+            url.searchParams.set('type', currentType);
+            window.history.replaceState({}, '', url);
+        }
+    }
+
     // Load genre preferences
     const savedIncluded = sessionStorage.getItem('includedGenres');
     if (savedIncluded) {
@@ -53,6 +65,9 @@ function saveStateToStorage() {
     sessionStorage.setItem('currentSort', currentSort);
     sessionStorage.setItem('includedGenres', JSON.stringify(includedGenres));
     sessionStorage.setItem('excludedGenres', JSON.stringify(excludedGenres));
+    if (currentType !== 'all') {
+        sessionStorage.setItem('currentType', currentType);
+    }
 }
 
 function parseURLParams() {
@@ -116,6 +131,9 @@ function selectType(button) {
     // Update current type
     currentType = button.dataset.type;
 
+    // Save state to session storage
+    saveStateToStorage();
+
     // Update URL and reload data
     updateURLAndReload();
 }
@@ -151,45 +169,6 @@ function toggleFilter(button) {
     }
 }
 
-function handleGenreInput(event) {
-    if (event.key === 'Enter') {
-        applyFilters();
-    }
-}
-
-function parseGenreInput() {
-    const input = document.getElementById('genreInput').value;
-    const genres = input.split(',').map(g => g.trim()).filter(g => g);
-
-    const tempIncluded = [...includedGenres];
-    const tempExcluded = [...excludedGenres];
-
-    genres.forEach(genre => {
-        if (genre.startsWith('-')) {
-            const cleanGenre = genre.substring(1);
-            if (!tempExcluded.includes(cleanGenre)) {
-                tempExcluded.push(cleanGenre);
-            }
-            // Remove from included if it's there
-            const index = tempIncluded.indexOf(cleanGenre);
-            if (index > -1) {
-                tempIncluded.splice(index, 1);
-            }
-        } else {
-            if (!tempIncluded.includes(genre)) {
-                tempIncluded.push(genre);
-            }
-            // Remove from excluded if it's there
-            const index = tempExcluded.indexOf(genre);
-            if (index > -1) {
-                tempExcluded.splice(index, 1);
-            }
-        }
-    });
-
-    return {included: tempIncluded, excluded: tempExcluded};
-}
-
 function applySorting() {
     const sortSelect = document.getElementById('sortSelect');
     currentSort = sortSelect.value;
@@ -201,11 +180,6 @@ function applySorting() {
 }
 
 function applyFilters() {
-    // Parse genre input and combine with button selections
-    const parsedGenres = parseGenreInput();
-    includedGenres = parsedGenres.included;
-    excludedGenres = parsedGenres.excluded;
-
     // Reset to first page
     currentPage = 1;
 
@@ -371,8 +345,7 @@ function createSeriesRow(series) {
     return `
         <tr>
             <td>
-                <img src="${thumbnailUrl}" alt="${series.title}" class="thumbnail" 
-                     onerror="this.src='/static/thumbnails/default.png'">
+                <img src="${thumbnailUrl}" alt="${series.title}" class="thumbnail">
             </td>
             <td>${titleSection}</td>
             <td>${genresList}</td>
