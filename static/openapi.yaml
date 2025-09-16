@@ -100,6 +100,7 @@ paths:
               - Other
               - minor
             default: all
+            description: "minor: includes everything except Manga, Manhwa and Manhua"
         - name: included
           in: query
           style: form
@@ -1338,12 +1339,12 @@ components:
       type: string
       description: Reading status
       enum:
-        - Plan to Read
+        - Plan_to_read
         - Reading
         - Completed
         - One-shot
         - Dropped
-        - On hold
+        - On_hold
         - Ongoing
     Timestamp:
       type: object

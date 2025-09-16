@@ -299,11 +299,11 @@ function buildAPIURL() {
 
     // Add status (required)
     const statusMap = {
-        'plan-to': 'Plan to Read',
+        'plan-to': 'Plan_to_read',
         'reading': 'Reading',
         'completed': 'Completed',
         'one-shots': 'One-shot',
-        'on-hold': 'On hold',
+        'on-hold': 'On_hold',
         'dropped': 'Dropped',
         'ongoing': 'Ongoing'
     };
