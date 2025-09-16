@@ -7,10 +7,10 @@ info:
     As a self-hosted FOSS solution, you have full control over your data and privacy. Please consider whether hosting and managing your own database fits your needs. If you wish to contribute to this project or need help, the documentation and community are here for you.
     - [Project Github Page](https://github.com/ma-tecik/MyMangaList)
     ***
-    This project relies on public APIs from MangaUpdates, Mangadex, and MyAnimeList to provide up-to-date manga information. We sincerely thank these communities and recommend users to contribute to their databases to keep the ecosystem rich and accurate. By using My Manga List API, you acknowledge and agree to the Terms of Service of these third-party platforms.
+    This project relies on public APIs from MangaUpdates, Mangadex, and (maybe) MyAnimeList to provide up-to-date manga information. We sincerely thank these communities and recommend users to contribute to their databases to keep the ecosystem rich and accurate. By using My Manga List API, you acknowledge and agree to the Terms of Service of these third-party platforms.
     - [MangaUpdates](https://www.mangaupdates.com/), [API usage Policy](https://api.mangaupdates.com/#section/Acceptable-Use-Policy)
     - [Mangadex](https://mangadex.org/), [API usage Policy](https://api.mangadex.org/docs/#acceptable-usage-policy)
-    - [MyAnimeList](https://myanimelist.net/), [API License and Developer Agreement](https://myanimelist.net/static/apiagreement.html)
+    - And if [MyAnimeList](https://myanimelist.net/) Client ID provided: [API License and Developer Agreement](https://myanimelist.net/static/apiagreement.html)
   termsOfService: https://github.com/ma-tecik/MyMangaList/ToS.md
   contact:
     name: Mehmet Akif Tecik
@@ -96,6 +96,7 @@ paths:
               - Novel
               - Artbook
               - Other
+              - minor
             default: all
         - name: included
           in: query
@@ -1321,7 +1322,6 @@ components:
       type: string
       description: Series type
       enum:
-        - all
         - Manga
         - Manhwa
         - Manhua
@@ -1332,7 +1332,6 @@ components:
         - Novel
         - Artbook
         - Other
-        - minor
     Status:
       type: string
       description: Reading status
@@ -1630,4 +1629,3 @@ components:
                     type: integer
                   as_both:
                     type: integer
-
