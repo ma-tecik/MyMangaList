@@ -34,6 +34,8 @@ tags:
     description: Operations related to hentai.
   - name: Misc
     description: Other operations
+  - name: Settings
+    description: Operations related to settings
   - name: Integration
     description: Operation related to external sites
 paths:
@@ -1073,7 +1075,7 @@ paths:
       operationId: getSettings
       summary: Retrieve settings
       description: Returns settings
-      tags: [Misc]
+      tags: [Settings]
       security: []
       responses:
         '200':
@@ -1092,7 +1094,7 @@ paths:
       operationId: updateSettings
       summary: Update settings
       description: Updates settings
-      tags: [Misc]
+      tags: [Settings]
       security: []
       requestBody:
         required: true

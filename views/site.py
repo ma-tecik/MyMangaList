@@ -35,16 +35,16 @@ def list_plan_to(status):
 @site_bp.route("/api", methods=["GET"])
 def redoc():
     try:
-        return send_from_directory("static", "redoc-static.html")
+        return send_from_directory("static", "redoc.html")
     except Exception as e:
-        app.logger.error(f"Failed to return redoc-static.html, {e}")
+        app.logger.error(f"Failed to return redoc.html, {e}")
         return "Internal Server Error", 500
 
 
 @site_bp.route("/api/openapi.yaml", methods=["GET"])
 def openapi_spec():
     try:
-        return send_from_directory("static", "redoc-static.html")
+        return send_from_directory("static", "openapi.yaml")
     except Exception as e:
         app.logger.error(f"Failed to return openapi.yaml, {e}")
         return "Internal Server Error", 500
