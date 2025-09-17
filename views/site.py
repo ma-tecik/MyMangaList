@@ -72,10 +72,19 @@ def series(status, series_id):
         return "Internal Server Error", 500
 
 
+@site_bp.route("/series/add")
+def series_add():
+    try:
+        return render_template("series-add.html")
+    except Exception as e:
+        app.logger.error(f"Failed to return series add page: {e}")
+        return "Internal Server Error", 500
+
+
 @site_bp.route("/series/merge")
 def series_merge():
     try:
-        return render_template("merge_series.html")
+        return render_template("series-merge.html")
     except Exception as e:
         app.logger.error(f"Failed to return merge authors page: {e}")
         return "Internal Server Error", 500
@@ -115,7 +124,7 @@ def author(author_id):
 @site_bp.route("/authors/add")
 def add_author():
     try:
-        return render_template("add_author.html")
+        return render_template("authors-add.html")
     except Exception as e:
         app.logger.error(f"Failed to return add author page: {e}")
         return "Internal Server Error", 500
@@ -124,7 +133,7 @@ def add_author():
 @site_bp.route("/authors/merge")
 def merge_authors():
     try:
-        return render_template("merge_authors.html")
+        return render_template("authors-merge.html")
     except Exception as e:
         app.logger.error(f"Failed to return merge authors page: {e}")
         return "Internal Server Error", 500

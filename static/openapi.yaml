@@ -320,7 +320,7 @@ paths:
                       format: uri
                     timestamp:
                       $ref: '#/components/schemas/Timestamp'
-                    integation:
+                    integration:
                       type: boolean
                       description: Whether to update series data from external sources (if enabled in settings)
                       default: True
@@ -1125,7 +1125,7 @@ paths:
       summary: Start a MangaUpdates integration job
       description: |-
         Starts a MangaUpdates integration job
-        - update-ratings: Updates ratings in the DB from MangaUpdates, both avarage and user ratings.
+        - update-ratings: Updates ratings in the DB from MangaUpdates, both average and user ratings.
         - update-ongoing: 
         - sync-lists: Sync lists. Works based on the latest changes (Thanks MU for "time_added" timestamp)
         - update-series: Updates series data.
@@ -1164,7 +1164,7 @@ paths:
       summary: Start a MangaDex integration job
       description: |-
         Starts a MangaDex integration job
-        - update-ratings: Updates ratings in the DB from MangaDex, both avarage and user ratings.
+        - update-ratings: Updates ratings in the DB from MangaDex, both average and user ratings.
         - sync-lists: Sync lists. If "DEX_INTEGRATION_FORCED" is disabled practically does nothing.
       tags: [Integration]
       security: []
@@ -1264,7 +1264,7 @@ components:
         - $ref: '#/components/schemas/SeriesData'
         - type: object
           properties:
-            integation:
+            integration:
               type: boolean
               description: Whether to update series data from external sources (if enabled in settings)
               default: True

@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% block title %}MML | Add Series {% endblock %}
+
+{% block content %}
+<main class="main-content" id="mainContent">
+    <section class="add-series-container">
+        <div class="page-header">
+            <h1>Add New Series</h1>
+            <p>Add a series to your manga list using external IDs or manual entry</p>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tab-navigation">
+            <button id="tab-external" class="tab-button active">
+                <i class="icon">🔗</i>
+                External ID
+            </button>
+            <button id="tab-manual" class="tab-button">
+                <i class="icon">✏️</i>
+                Manual Entry
+            </button>
+        </div>
+
+        <!-- External ID Tab -->
+        <div id="external-tab" class="tab-content active">
+            <div class="form-section">
+                <h3>Fetch from External Sources</h3>
+                <p class="section-description">Enter one or more external IDs to automatically fetch series information</p>
+
+                <form id="external-form" class="external-form">
+                    <div class="external-ids-grid">
+                        <div class="form-group">
+                            <label for="mu-id">
+                                <img src="/static/icons/mangaupdates.svg" alt="MU" class="provider-icon">
+                                MangaUpdates ID
+                            </label>
+                            <input type="text" id="mu-id" name="mu" placeholder="s0htgp6" pattern="[0-9a-z]{7}">
+                            <small>7-character base36 format</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="dex-id">
+                                <img src="/static/icons/mangadex.svg" alt="Dex" class="provider-icon">
+                                MangaDex ID
+                            </label>
+                            <input type="text" id="dex-id" name="dex" placeholder="b15632d7-88d0-4233-9815-c01e75cabda8">
+                            <small>UUID format</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="mal-id">
+                                <img src="/static/icons/myanimelist.ico" alt="MAL" class="provider-icon">
+                                MyAnimeList ID
+                            </label>
+                            <input type="number" id="mal-id" name="mal" placeholder="12345">
+                            <small>Numeric ID</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="bato-id">
+                                <img src="/static/icons/bato.png" alt="Bato" class="provider-icon">
+                                Bato.to ID
+                            </label>
+                            <input type="number" id="bato-id" name="bato" placeholder="12345">
+                            <small>Numeric ID</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="line-id">
+                                <img src="/static/icons/line.png" alt="Line" class="provider-icon">
+                                Line Webtoon ID
+                            </label>
+                            <input type="text" id="line-id" name="line" placeholder="o:1234 or c:123456" pattern="(o:[0-9]{4}|c:[0-9]{6})">
+                            <small>o:NNNN or c:NNNNNN format</small>
+                        </div>
+                    </div>
+
+                    <button type="button" id="fetch-data-btn" class="primary-button">
+                        <span class="button-text">Fetch Series Data</span>
+                        <span class="loading-spinner hidden"></span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Fetched Data Form -->
+            <div id="fetched-data-section" class="form-section hidden">
+                <h3>Review & Edit Fetched Data</h3>
+                <form id="fetched-data-form"></form>
+            </div>
+        </div>
+
+        <!-- Manual Entry Tab -->
+        <div id="manual-tab" class="tab-content">
+            <div class="form-section">
+                <h3>Manual Series Entry</h3>
+                <p class="section-description">Enter all series information manually</p>
+
+                <form id="manual-form" class="manual-form">
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label for="manual-title">Title *</label>
+                            <input type="text" id="manual-title" name="title" required>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label for="manual-alt-titles">Alternative Titles</label>
+                            <input type="text" id="manual-alt-titles" name="alt_titles" placeholder="Separate multiple titles with commas">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="manual-type">Type *</label>
+                            <select id="manual-type" name="type" required>
+                                <option value="">Select type...</option>
+                                <option value="Manga">Manga</option>
+                                <option value="Manhwa">Manhwa</option>
+                                <option value="Manhua">Manhua</option>
+                                <option value="OEL">OEL</option>
+                                <option value="Vietnamese">Vietnamese</option>
+                                <option value="Malaysian">Malaysian</option>
+                                <option value="Indonesian">Indonesian</option>
+                                <option value="Novel">Novel</option>
+                                <option value="Artbook">Artbook</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="manual-status">Reading Status *</label>
+                            <select id="manual-status" name="status" required>
+                                <option value="">Select status...</option>
+                                <option value="plan-to">Plan to Read</option>
+                                <option value="reading">Reading</option>
+                                <option value="completed">Completed</option>
+                                <option value="one-shot">One-shot</option>
+                                <option value="dropped">Dropped</option>
+                                <option value="on-hold">On Hold</option>
+                                <option value="ongoing">Ongoing</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="manual-year">Year</label>
+                            <input type="number" id="manual-year" name="year" min="1900" max="2030">
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label for="manual-description">Description</label>
+                            <textarea id="manual-description" name="description" rows="4"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="manual-vol-ch">Volume/Chapter Info</label>
+                            <input type="text" id="manual-vol-ch" name="vol_ch" placeholder="e.g., 10 volumes, 150 chapters">
+                        </div>
+
+                        <div class="form-group checkbox-group">
+                            <label for="manual-is-md" class="checkbox-label">
+                                <input type="checkbox" id="manual-is-md" name="is_md">
+                                <span class="checkmark"></span>
+                                Description is in Markdown format
+                            </label>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label for="manual-genres">Genres</label>
+                            <input type="text" id="manual-genres" name="genres" placeholder="Separate multiple genres with commas">
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label for="manual-authors">Authors</label>
+                            <input type="text" id="manual-authors" name="authors" placeholder="Separate multiple authors with commas">
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label for="manual-thumbnail">Thumbnail URL *</label>
+                            <input type="url" id="manual-thumbnail" name="thumbnail" required placeholder="https://example.com/image.jpg">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="primary-button">
+                        <span class="button-text">Add Series</span>
+                        <span class="loading-spinner hidden"></span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        <div id="success-message" class="message success hidden"></div>
+        <div id="error-message" class="message error hidden"></div>
+    </section>
+</main>
+{% endblock %}
+
+{% block script %}
+    <script src="/static/series-add.js"></script>
+{% endblock %}

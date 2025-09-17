@@ -430,3 +430,363 @@ body {
 .loading-spinner.hidden {
     display: none;
 }
+
+/* Add Series Page Styles */
+.add-series-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.page-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--nord6);
+    margin-bottom: 0.5rem;
+}
+
+.page-header p {
+    font-size: 1.1rem;
+    color: var(--nord4);
+    opacity: 0.8;
+}
+
+/* Tab Navigation */
+.tab-navigation {
+    display: flex;
+    background: var(--nord2);
+    border-radius: 12px;
+    padding: 6px;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.tab-button {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: none;
+    border: none;
+    border-radius: 8px;
+    color: var(--nord4);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.tab-button:hover {
+    background: var(--nord3);
+    color: var(--nord6);
+}
+
+.tab-button.active {
+    background: var(--nord10);
+    color: var(--nord6);
+    box-shadow: 0 2px 8px rgba(94, 129, 172, 0.3);
+}
+
+.tab-button .icon {
+    font-size: 1.2rem;
+}
+
+/* Tab Content */
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Form Sections */
+.form-section {
+    background: var(--nord1);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 6px 30px rgba(0, 0, 0, 0.15);
+}
+
+.form-section h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--nord6);
+    margin-bottom: 0.5rem;
+}
+
+.section-description {
+    color: var(--nord4);
+    margin-bottom: 1.5rem;
+    opacity: 0.9;
+}
+
+/* External IDs Grid */
+.external-ids-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+/* Form Grid */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+/* Form Groups */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: var(--nord5);
+    font-size: 0.95rem;
+}
+
+.provider-icon {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 0.75rem;
+    border: 2px solid var(--nord3);
+    border-radius: 8px;
+    background: var(--nord0);
+    color: var(--nord4);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--nord10);
+    box-shadow: 0 0 0 3px rgba(94, 129, 172, 0.2);
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color: var(--nord3);
+    opacity: 0.7;
+}
+
+.form-group small {
+    font-size: 0.85rem;
+    color: var(--nord3);
+    margin-top: -0.25rem;
+}
+
+/* Checkbox Groups */
+.checkbox-group {
+    flex-direction: row;
+    align-items: center;
+}
+
+.checkbox-label {
+    display: flex !important;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.checkbox-label input[type="checkbox"] {
+    display: none;
+}
+
+.checkmark {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--nord3);
+    border-radius: 4px;
+    background: var(--nord0);
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.checkbox-label input[type="checkbox"]:checked + .checkmark {
+    background: var(--nord10);
+    border-color: var(--nord10);
+}
+
+.checkbox-label input[type="checkbox"]:checked + .checkmark::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--nord6);
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+/* Primary Button */
+.primary-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, var(--nord8), var(--nord10));
+    color: var(--nord6);
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(136, 192, 208, 0.3);
+}
+
+.primary-button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(136, 192, 208, 0.4);
+}
+
+.primary-button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.primary-button .button-text {
+    transition: opacity 0.3s ease;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Messages */
+.message {
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    text-align: center;
+    margin-top: 1.5rem;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.message.success {
+    background: linear-gradient(135deg, var(--nord15), #a3be8c);
+    color: var(--nord0);
+    box-shadow: 0 4px 15px rgba(163, 190, 140, 0.3);
+}
+
+.message.error {
+    background: linear-gradient(135deg, var(--nord11), #bf616a);
+    color: var(--nord6);
+    box-shadow: 0 4px 15px rgba(191, 97, 106, 0.3);
+}
+
+/* Hidden utility */
+.hidden {
+    display: none !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .add-series-container {
+        padding: 1rem;
+    }
+
+    .page-header h1 {
+        font-size: 2rem;
+    }
+
+    .external-ids-grid,
+    .form-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .form-section {
+        padding: 1.5rem;
+    }
+
+    .tab-button {
+        padding: 0.75rem;
+        font-size: 0.9rem;
+    }
+
+    .tab-button .icon {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .tab-navigation {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .tab-button {
+        justify-content: flex-start;
+        padding: 0.75rem 1rem;
+    }
+}
+
+/* Smooth transitions for better UX */
+* {
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Focus styles for accessibility */
+.tab-button:focus,
+.primary-button:focus,
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: 2px solid var(--nord10);
+    outline-offset: 2px;
+}

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}MML {{ page_title }} List {% endblock %}
+{% block title %}MML | {{ page_title }} List {% endblock %}
 {% block main_menu %}
     <button onclick="toggleFilterMenu()">☰</button>
 {% endblock %}
@@ -82,6 +82,6 @@
 
 {% block script %}
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="/static/series.js"></script>
+    <script src="/static/series-common.js"></script>
     <script src="/static/list.js"></script>
 {% endblock %}
