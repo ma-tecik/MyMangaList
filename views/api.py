@@ -41,7 +41,7 @@ def status():
         cursor.execute("SELECT COUNT(*) FROM series")
         data["series_total"] = cursor.fetchone()[0]
 
-        for i in ("Plan_to_read", "Reading", "Completed", "One-shot", "Dropped", "On_hold", "Ongoing"):
+        for i in ("plan-to", "reading", "completed", "one-shot", "dropped", "on-hold", "ongoing"):
             cursor.execute("SELECT COUNT(*) FROM series WHERE status = ?", (i,))
             data["series_by_status"][i.lower()] = cursor.fetchone()[0]
 

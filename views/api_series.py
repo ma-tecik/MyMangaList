@@ -7,7 +7,7 @@ from typing import List, Tuple
 
 api_series_bp = Blueprint("api_series", __name__, url_prefix="/series")
 
-allowed_statuses = ["Plan_to_read", "Reading", "Completed", "One-shot", "Dropped", "On_hold", "Ongoing"]
+allowed_statuses = ["plan-to", "reading", "completed", "one-shot", "dropped", "on-hold", "ongoing"]
 allowed_types = ["all", "Manga", "Manhwa", "Manhua", "OEL", "Vietnamese", "Malaysian", "Indonesian",
                  "Novel", "Artbook", "Other", "minor"]
 

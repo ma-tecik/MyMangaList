@@ -1,7 +1,6 @@
 // JS for List page only
 
 // Global state
-let currentStatus = '';
 let currentType = 'all';
 let currentSort = '';
 let includedGenres = [];
@@ -11,17 +10,7 @@ let currentPage = 1;
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function () {
     // Load saved state from session storage
-    loadStateFromStorage();
-
-    // Get status from URL path
-    const path = window.location.pathname;
-    const statusMatch = path.match(/\/series\/(.+)/);
-    if (statusMatch) {
-        currentStatus = statusMatch[1];
-    }
-
-    // Parse URL parameters
-    parseURLParams();
+    loadStateFromStorageAndURL();
 
     // Initialize UI state
     initializeUI();
@@ -30,7 +19,10 @@ document.addEventListener('DOMContentLoaded', function () {
     loadSeriesData();
 });
 
-function loadStateFromStorage() {
+
+function loadStateFromStorageAndURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+
     // Load sort preference
     const savedSort = sessionStorage.getItem('currentSort');
     if (savedSort) {
@@ -38,15 +30,27 @@ function loadStateFromStorage() {
     }
 
     // Load type preference
+    const typeParam = urlParams.get("type");
     const savedType = sessionStorage.getItem('currentType');
-    if (savedType) {
-        currentType = savedType;
-        // Change the URL parameter to match saved type
-        if (currentType !== 'all') {
-            const url = new URL(window.location);
-            url.searchParams.set('type', currentType);
-            window.history.replaceState({}, '', url);
+    const validTypes = ["Manga", "Manhwa", "Manhua", "minor",
+        "OEL", "Vietnamese", "Malaysian", "Indonesian", "Novel", "Artbook", "Other"]
+    if (typeParam && validTypes.includes(typeParam)) {
+        currentType = typeParam;
+        if (savedType !== typeParam) {
+            sessionStorage.setItem('currentType', typeParam);
         }
+    } else if (savedType) {
+        currentType = savedType;
+    }
+    // Change the URL parameter to match saved type
+    if (typeParam !== currentPage) {
+        const url = new URL(window.location);
+        if (currentType === "all") {
+            url.searchParams.delete("type")
+        } else{
+            url.searchParams.set("type", currentType);
+        }
+        window.history.replaceState({}, "", url);
     }
 
     // Load genre preferences
@@ -67,16 +71,6 @@ function saveStateToStorage() {
     sessionStorage.setItem('excludedGenres', JSON.stringify(excludedGenres));
     if (currentType !== 'all') {
         sessionStorage.setItem('currentType', currentType);
-    }
-}
-
-function parseURLParams() {
-    const urlParams = new URLSearchParams(window.location.search);
-
-    // Get type from URL
-    const typeParam = urlParams.get('type');
-    if (typeParam) {
-        currentType = typeParam;
     }
 }
 
@@ -271,21 +265,7 @@ function loadSeriesData() {
 function buildAPIURL() {
     const params = new URLSearchParams();
 
-    // Add status (required)
-    const statusMap = {
-        'plan-to': 'Plan_to_read',
-        'reading': 'Reading',
-        'completed': 'Completed',
-        'one-shots': 'One-shot',
-        'on-hold': 'On_hold',
-        'dropped': 'Dropped',
-        'ongoing': 'Ongoing'
-    };
-
-    const mappedStatus = statusMap[currentStatus];
-    if (mappedStatus) {
-        params.append('status', mappedStatus);
-    }
+    params.append('status', currentStatus);
 
     // Add type if not 'all'
     if (currentType !== 'all') {

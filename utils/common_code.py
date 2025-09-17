@@ -13,6 +13,8 @@ def base36(num: int) -> str:
     while num > 0:
         num, i = divmod(num, 36)
         result = alphabet[i] + result
+    while len(result) < 7:
+        result = f"0{result}"
     return result
 
 
@@ -71,8 +73,11 @@ def valid_ids(ids: Dict[str, Any], reduced: bool = False) -> Dict[str, Any]:
     if "line" in ids and not (
             re.fullmatch(r"[o]{1}:[0-9]{4}", ids["line"]) or re.fullmatch(r"[c]{1}:[0-9]{6}", ids["line"])):
         return {}
-    if "mu" in ids and not re.fullmatch(r"[0-9a-z]+", ids["mu"]):
-        return {}
+    if "mu" in ids:
+        if re.fullmatch(r"[0-9a-z]{6}", ids["mu"]):
+            ids["mu"] = f"0{ids["mu"]}"
+        if not re.fullmatch(r"[0-9a-z]{7}", ids["mu"]):
+            return {}
     if "dex" in ids and not re.fullmatch(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", ids["dex"]):
         return {}
     return ids

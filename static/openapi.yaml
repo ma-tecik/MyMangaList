@@ -1023,17 +1023,17 @@ paths:
                       series_by_status:
                         type: object
                         properties:
-                          plan_to_read:
+                          plan-to:
                             type: integer
                           reading:
                             type: integer
                           completed:
                             type: integer
-                          one_shots:
+                          one-shots:
                             type: integer
                           dropped:
                             type: integer
-                          on_hold:
+                          on-hold:
                             type: integer
                           ongoing:
                             type: integer
@@ -1303,7 +1303,7 @@ components:
       properties:
         mu:
           type: string
-          pattern: '^[0-9a-z]+$'
+          pattern: '^[0-9a-z]{7}$'
           examples:
             - 's0htgp6'
           description: MangaUpdates ID in base36 format NOT base10
@@ -1339,13 +1339,13 @@ components:
       type: string
       description: Reading status
       enum:
-        - Plan_to_read
-        - Reading
-        - Completed
-        - One-shot
-        - Dropped
-        - On_hold
-        - Ongoing
+        - plan-to
+        - reading
+        - completed
+        - one-shot
+        - dropped
+        - on-hold
+        - ongoing
     Timestamp:
       type: object
       description: UNIX timestamp in seconds (Only one of mu, dex, mal)
@@ -1450,7 +1450,7 @@ components:
       properties:
         mu:
           type: string
-          pattern: '^[0-9a-z]+$'
+          pattern: '^[0-9a-z]{7}$'
           examples:
             - '45vzs8e'
           description: MangaUpdates ID in base36 format NOT base10

@@ -52,7 +52,7 @@ def dex_refresh_token(tokens) -> Tuple[Dict[str, str], Dict[str, str]]:
             "client_secret": u[1]
         }
         for attempt in range(3):
-            response = requests.post(auth_url, json=payload)
+            response = requests.post(auth_url, data=payload)
             if response.status_code == 200:
                 break
             if attempt == 2:
@@ -100,7 +100,7 @@ def dex_get_lists(headers) -> Tuple[Dict[str, List[str]], int]:
             if attempt == 2:
                 return {}, 502
             sleep(2)
-        lists = {"plan_to_read": [], "reading": [], "completed": [], "dropped": [], "on_hold": [], "re_reading": []}
+        lists = {"plan-to": [], "reading": [], "completed": [], "dropped": [], "on-hold": [], "re_reading": []}
         for k, v in data.items():
             lists[v].append(k)
         lists["completed"].extend(lists["re_reading"])
@@ -184,7 +184,9 @@ def dex_sync_lists(lists) -> Dict[str, str]:
         add_to_db = {}
         to_update = {}
         for k, v in db.items():
-            if v == "one-shot":
+            if v == "plan_to":
+                v = "plan_to_read"
+            elif v == "one-shot":
                 v = "completed"
             elif v == "ongoing":
                 v = "reading"
@@ -251,7 +253,7 @@ def dex_sync_lists_forced(tokens, headers, to_update: Dict[str, str], ) -> Tuple
         for k, v in to_update.items():
             w = True
             for attempt in range(3):
-                r = requests.put(url + k + "status", headers=headers, json={"status": v})
+                r = requests.post(url + k + "status", headers=headers, json={"status": v})
                 if r.status_code == 200:
                     break
                 elif r.status_code == 401 and w:

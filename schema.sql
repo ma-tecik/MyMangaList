@@ -60,7 +60,7 @@ create table series
     integration        BOOLEAN default 1,
     integration_genres BOOLEAN default 0,
     user_rating        REAL,
-    check (status in ('Plan_to_read', 'Reading', 'Completed', 'One-shot', 'Dropped', 'On_hold', 'Ongoing')),
+    check (status in ('plan-to', 'reading', 'completed', 'one-shot', 'dropped', 'on-hold', 'ongoing')),
     check (type in ('Manga', 'Manhwa', 'Manhua', 'OEL', 'Vietnamese', 'Malaysian', 'Indonesian',
                     'Novel', 'Artbook', 'Other'))
 );

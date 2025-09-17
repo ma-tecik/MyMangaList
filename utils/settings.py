@@ -119,7 +119,7 @@ def get_settings(app):
 
     # MU INTEGRATION
     if app.config["MU_INTEGRATION"]:
-        l = ("plan_to_read", "reading", "completed", "one-shot", "dropped", "on_hold", "ongoing")
+        l = ("plan-to", "reading", "completed", "one-shot", "dropped", "on-hold", "ongoing")
         l = [f"mu_list_{i}" for i in l]
         s = ("mu_username", "mu_password")
         if all(settings.get(i) for i in s) and all(_is_int(settings.get(i)) for i in l):
