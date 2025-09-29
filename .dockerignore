@@ -20,7 +20,7 @@ coverage.xml
 .hypothesis
 
 .github
-Docker
+Docker/Dockerfile
 
 LICENSE
 README.md
