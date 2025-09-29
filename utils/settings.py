@@ -33,6 +33,7 @@ def first_run():
     cursor = conn.cursor()
     cursor.executescript(schema)
     cursor.executescript(set_up)
+    cursor.execute("UPDATE settings SET value = ? WHERE key = ?", (secrets.token_hex(16),"secret_key"))
     conn.commit()
     conn.close()
 
@@ -48,8 +49,6 @@ def first_run():
                        timestamp  INTEGER
                    )
                    """)
-
-    cursor.execute("UPDATE settings SET value = ? WHERE key = ?", (secrets.token_hex(16), "secret_key"))
     conn.commit()
     conn.close()
 

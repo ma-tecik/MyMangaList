@@ -1,6 +1,7 @@
 FROM python:3.13-slim-trixie
 
 LABEL maintainer="ma-tecik"
+LABEL org.opencontainers.image.authors="ma-tecik"
 
 WORKDIR /app
 COPY . .
