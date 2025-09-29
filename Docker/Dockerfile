@@ -7,9 +7,9 @@ RUN apt-get update && apt-get install -y sqlite3 cron && \
     pip install --no-cache-dir -r requirements.txt && \
     rm -rf /var/lib/apt/lists/*
 
-COPY docker/backup.sh /backup.sh
-COPY docker/app.sh /app.sh
-COPY docker/cronjob /etc/cron.d/mml-cron
+COPY Docker/backup.sh /backup.sh
+COPY Docker/app.sh /app.sh
+COPY Docker/cronjob /etc/cron.d/mml-cron
 
 RUN chmod 0644 /etc/cron.d/mml-cron && \
     chmod +x /backup.sh /app.sh

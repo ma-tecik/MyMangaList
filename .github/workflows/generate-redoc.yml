@@ -1,4 +1,4 @@
-name: Generate Static Redoc page
+name: Redoc
 
 on:
   push:

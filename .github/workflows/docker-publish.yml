@@ -1,4 +1,4 @@
-name: Publish Docker Container
+name: Docker
 
 # This workflow uses actions that are not certified by GitHub.
 # They are provided by a third-party and are governed by
@@ -8,6 +8,8 @@ name: Publish Docker Container
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - "static/openapi.yaml"
 
 env:
   # Use docker.io for Docker Hub if empty
@@ -30,6 +32,20 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Check changed files
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            spec:
+              - 'static/openapi.yaml'
+
+      - name: Stop if openapi.yaml changed
+        if: steps.changes.outputs.spec == 'true'
+        run: |
+          echo "openapi.yaml changed, Redoc workflow is active. Docker cancelled."
+          exit 0
 
       # Install the cosign tool except on PR
       # https://github.com/sigstore/cosign-installer
