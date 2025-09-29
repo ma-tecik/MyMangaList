@@ -1,8 +1,9 @@
 from flask import current_app as app
 from utils.common_code import author_type_merger
 from utils.mangadex_worker import worker
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, List
 import requests
+import re
 from utils.line import get_id as get_id_line
 from utils.mangaupdates import get_id_old as get_id_mu
 
@@ -45,9 +46,9 @@ def series(id_dex: str) -> Tuple[Dict[str, Any], int]:
     authors = author_type_merger(authors)
 
     genres, type_, accepted_languages = worker(data["attributes"].get("tags", []),
-                                                     data["attributes"]["publicationDemographic"],
-                                                     data["attributes"]["contentRating"],
-                                                     data["attributes"]["originalLanguage"])
+                                               data["attributes"].get("publicationDemographic", ""),
+                                               data["attributes"].get("contentRating", ""),
+                                               data["attributes"].get("originalLanguage", ""))
     accepted_languages.extend(app.config["TITLE_LANGUAGES"])
 
     alt_titles = []
@@ -86,3 +87,23 @@ def series(id_dex: str) -> Tuple[Dict[str, Any], int]:
         if "webtoons.com" in engtl:
             data_final["ids"]["line"] = get_id_line(engtl)
     return data_final, 200
+
+
+def search(title: str) -> List[Dict[str, Any]]:
+    try:
+        if m := re.search(r"\(([^)]*)\)", title):
+            inside = m.group(1)
+            if not re.fullmatch(r"\d{4}", inside):
+                title = re.sub(r"\s*\([^)]*\)", "", title)
+        url = f"https://api.mangadex.org/manga"
+        params = {
+            "title": title,
+            "order[relevance]": "desc",
+            "contentRating[]": ["safe", "suggestive", "erotica", "pornographic"]
+        }
+        response = requests.get(url, params=params)
+        if response.status_code == 200:
+            return response.json().get("data", [])
+    except Exception as e:
+        app.logger.error(f"Searching for title {title}: {e}")
+    return []
