@@ -734,6 +734,152 @@ body {
     display: none !important;
 }
 
+/* Login Page Styles */
+.login-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin-left: 0;
+}
+
+.login-container {
+    background-color: var(--nord1);
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    width: 100%;
+    max-width: 400px;
+}
+
+.login-title {
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 30px;
+    color: var(--nord6);
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-weight: 500;
+    color: var(--nord4);
+    text-align: left;
+}
+
+.form-group input {
+    padding: 12px 16px;
+    border: 2px solid var(--nord3);
+    border-radius: 8px;
+    background-color: var(--nord0);
+    color: var(--nord6);
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--nord10);
+}
+
+.login-btn {
+    padding: 12px 24px;
+    background-color: var(--nord10);
+    color: var(--nord6);
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.login-btn:hover {
+    background-color: var(--nord9);
+}
+
+.login-btn:active {
+    transform: translateY(1px);
+}
+
+.error-message {
+    padding: 12px;
+    background-color: var(--nord11);
+    color: var(--nord6);
+    border-radius: 8px;
+    margin-top: 16px;
+    font-weight: 500;
+}
+
+.error-message.hidden {
+    display: none;
+}
+
+/* Login footer with GitHub link */
+.login-footer {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.github-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: var(--nord2);
+    border: 1px solid var(--nord3);
+    border-radius: 10px;
+    color: var(--nord6);
+    text-decoration: none;
+    line-height: 1;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.github-link:hover {
+    background: var(--nord3);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+    transform: translateY(-1px);
+}
+
+.github-link:active {
+    transform: translateY(0);
+}
+
+.github-link:focus-visible {
+    outline: 2px solid var(--nord10);
+    outline-offset: 2px;
+}
+
+.github-icon {
+    display: inline-flex;
+    width: 18px;
+    height: 18px;
+    color: var(--nord8);
+}
+
+.github-text {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--nord6);
+    letter-spacing: 0.2px;
+}
+
+/* Hide navbar on login page */
+body:has(.login-page) .navbar {
+    display: none;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .add-series-container {

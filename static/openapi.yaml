@@ -26,6 +26,7 @@ servers:
   - url: "https://dev.mat.tr.eu.org/api/v1"
     description: Development Server (DNS record may be deleted any time)
 tags:
+  - name: Login
   - name: Series
     description: Operations related to series.
   - name: Authors
@@ -39,13 +40,60 @@ tags:
   - name: Integration
     description: Operation related to external sites
 paths:
+  /login:
+    post:
+      operationId: login
+      summary: Login
+      description: On success, sets a session cookie.
+      tags: [ Login ]
+      security: [ ]
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                password:
+                  type: string
+              required:
+                - password
+      responses:
+        '200':
+          description: Login successful, session cookie set
+          headers:
+            Set-Cookie:
+              description: Session cookie
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    default: OK
+        '401':
+          description: Invalid password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+
   /ping:
     get:
       operationId: getPing
       summary: Ping healthcheck
       description: Returns a plaintext response containing only the word 'pong' if the API is healthy.
-      tags: [Misc]
-      security: []
+      tags: [ Misc ]
+      security: [ ]
       responses:
         '200':
           description: Pong
@@ -60,8 +108,7 @@ paths:
       operationId: getSeriesList
       summary: Retrieve series list
       description: Returns a list of series with optional filters for status, type, and tags.
-      tags: [Series]
-      security: []
+      tags: [ Series ]
       parameters:
         - name: page
           in: query
@@ -154,8 +201,7 @@ paths:
       operationId: createSeries
       summary: Add a series entry
       description: Adds a new series to your manga list.
-      tags: [Series]
-      security: []
+      tags: [ Series ]
       requestBody:
         required: true
         content:
@@ -213,8 +259,7 @@ paths:
       operationId: getSeriesById
       summary: Get a series by series_id
       description: Returns series details for a given series_id.
-      tags: [Series]
-      security: []
+      tags: [ Series ]
       parameters:
         - name: id
           in: path
@@ -251,8 +296,7 @@ paths:
       operationId: deleteSeries
       summary: Delete a series by series_id
       description: Deletes a series for given series_id.
-      tags: [Series]
-      security: []
+      tags: [ Series ]
       parameters:
         - name: id
           in: path
@@ -297,8 +341,7 @@ paths:
       description: |-
         Updates a series by given series_id  
         Note: All provided fields will be overwritten. External IDs are merged; titles, alt_titles and genres are fully replaced.
-      tags: [Series]
-      security: []
+      tags: [ Series ]
       parameters:
         - name: id
           in: path
@@ -365,8 +408,7 @@ paths:
       operationId: updateSeriesRatings
       summary: Update series ratings and vote counts
       description: Updates/overwrites ratings and vote counts of given series
-      tags: [Series]
-      security: []
+      tags: [ Series ]
       parameters:
         - name: id
           in: path
@@ -437,8 +479,7 @@ paths:
       operationId: externalUpdateSeriesRatings
       summary: Update a list of series' ratings and vote counts
       description: Updates/adds/overwrites or skips (if series not exist in db) ratings and vote counts of given list of series
-      tags: [Series]
-      security: []
+      tags: [ Series ]
       requestBody:
         required: true
         content:
@@ -511,8 +552,7 @@ paths:
       operationId: externalSeriesID
       summary: Get the series_id of a series by external IDs
       description: Returns the series_id of a series based on given one or more MU, Dex, MAL, Bato, line IDs.
-      tags: [Series]
-      security: []
+      tags: [ Series ]
       parameters:
         - name: mu
           in: query
@@ -577,8 +617,7 @@ paths:
       operationId: externalSeriesData
       summary: Get the series details from external sources
       description: Retrieves and returns series details from external sources based on given one or more MU, Dex, MAL, Bato, or line IDs.
-      tags: [Series]
-      security: []
+      tags: [ Series ]
       parameters:
         - name: mu
           in: query
@@ -643,8 +682,7 @@ paths:
       operationId: getAuthorList
       summary: Retrieve authors list
       description: Returns the list of authors in the DB with the count of their series.
-      tags: [Authors]
-      security: []
+      tags: [ Authors ]
       parameters:
         - name: page
           in: query
@@ -692,8 +730,7 @@ paths:
       description: |-
         Adds an author with only name.
         Note: Use this endpoint for only authors of Bato and Line series.
-      tags: [Authors]
-      security: []
+      tags: [ Authors ]
       requestBody:
         required: true
         content:
@@ -703,7 +740,7 @@ paths:
               properties:
                 name:
                   type: string
-              required: [name]
+              required: [ name ]
       responses:
         '201':
           description: Author details
@@ -729,8 +766,7 @@ paths:
       operationId: searchAuthor
       summary: Search authors by name
       description: Returns authors matching the given name.
-      tags: [Authors]
-      security: []
+      tags: [ Authors ]
       parameters:
         - name: name
           in: query
@@ -779,8 +815,7 @@ paths:
       operationId: getAuthorById
       summary: Get an author by author_id
       description: Returns author's details for the given author_id.
-      tags: [Authors]
-      security: []
+      tags: [ Authors ]
       parameters:
         - name: id
           in: path
@@ -813,8 +848,7 @@ paths:
       description: |-
         Updates an author by given author_id  
         Note: IDs will be merged, name will be overwritten
-      tags: [Authors]
-      security: []
+      tags: [ Authors ]
       parameters:
         - name: id
           in: path
@@ -860,8 +894,7 @@ paths:
       description: |-
         Merges 2 or more authors by the given author_ids.
         Note: External IDs will be merged; the smallest internal ID will be kept, and the author's name of the kept record will remain.
-      tags: [Authors]
-      security: []
+      tags: [ Authors ]
       parameters:
         - name: ids
           in: query
@@ -910,8 +943,7 @@ paths:
       operationId: addHentai
       summary: Add a hentai
       description: Adds a hentai
-      tags: [H]
-      security: []
+      tags: [ H ]
       parameters:
         - name: id
           in: query
@@ -930,8 +962,7 @@ paths:
       operationId: deleteHentai
       summary: Delete a hentai
       description: Deletes a hentai
-      tags: [H]
-      security: []
+      tags: [ H ]
       parameters:
         - name: id
           in: query
@@ -952,8 +983,7 @@ paths:
       operationId: isNhentaiInDB
       summary: Check if a hentai is in DB
       description: Checks if a hentai is in the database.
-      tags: [H]
-      security: []
+      tags: [ H ]
       parameters:
         - name: id
           in: path
@@ -974,8 +1004,7 @@ paths:
       operationId: isSchaleInDB
       summary: Check if a hentai is in DB
       description: Checks if a hentai is in the database.
-      tags: [H]
-      security: []
+      tags: [ H ]
       parameters:
         - name: id
           in: path
@@ -1002,8 +1031,7 @@ paths:
       operationId: getStatus
       summary: Your reading status
       description: Returns your reading status.
-      tags: [Misc]
-      security: []
+      tags: [ Misc ]
       responses:
         '200':
           description: Your reading status
@@ -1076,8 +1104,7 @@ paths:
       operationId: getSettings
       summary: Retrieve settings
       description: Returns settings
-      tags: [Settings]
-      security: []
+      tags: [ Settings ]
       responses:
         '200':
           description: Settings
@@ -1095,8 +1122,7 @@ paths:
       operationId: updateSettings
       summary: Update settings
       description: Updates settings
-      tags: [Settings]
-      security: []
+      tags: [ Settings ]
       requestBody:
         required: true
         content:
@@ -1129,8 +1155,7 @@ paths:
         - update-ongoing: Move fully scanlated series to "plan-to" list and ongoing series to "ongoing" list on MangaUpdates.
         - sync-lists: Sync lists. Works based on the latest changes (Thanks MU for "time_added" timestamp)
         - update-series: Updates series data.
-      tags: [Integration]
-      security: []
+      tags: [ Integration ]
       parameters:
         - name: job
           in: path
@@ -1167,8 +1192,7 @@ paths:
         - update-ratings: Updates ratings in the DB from MangaDex, both average and user ratings.
         - sync-lists: Sync lists. If "DEX_INTEGRATION_FORCED" is disabled practically does nothing.
         - fetch-ids: Fetches and updates missing Mangadex IDs from series that have a MangaUpdates ID. Works even if "DEX_INTEGRATION" is disabled.
-      tags: [Integration]
-      security: []
+      tags: [ Integration ]
       parameters:
         - name: job
           in: path
@@ -1499,7 +1523,7 @@ components:
       properties:
         main_rating:
           type: string
-          enum: [mu, dex, mal]
+          enum: [ mu, dex, mal ]
         title_languages:
           type: string
           description: 'Comma-separated ISO 639-1 codes. Example: "en,tr,de"'
@@ -1526,7 +1550,7 @@ components:
           properties:
             main_rating:
               type: string
-              enum: [mu, dex, mal]
+              enum: [ mu, dex, mal ]
             title_languages:
               type: string
               description: 'Comma-separated ISO 639-1 codes. Example: "en,tr,de"'
@@ -1634,3 +1658,11 @@ components:
                     type: integer
                   as_both:
                     type: integer
+
+  securitySchemes:
+    cookieAuth:
+      in: cookie
+      name: session
+      type: apiKey
+security:
+  - cookieAuth: [ ]

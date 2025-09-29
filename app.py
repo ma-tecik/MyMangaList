@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request, session, jsonify, redirect
 from views.api import api_bp
 from views.site import site_bp
 from views.misc import misc_bp
@@ -31,6 +31,21 @@ if not os.path.isfile("data/mml.sqlite3"):
 
 get_settings(app)
 init_scheduler(app)
+
+
+@app.before_request
+def require_login():
+    public = ["api.ping", "api.login", "site.login", "site.redoc", "site.openapi_spec"]
+    public_files = ["/static/style.css", "/static/login.js"]
+
+    if request.endpoint in public or request.path in public_files:
+        return None
+    if not session.get("logged_in"):
+        if request.path.startswith("/api/"):
+            return jsonify({"status": "KO", "error": "Authentication required"}), 401
+        return redirect("/login")
+    return None
+
 
 # Blueprints
 app.register_blueprint(api_bp)

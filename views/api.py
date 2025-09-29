@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request, current_app as app
+from flask import Blueprint, jsonify, request, session, current_app as app
 from views.api_external import api_external_bp
 from views.api_series import api_series_bp
 from views.api_authors import api_authors_bp
@@ -19,6 +19,21 @@ api_bp.register_blueprint(integration_bp)
 @api_bp.route("/ping", methods=["GET"])
 def ping():
     return "pong", 200
+
+
+@api_bp.route("/login", methods=["POST"])
+def login():
+    try:
+        password = request.form.get("password")
+        if password == app.config["PASSWORD"]:
+            session["logged_in"] = True
+            session.permanent = True
+            return jsonify({"result": "OK"}), 200
+        else:
+            return jsonify({"result": "KO", "error": "Invalid password"}), 401
+    except Exception as e:
+        app.logger.error(e)
+    return jsonify({"result": "KO", "error": "Internal error"}), 500
 
 
 @api_bp.route("/status", methods=["GET"])

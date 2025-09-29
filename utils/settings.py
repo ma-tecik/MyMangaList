@@ -23,6 +23,7 @@ def _is_mal_id_valid(mal_id: str) -> None | str:
 
 
 def first_run():
+    import secrets
     with open("schema.sql") as f:
         schema = f.read()
     with open("first_run.sql") as f:
@@ -47,6 +48,8 @@ def first_run():
                        timestamp  INTEGER
                    )
                    """)
+
+    cursor.execute("UPDATE settings SET value = ? WHERE key = secret_key", (secrets.token_hex(16),))
     conn.commit()
     conn.close()
 
@@ -89,6 +92,10 @@ def get_settings(app):
     cursor.execute("SELECT * FROM settings")
     settings = {r[0]: r[1] for r in cursor.fetchall()}
     params = []
+
+    app.secret_key = settings["secret_key"]
+    app.config["PASSWORD"] = settings["password"]
+    app.config["SESSION_COOKIE_SAMESITE"] = "Strict"
 
     main_rating = settings["main_rating"]
     if main_rating in ["mu", "dex", "mal"]:
@@ -184,7 +191,7 @@ def update_settings(data):
     in_db = {r[0]: r[1] for r in cursor.fetchall()}
     params = []
     bools = ("mu_integration", "dex_integration", "mal_integration")
-    accepted = bools + ("main_rating", "title_languages")
+    accepted = bools + ("password", "main_rating", "title_languages")
     for k, v in data.items():
         if not k in accepted:
             continue

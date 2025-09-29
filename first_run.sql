@@ -65,6 +65,8 @@ INSERT OR IGNORE INTO genres (genre) VALUES
 ('Toxic Rel.');
 
 INSERT OR IGNORE INTO settings VALUES
+('secret_key', NULL),
+('password', 'password'),
 ('main_rating', 'mu'),
 ('title_languages', 'en'),
 -- MU

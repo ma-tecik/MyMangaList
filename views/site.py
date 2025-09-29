@@ -1,8 +1,19 @@
-from flask import Blueprint, render_template, send_from_directory, request, current_app as app, redirect
+from flask import Blueprint, render_template, send_from_directory, request, redirect, session, current_app as app
 from utils.db_authors import get_author, get_authors
 import sqlite3
 
 site_bp = Blueprint("site", __name__)
+
+
+@site_bp.route("/login")
+def login():
+    return render_template("login.html")
+
+
+@site_bp.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/login")
 
 
 @site_bp.route("/")
