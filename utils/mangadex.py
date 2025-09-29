@@ -95,13 +95,12 @@ def search(title: str) -> List[Dict[str, Any]]:
             inside = m.group(1)
             if not re.fullmatch(r"\d{4}", inside):
                 title = re.sub(r"\s*\([^)]*\)", "", title)
-        url = f"https://api.mangadex.org/manga"
         params = {
             "title": title,
             "order[relevance]": "desc",
             "contentRating[]": ["safe", "suggestive", "erotica", "pornographic"]
         }
-        response = requests.get(url, params=params)
+        response = requests.get("https://api.mangadex.org/manga", params=params)
         if response.status_code == 200:
             return response.json().get("data", [])
     except Exception as e:

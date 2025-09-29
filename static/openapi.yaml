@@ -1126,7 +1126,7 @@ paths:
       description: |-
         Starts a MangaUpdates integration job
         - update-ratings: Updates ratings in the DB from MangaUpdates, both average and user ratings.
-        - update-ongoing: 
+        - update-ongoing: Move fully scanlated series to "plan-to" list and ongoing series to "ongoing" list on MangaUpdates.
         - sync-lists: Sync lists. Works based on the latest changes (Thanks MU for "time_added" timestamp)
         - update-series: Updates series data.
       tags: [Integration]
@@ -1166,6 +1166,7 @@ paths:
         Starts a MangaDex integration job
         - update-ratings: Updates ratings in the DB from MangaDex, both average and user ratings.
         - sync-lists: Sync lists. If "DEX_INTEGRATION_FORCED" is disabled practically does nothing.
+        - fetch-ids: Fetches and updates missing Mangadex IDs from series that have a MangaUpdates ID. Works even if "DEX_INTEGRATION" is disabled.
       tags: [Integration]
       security: []
       parameters:
@@ -1177,6 +1178,7 @@ paths:
             enum:
               - 'update-ratings'
               - 'sync-lists'
+              - 'fetch-ids'
       responses:
         '204':
           description: Job completed

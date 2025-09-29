@@ -2,7 +2,7 @@ from flask_apscheduler import APScheduler
 from utils.mangaupdates_integration import mu_update_ongoing, mu_get_data_for_all, mu_sync_lists, mu_update_series, \
     mu_update_ratings
 from utils.mangadex_integration import dex_start, dex_sync_lists, dex_sync_lists_forced, dex_refresh_token, \
-    dex_update_ratings
+    dex_update_ratings, dex_fetch_ids
 
 scheduler = APScheduler()
 
@@ -22,8 +22,12 @@ def init_scheduler(app):
             mu_update_series(data)
             mu_update_ratings(data)
 
+    @scheduler.task("cron", id="dex_fetch_ids", day="*", hour=1, minute=30)
+    def scheduled_dex_fetch_ids():
+        dex_fetch_ids()
+
     if app.config.get("DEX_AUTOMATION"):
-        @scheduler.task("cron", id="dex_automation", day="*", hour=1, minute=30)
+        @scheduler.task("cron", id="dex_automation", day="*", hour=2, minute=0)
         def scheduled_dex_updates():
             tokens, headers, lists = dex_start()
             if not tokens or not headers or not lists:

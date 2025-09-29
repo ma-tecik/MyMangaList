@@ -1,6 +1,8 @@
 from flask import current_app as app
 from utils.common_db import update_ratings, update_user_ratings, add_series_data
 from utils.external import series_data_external
+from utils.mangadex import search
+from utils.mangaupdates import get_id_old as get_id_mu
 from time import sleep
 import requests
 import sqlite3
@@ -267,3 +269,53 @@ def dex_sync_lists_forced(tokens, headers, to_update: Dict[str, str], ) -> Tuple
     except Exception as e:
         app.logger.error(e)
     return tokens, headers
+
+
+def dex_fetch_ids() -> bool:
+    try:
+        conn = sqlite3.connect("data/mml.sqlite3")
+        cursor = conn.cursor()
+        cursor.execute("SELECT title, id_mu, id FROM series WHERE id_mu IS NOT NULL AND id_dex is NULL")
+        series = cursor.fetchall()
+        to_update = []
+        to_update_mal = []
+        w = 0
+        for title, id_mu, id_ in series:
+            if w >= 3:
+                sleep(1)
+                w = 0
+            results = search(title)
+            w += 1
+            if not results:
+                continue
+            for i in results:
+                result_id_mu = get_id_mu(i["attributes"].get("links", {}).get("mu"))
+                if result_id_mu == id_mu:
+                    app.logger.info(f"For {title} (MU_ID:{id_mu}): Found DEX_ID {i["id"]}")
+                    to_update.append((i["id"], id_))
+                    if id_mal := i["attributes"].get("links", {}).get("mal"):
+                        app.logger.info(f"For {title} (MU_ID:{id_mu}): Found MAL_ID {id_mal}")
+                        to_update_mal.append((id_mal, id_))
+                    break
+        if to_update:
+            cursor.executemany("UPDATE series SET id_dex = ? WHERE id = ?", to_update)
+            conn.commit()
+        if to_update_mal:
+            cursor.executemany("SELECT id FROM series WHERE id = ? AND id_mal IS NOT NULL", ((i[1],) for i in to_update_mal))
+            existing = {i[0] for i in cursor.fetchall()}
+            if existing:
+                app.logger.info(f"Skipping existing entries with Internal IDs (merge could be required): {existing}")
+                to_update_mal = [i for i in to_update_mal if i[1] not in existing]
+            cursor.executemany("SELECT id_mal FROM series WHERE id_mal = ?", ((i[0],) for i in to_update_mal))
+            existing = {i[0] for i in cursor.fetchall()}
+            if existing:
+                app.logger.info(f"Skipping existing MAL IDs (merge could be required): {existing}")
+                to_update_mal = [i for i in to_update_mal if i[0] not in existing]
+            if to_update_mal:
+                cursor.executemany("UPDATE series SET id_mal = ? WHERE id = ?", to_update_mal)
+                conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        app.logger.error(e)
+    return False

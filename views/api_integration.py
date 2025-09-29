@@ -2,7 +2,8 @@ from flask import Blueprint, jsonify, current_app as app
 from utils.common_code import base36
 from utils.mangaupdates_integration import mu_get_data_for_all, mu_update_ratings, mu_update_ongoing, mu_sync_lists, \
     mu_update_series
-from utils.mangadex_integration import dex_start, dex_update_ratings, dex_sync_lists, dex_sync_lists_forced
+from utils.mangadex_integration import dex_start, dex_update_ratings, dex_sync_lists, dex_sync_lists_forced, \
+    dex_fetch_ids
 from time import sleep
 
 integration_bp = Blueprint("api_integration", __name__, url_prefix="/integration")
@@ -108,6 +109,16 @@ def dex_lists():
         if to_update and app.config["DEX_INTEGRATION_FORCED"] == "1":
             dex_sync_lists_forced(tokens, headers, to_update)
         return "", 204
+    except Exception as e:
+        app.logger.error(e)
+    return jsonify({"result": "KO", "error": "Internal error"}), 500
+
+
+@integration_dex.route("/fetch-ids", methods=["PUT"])
+def dex_fetch_ids_api():
+    try:
+        if dex_fetch_ids():
+            return "", 204
     except Exception as e:
         app.logger.error(e)
     return jsonify({"result": "KO", "error": "Internal error"}), 500
