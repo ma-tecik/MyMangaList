@@ -1,5 +1,7 @@
 FROM python:3.13-slim-trixie
 
+LABEL maintainer="ma-tecik"
+
 WORKDIR /app
 COPY . .
 

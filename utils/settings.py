@@ -49,7 +49,7 @@ def first_run():
                    )
                    """)
 
-    cursor.execute("UPDATE settings SET value = ? WHERE key = secret_key", (secrets.token_hex(16),))
+    cursor.execute("UPDATE settings SET value = ? WHERE key = ?", (secrets.token_hex(16), "secret_key"))
     conn.commit()
     conn.close()
 

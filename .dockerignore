@@ -20,6 +20,7 @@ coverage.xml
 .hypothesis
 
 .github
+.gitignore
 Docker/Dockerfile
 Docker/compose.yaml
 LICENSE
