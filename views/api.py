@@ -35,6 +35,13 @@ def login():
         app.logger.error(e)
     return jsonify({"result": "KO", "error": "Internal error"}), 500
 
+@api_bp.route("/auth", methods=["HEAD"])
+def auth_check():
+    try:
+        return "", 204
+    except Exception as e:
+        app.logger.error(e)
+    return "", 500
 
 @api_bp.route("/status", methods=["GET"])
 def status():
@@ -56,7 +63,7 @@ def status():
         cursor.execute("SELECT COUNT(*) FROM series")
         data["series_total"] = cursor.fetchone()[0]
 
-        for i in ("plan-to", "reading", "completed", "one-shot", "dropped", "on-hold", "ongoing"):
+        for i in ("plan-to", "reading", "completed", "one-shots", "dropped", "on-hold", "ongoing"):
             cursor.execute("SELECT COUNT(*) FROM series WHERE status = ?", (i,))
             data["series_by_status"][i.lower()] = cursor.fetchone()[0]
 
@@ -96,11 +103,28 @@ def get_settings():
             "main_rating": db["main_rating"],
             "title_languages": db["title_languages"],
             "mu_integration": bool(int(db.get("mu_integration", 0))),
+            "mu_automation": bool(int(db.get("mu_automation", 0))),
             "mu_username": db.get("mu_username"),
             "mu_password": bool(db.get("mu_password")),
+            "mu_lists": {
+                "plan-to": int(db.get("mu_list_plan-to")),
+                "reading": int(db.get("mu_list_reading")),
+                "completed": int(db.get("mu_list_completed")),
+                "one-shots": int(db.get("mu_list_one-shots")),
+                "dropped": int(db.get("mu_list_dropped")),
+                "on-hold": int(db.get("mu_list_on-hold")),
+                "ongoing": int(db.get("mu_list_ongoing")),
+            },
             "dex_integration": bool(int(db.get("dex_integration", 0))),
-            "dex_token": bool(db.get("dex_token")),
+            "dex_integration_forced": bool(int(db.get("dex_integration_forced", 0))),
+            "dex_automation": bool(int(db.get("dex_automation", 0))),
+            "dex_username": db.get("dex_username"),
+            "dex_password": bool(db.get("dex_password")),
+            "dex_client_id": db.get("dex_token"),
+            "dex_secret": bool(db.get("dex_secret")),
             "mal_integration": bool(int(db.get("mal_integration", 0))),
+            "mal_automation": bool(int(db.get("mal_automation", 0))),
+            "mal_client_id": db.get("mal_client_id"),
         }
         conn.close()
         return jsonify({"result": "OK", "data": data}), 200

@@ -33,7 +33,7 @@ def first_run():
     cursor = conn.cursor()
     cursor.executescript(schema)
     cursor.executescript(set_up)
-    cursor.execute("UPDATE settings SET value = ? WHERE key = ?", (secrets.token_hex(16),"secret_key"))
+    cursor.execute("UPDATE settings SET value = ? WHERE key = ?", (secrets.token_hex(16), "secret_key"))
     conn.commit()
     conn.close()
 
@@ -125,7 +125,7 @@ def get_settings(app):
 
     # MU INTEGRATION
     if app.config["MU_INTEGRATION"]:
-        l = ("plan-to", "reading", "completed", "one-shot", "dropped", "on-hold", "ongoing")
+        l = ("plan-to", "reading", "completed", "one-shots", "dropped", "on-hold", "ongoing")
         l = [f"mu_list_{i}" for i in l]
         s = ("mu_username", "mu_password")
         if all(settings.get(i) for i in s) and all(_is_int(settings.get(i)) for i in l):
@@ -182,20 +182,24 @@ def get_settings(app):
     conn.close()
 
 
-def update_settings(data):
+def update_settings(data) -> bool:
     from flask import current_app as app
     conn = sqlite3.connect("data/mml.sqlite3")
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM settings")
     in_db = {r[0]: r[1] for r in cursor.fetchall()}
     params = []
-    bools = ("mu_integration", "dex_integration", "mal_integration")
-    accepted = bools + ("password", "main_rating", "title_languages")
+    bools = ("mu_integration", "mu_automation", "dex_integration", "dex_integration_forced", "dex_automation",
+             "mal_integration", "mal_automation")
+    accepted = bools + ("main_rating", "title_languages", "password", "mu_username", "mu_password",
+                        "dex_username", "dex_password", "dex_client_id", "dex_secret", "mal_client_id")
     for k, v in data.items():
         if not k in accepted:
             continue
         if k in bools:
             v = 1 if v == True else 0
+        elif k == "mu_lists":
+            continue
         if v == in_db[k]:
             continue
         if k == "main_rating":
@@ -214,7 +218,18 @@ def update_settings(data):
         params.append((v, k))
         app.config[k] = v
 
+    if "mu_lists" in data and isinstance(data["mu_lists"], dict):
+        for k, v in data["mu_lists"].items():
+            if k not in ("plan-to", "reading", "completed", "one-shots", "dropped", "on-hold", "ongoing"):
+                continue
+            if not _is_int(v):
+                continue
+            params.append((v, f"mu_list_{k}"))
+
     if params:
         cursor.executemany("UPDATE settings SET value = ? WHERE key = ? ", params)
         conn.commit()
-    conn.close()
+        conn.close()
+        get_settings(app)
+    else:
+        conn.close()

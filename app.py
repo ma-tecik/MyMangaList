@@ -42,6 +42,8 @@ def require_login():
         return None
     if not session.get("logged_in"):
         if request.path.startswith("/api/"):
+            if request.method == "HEAD":
+                return "", 401
             return jsonify({"status": "KO", "error": "Authentication required"}), 401
         return redirect("/login")
     return None

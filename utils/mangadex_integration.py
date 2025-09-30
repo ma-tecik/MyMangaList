@@ -188,7 +188,7 @@ def dex_sync_lists(lists) -> Dict[str, str]:
         for k, v in db.items():
             if v == "plan_to":
                 v = "plan_to_read"
-            elif v == "one-shot":
+            elif v == "one-shots":
                 v = "completed"
             elif v == "ongoing":
                 v = "reading"

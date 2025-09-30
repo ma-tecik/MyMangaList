@@ -1,1 +1,1 @@
-0 3 * * * /backup.sh >> /app/data/logs/cron.log 2>&1
+0 3 * * * root /backup.sh >> /app/data/logs/cron.log 2>&1

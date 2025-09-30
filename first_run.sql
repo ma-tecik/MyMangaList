@@ -77,7 +77,7 @@ INSERT OR IGNORE INTO settings VALUES
 ('mu_list_plan-to', 102),
 ('mu_list_reading', 0),
 ('mu_list_completed',2),
-('mu_list_one-shot', 101),
+('mu_list_one-shots', 101),
 ('mu_list_dropped', 3),
 ('mu_list_on-hold', 4),
 ('mu_list_ongoing', 1),

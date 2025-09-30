@@ -171,7 +171,7 @@ def mu_get_data_for_all() -> Tuple[Dict[str, List[dict]], dict]:
             return {}, {}
 
         data = {}
-        for i in ("plan-to", "reading", "completed", "one-shot", "dropped", "on-hold", "ongoing"):
+        for i in ("plan-to", "reading", "completed", "one-shots", "dropped", "on-hold", "ongoing"):
             list_id = app.config[f"MU_LIST_{i.upper()}"]
             data_ = mu_get_list(list_id, headers)
             if data_:
@@ -252,14 +252,14 @@ def mu_sync_lists(data: Dict[str, List[dict]], headers) -> bool:
             cursor.executemany(query, [(to_update_db[k][0], to_update_mu[1], k) for k in to_update_mu.keys()])
             conn.commit()
         if add_to_mu:
-            for i in ("plan-to", "reading", "completed", "one-shot", "dropped", "on-hold", "ongoing"):
+            for i in ("plan-to", "reading", "completed", "one-shots", "dropped", "on-hold", "ongoing"):
                 list_id = app.config[f"MU_LIST_{i.upper()}"]
                 payload = [{"series": {"id": int(j, 36)}, "list_id": list_id} for j in add_to_mu if add_to_mu[j] == i]
                 _add_series_batch(payload, headers)
         if to_update_mu:
             if add_to_mu:
                 sleep(1)
-            for i in ("plan-to", "reading", "completed", "one-shot", "dropped", "on-hold", "ongoing")   :
+            for i in ("plan-to", "reading", "completed", "one-shots", "dropped", "on-hold", "ongoing")   :
                 list_id = app.config[f"MU_LIST_{i.upper()}"]
                 payload = [{"series": {"id": j}, "list_id": list_id} for j in add_to_mu if add_to_mu[j] == i]
                 _move_series_batch(payload, headers)

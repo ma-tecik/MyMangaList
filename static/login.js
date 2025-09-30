@@ -1,5 +1,3 @@
-// JS for Login page only
-
 document.addEventListener('DOMContentLoaded', function() {
     const loginForm = document.getElementById('loginForm');
     const errorMessage = document.getElementById('error-message');
@@ -27,8 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
 
             if (response.ok && data.result === 'OK') {
-                // Login successful, redirect to main page
-                window.location.href = '/';
+                window.location.href = document.referrer || "/";
             } else {
                 // Show error message
                 errorMessage.textContent = data.error || 'Login failed';

@@ -26,7 +26,7 @@ servers:
   - url: "https://dev.mat.tr.eu.org/api/v1"
     description: Development Server (DNS record may be deleted any time)
 tags:
-  - name: Login
+  - name: Auth
   - name: Series
     description: Operations related to series.
   - name: Authors
@@ -45,7 +45,7 @@ paths:
       operationId: login
       summary: Login
       description: On success, sets a session cookie.
-      tags: [ Login ]
+      tags: [ Auth ]
       security: [ ]
       requestBody:
         required: true
@@ -81,11 +81,25 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseKO'
         '500':
-          description: Server error
+          description: Internal server error, check logs.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/responseKO'
+
+  /auth:
+    head:
+      operationId: checkAuth
+      summary: Check authentication
+      description: Checks if the user is authenticated by verifying the session cookie.
+      tags: [ Auth ]
+      responses:
+        '204':
+          description: Authenticated
+        '401':
+          description: Not authenticated
+        '500':
+          description: Internal server error
 
   /ping:
     get:
@@ -192,7 +206,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseKO'
         '500':
-          description: Internal error, check logs.
+          description: Internal server error, check logs.
           content:
             application/json:
               schema:
@@ -243,7 +257,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseMerge'
         '500':
-          description: Internal error, check logs.
+          description: Internal server error, check logs.
           content:
             application/json:
               schema:
@@ -287,7 +301,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseKO'
         '500':
-          description: Internal error, check logs.
+          description: Internal server error, check logs.
           content:
             application/json:
               schema:
@@ -330,7 +344,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseKO'
         '500':
-          description: Internal error, check logs.
+          description: Internal server error, check logs.
           content:
             application/json:
               schema:
@@ -397,7 +411,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseMerge'
         '500':
-          description: Internal error, check logs.
+          description: Internal server error, check logs.
           content:
             application/json:
               schema:
@@ -468,7 +482,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseKO'
         '500':
-          description: Internal error, check logs.
+          description: Internal server error, check logs.
           content:
             application/json:
               schema:
@@ -541,7 +555,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseKO'
         '500':
-          description: Internal error, check logs.
+          description: Internal server error, check logs.
           content:
             application/json:
               schema:
@@ -606,7 +620,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseMerge'
         '500':
-          description: Internal error, check logs.
+          description: Internal server error, check logs.
           content:
             application/json:
               schema:
@@ -665,7 +679,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseKO'
         '500':
-          description: Internal error, check logs.
+          description: Internal server error, check logs.
           content:
             application/json:
               schema:
@@ -718,7 +732,7 @@ paths:
                           type: integer
                           description: Total count of his/her series
         '500':
-          description: Internal error, check logs.
+          description: Internal server error, check logs.
           content:
             application/json:
               schema:
@@ -755,7 +769,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseKO'
         '500':
-          description: Internal error, check logs.
+          description: Internal server error, check logs.
           content:
             application/json:
               schema:
@@ -804,7 +818,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseKO'
         '500':
-          description: Internal error, check logs.
+          description: Internal server error, check logs.
           content:
             application/json:
               schema:
@@ -837,7 +851,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseKO'
         '500':
-          description: Internal error, check logs.
+          description: Internal server error, check logs.
           content:
             application/json:
               schema:
@@ -881,7 +895,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseKO'
         '500':
-          description: Internal error, check logs.
+          description: Internal server error, check logs.
           content:
             application/json:
               schema:
@@ -932,7 +946,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseKO'
         '500':
-          description: Internal error, check logs.
+          description: Internal server error, check logs.
           content:
             application/json:
               schema:
@@ -957,7 +971,7 @@ paths:
         '400':
           description: Bad request (invalid query)
         '500':
-          description: Internal error, check logs.
+          description: Internal server error, check logs.
     delete:
       operationId: deleteHentai
       summary: Delete a hentai
@@ -976,7 +990,7 @@ paths:
         '400':
           description: Bad request (invalid query)
         '500':
-          description: Internal error, check logs.
+          description: Internal server error, check logs.
 
   /h/{id}:
     head:
@@ -997,7 +1011,7 @@ paths:
         '404':
           description: It is not.
         '500':
-          description: Internal error, check logs.
+          description: Internal server error, check logs.
 
   /h/{id}/{key}:
     head:
@@ -1024,7 +1038,7 @@ paths:
         '404':
           description: It is not.
         '500':
-          description: Internal error, check logs.
+          description: Internal server error, check logs.
 
   /status:
     get:
@@ -1113,7 +1127,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseSettings'
         '500':
-          description: Internal error, check logs.
+          description: Internal server error, check logs.
           content:
             application/json:
               schema:
@@ -1128,7 +1142,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/settings'
+              allOf:
+                - $ref: '#/components/schemas/settings'
+                - type: object
+                  properties:
+                    password:
+                      type: string
       responses:
         '204':
           description: Settings updated
@@ -1139,7 +1158,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseKO'
         '500':
-          description: Internal error, check logs.
+          description: Internal server error, check logs.
           content:
             application/json:
               schema:
@@ -1177,7 +1196,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseKO'
         '500':
-          description: Internal error, check logs.
+          description: Internal server error, check logs.
           content:
             application/json:
               schema:
@@ -1213,7 +1232,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseKO'
         '500':
-          description: Internal error, check logs.
+          description: Internal server error, check logs.
           content:
             application/json:
               schema:
@@ -1368,7 +1387,7 @@ components:
         - plan-to
         - reading
         - completed
-        - one-shot
+        - one-shots
         - dropped
         - on-hold
         - ongoing
@@ -1518,6 +1537,30 @@ components:
         required:
           - type
 
+    mu_lists:
+      type: object
+      properties:
+        plan-to:
+          type: integer
+          default: 102
+        reading:
+          type: integer
+          default: 0
+        completed:
+          type: integer
+          default: 2
+        one-shots:
+          type: integer
+          default: 101
+        dropped:
+          type: integer
+          default: 3
+        on-hold:
+          type: integer
+          default: 4
+        ongoing:
+          type: integer
+          default: 1
     settings:
       type: object
       properties:
@@ -1527,18 +1570,40 @@ components:
         title_languages:
           type: string
           description: 'Comma-separated ISO 639-1 codes. Example: "en,tr,de"'
+        password:
+          type: string
+          description: new password
         mu_integration:
+          type: boolean
+        mu_automation:
           type: boolean
         mu_username:
           type: string
         mu_password:
           type: string
+        mu_lists:
+          $ref: '#/components/schemas/mu_lists'
         dex_integration:
           type: boolean
-        dex_token:
+        dex_integration_forced:
+          type: boolean
+        dex_automation:
+          type: boolean
+        dex_username:
+          type: string
+        dex_password:
+          type: string
+        dex_client_id:
+          type: string
+          pattern: '^personal-client-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+        dex_secret:
           type: string
         mal_integration:
           type: boolean
+        mal_automation:
+          type: boolean
+        mal_client_id:
+          type: string
     responseSettings:
       type: object
       properties:
@@ -1556,15 +1621,34 @@ components:
               description: 'Comma-separated ISO 639-1 codes. Example: "en,tr,de"'
             mu_integration:
               type: boolean
+            mu_automation:
+              type: boolean
             mu_username:
               type: string
             mu_password:
               type: boolean
+            mu_lists:
+              $ref: '#/components/schemas/mu_lists'
             dex_integration:
               type: boolean
-            dex_token:
+            dex_integration_forced:
+              type: boolean
+            dex_automation:
+              type: boolean
+            dex_username:
+              type: string
+            dex_password:
+              type: boolean
+            dex_client_id:
+              type: string
+              pattern: '^personal-client-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+            dex_secret:
               type: boolean
             mal_integration:
+              type: boolean
+            mal_automation:
+              type: boolean
+            mal_client_id:
               type: boolean
 
     responseKO:

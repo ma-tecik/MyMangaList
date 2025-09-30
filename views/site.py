@@ -19,7 +19,8 @@ def logout():
 @site_bp.route("/")
 def index():
     try:
-        return render_template("index.html")  # TODO: May be change
+        # return render_template("index.html")  # TODO: May be change
+        return redirect("/series/plan-to", 302)
     except Exception as e:
         app.logger.error(f"Failed to return index: {e}")
         return "Internal Server Error", 500
@@ -155,6 +156,7 @@ def h():
     try:
         return render_template("h.html")
     except Exception as e:
+        app.logger.error(f"Failed to return h page: {e}")
         return "Internal Server Error", 500
 
 
@@ -167,12 +169,12 @@ def settings():
         return "Internal Server Error", 500
 
 
-@site_bp.route("/integration")
+@site_bp.route("/integrations")
 def integration():
     try:
-        return render_template("integration.html")
+        return render_template("integrations.html")
     except Exception as e:
-        app.logger.error(f"Failed to return integration page: {e}")
+        app.logger.error(f"Failed to return integrations page: {e}")
         return "Internal Server Error", 500
 
 

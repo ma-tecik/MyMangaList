@@ -127,7 +127,7 @@ class ExternalDataFetcher {
             { name: 'title', label: 'Title *', type: 'text', value: seriesData.title || '', required: true },
             { name: 'alt_titles', label: 'Alternative Titles', type: 'text', value: (seriesData.alt_titles || []).join(', ') },
             { name: 'type', label: 'Type *', type: 'select', value: seriesData.type || '', required: true, options: ['Manga', 'Manhwa', 'Manhua', 'OEL', 'Vietnamese', 'Malaysian', 'Indonesian', 'Novel', 'Artbook', 'Other'] },
-            { name: 'status', label: 'Reading Status *', type: 'select', value: seriesData.status || 'plan-to', required: true, options: ['plan-to', 'reading', 'completed', 'one-shot', 'dropped', 'on-hold', 'ongoing'] },
+            { name: 'status', label: 'Reading Status *', type: 'select', value: seriesData.status || 'plan-to', required: true, options: ['plan-to', 'reading', 'completed', 'one-shots', 'dropped', 'on-hold', 'ongoing'] },
             { name: 'year', label: 'Year', type: 'number', value: seriesData.year || '' },
             { name: 'description', label: 'Description', type: 'textarea', value: seriesData.description || '' },
             { name: 'vol_ch', label: 'Volume/Chapter Info', type: 'text', value: seriesData.vol_ch || '' },
@@ -213,7 +213,7 @@ class ExternalDataFetcher {
             'plan-to': 'Plan to Read',
             'reading': 'Reading',
             'completed': 'Completed',
-            'one-shot': 'One-shot',
+            'one-shots': 'One-shots',
             'dropped': 'Dropped',
             'on-hold': 'On Hold',
             'ongoing': 'Ongoing'
