@@ -8,11 +8,6 @@ name: Docker
 on:
   push:
     branches: [ "main" ]
-    paths-ignore:
-      - "static/openapi.yaml"
-  workflow_run:
-    workflows: [ "Redoc" ]
-    types: [ completed ]
 env:
   # Use docker.io for Docker Hub if empty
   REGISTRY: ghcr.io
@@ -36,11 +31,32 @@ jobs:
           filters: |
             spec:
               - 'static/openapi.yaml'
+
+
+  generate-redoc:
+    needs: changes
+    if: needs.changes.outputs.spec_changed == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Build docs
+        run: npx @redocly/cli build-docs static/openapi.yaml -o static/redoc.html --theme.openapi.downloadDefinitionUrl=/api/openapi.yaml
+
+      - name: Commit docs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add static/redoc.html
+          git commit -m "chore: update redoc.html" || echo "No changes to commit"
+          git push
   
 
-  build:
-    needs: changes
-    if: needs.changes.outputs.spec_changed != 'true'
+  build-docker:
+    needs: [changes, generate-redoc]
     runs-on: ubuntu-latest
     permissions:
       contents: read
