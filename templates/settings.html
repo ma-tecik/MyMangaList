@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}Settings | MML{% endblock %}
+
+{% block content %}
+<main class="main-content" id="mainContent">
+    <section class="settings-section">
+        <div class="settings-header">
+            <h1 class="settings-title">Settings</h1>
+            <p class="settings-subtitle">Configure your manga list preferences and integrations</p>
+        </div>
+
+        <form id="settingsForm" class="settings-form">
+            <!-- General Settings -->
+            <div class="settings-group">
+                <h2 class="group-title">General Settings</h2>
+
+                <div class="form-group">
+                    <label for="main_rating" class="form-label">
+                        <span class="label-text">Primary Rating Source</span>
+                        <span class="label-description">Choose which rating system to display as primary</span>
+                    </label>
+                    <select id="main_rating" name="main_rating" class="form-select">
+                        <option value="mu">MangaUpdates</option>
+                        <option value="dex">Mangadex</option>
+                        <option value="mal">MyAnimeList</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="title_languages" class="form-label">
+                        <span class="label-text">Preferred Title Languages</span>
+                        <span class="label-description">Comma-separated ISO 639-1 language codes (e.g., en,ja,tr)</span>
+                    </label>
+                    <input type="text" id="title_languages" name="title_languages"
+                           placeholder="en,ja,tr" class="form-input" />
+                </div>
+            </div>
+
+            <!-- MangaUpdates Integration -->
+            <div class="settings-group">
+                <h2 class="group-title">MangaUpdates Integration</h2>
+
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="mu_integration" name="mu_integration" class="form-checkbox" />
+                        <span class="checkbox-custom"></span>
+                        <div class="checkbox-content">
+                            <span class="label-text">Enable MangaUpdates Integration</span>
+                            <span class="label-description">Sync your reading progress with MangaUpdates</span>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="form-group mu-credentials" style="display: none;">
+                    <label for="mu_username" class="form-label">
+                        <span class="label-text">Username</span>
+                    </label>
+                    <input type="text" id="mu_username" name="mu_username"
+                           placeholder="Your MangaUpdates username" class="form-input" />
+                </div>
+
+                <div class="form-group mu-credentials" style="display: none;">
+                    <label for="mu_password" class="form-label">
+                        <span class="label-text">Password</span>
+                    </label>
+                    <input type="password" id="mu_password" name="mu_password"
+                           placeholder="Your MangaUpdates password" class="form-input" />
+                </div>
+            </div>
+
+            <!-- Mangadex Integration -->
+            <div class="settings-group">
+                <h2 class="group-title">Mangadex Integration</h2>
+
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="dex_integration" name="dex_integration" class="form-checkbox" />
+                        <span class="checkbox-custom"></span>
+                        <div class="checkbox-content">
+                            <span class="label-text">Enable Mangadex Integration</span>
+                            <span class="label-description">Sync your reading progress with Mangadex</span>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="form-group dex-credentials" style="display: none;">
+                    <label for="dex_token" class="form-label">
+                        <span class="label-text">API Token</span>
+                        <span class="label-description">Your personal Mangadex API token</span>
+                    </label>
+                    <input type="text" id="dex_token" name="dex_token"
+                           placeholder="Enter your Mangadex API token" class="form-input" />
+                </div>
+            </div>
+
+            <!-- MyAnimeList Integration -->
+            <div class="settings-group">
+                <h2 class="group-title">MyAnimeList Integration</h2>
+
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="mal_integration" name="mal_integration" class="form-checkbox" />
+                        <span class="checkbox-custom"></span>
+                        <div class="checkbox-content">
+                            <span class="label-text">Enable MyAnimeList Integration</span>
+                            <span class="label-description">Sync your reading progress with MyAnimeList</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <button type="submit" class="btn-primary" id="saveBtn">
+                    <span class="btn-text">Save Settings</span>
+                    <div class="btn-loader hidden">
+                        <div class="spinner"></div>
+                    </div>
+                </button>
+                <div id="statusMessage" class="status-message"></div>
+            </div>
+        </form>
+    </section>
+</main>
+{% endblock %}
+
+{% block script %}
+    <script src="/static/settings.js"></script>
+{% endblock %}
