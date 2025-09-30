@@ -57,6 +57,7 @@ jobs:
 
   build-docker:
     needs: [changes, generate-redoc]
+    if: always()
     runs-on: ubuntu-latest
     permissions:
       contents: read
