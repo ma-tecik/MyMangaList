@@ -2,126 +2,321 @@
 {% block title %}Settings | MML{% endblock %}
 
 {% block content %}
-<main class="main-content" id="mainContent">
-    <section class="settings-section">
-        <div class="settings-header">
-            <h1 class="settings-title">Settings</h1>
-            <p class="settings-subtitle">Configure your manga list preferences and integrations</p>
-        </div>
-
-        <form id="settingsForm" class="settings-form">
-            <!-- General Settings -->
-            <div class="settings-group">
-                <h2 class="group-title">General Settings</h2>
-
-                <div class="form-group">
-                    <label for="main_rating" class="form-label">
-                        <span class="label-text">Primary Rating Source</span>
-                        <span class="label-description">Choose which rating system to display as primary</span>
-                    </label>
-                    <select id="main_rating" name="main_rating" class="form-select">
-                        <option value="mu">MangaUpdates</option>
-                        <option value="dex">Mangadex</option>
-                        <option value="mal">MyAnimeList</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="title_languages" class="form-label">
-                        <span class="label-text">Preferred Title Languages</span>
-                        <span class="label-description">Comma-separated ISO 639-1 language codes (e.g., en,ja,tr)</span>
-                    </label>
-                    <input type="text" id="title_languages" name="title_languages"
-                           placeholder="en,ja,tr" class="form-input" />
-                </div>
+    <main class="main-content" id="mainContent">
+        <div class="settings-container">
+            <div class="page-header">
+                <h1>⚙️ Settings</h1>
+                <p>Configure your manga tracking preferences and integrations</p>
             </div>
 
-            <!-- MangaUpdates Integration -->
-            <div class="settings-group">
-                <h2 class="group-title">MangaUpdates Integration</h2>
-
-                <div class="form-group">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="mu_integration" name="mu_integration" class="form-checkbox" />
-                        <span class="checkbox-custom"></span>
-                        <div class="checkbox-content">
-                            <span class="label-text">Enable MangaUpdates Integration</span>
-                            <span class="label-description">Sync your reading progress with MangaUpdates</span>
-                        </div>
-                    </label>
+            <div class="settings-content">
+                <!-- Loading State -->
+                <div class="loading-spinner" id="loadingSpinner">
+                    <div class="spinner-animation"></div>
+                    <p>Loading settings...</p>
                 </div>
 
-                <div class="form-group mu-credentials" style="display: none;">
-                    <label for="mu_username" class="form-label">
-                        <span class="label-text">Username</span>
-                    </label>
-                    <input type="text" id="mu_username" name="mu_username"
-                           placeholder="Your MangaUpdates username" class="form-input" />
-                </div>
-
-                <div class="form-group mu-credentials" style="display: none;">
-                    <label for="mu_password" class="form-label">
-                        <span class="label-text">Password</span>
-                    </label>
-                    <input type="password" id="mu_password" name="mu_password"
-                           placeholder="Your MangaUpdates password" class="form-input" />
-                </div>
-            </div>
-
-            <!-- Mangadex Integration -->
-            <div class="settings-group">
-                <h2 class="group-title">Mangadex Integration</h2>
-
-                <div class="form-group">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="dex_integration" name="dex_integration" class="form-checkbox" />
-                        <span class="checkbox-custom"></span>
-                        <div class="checkbox-content">
-                            <span class="label-text">Enable Mangadex Integration</span>
-                            <span class="label-description">Sync your reading progress with Mangadex</span>
-                        </div>
-                    </label>
-                </div>
-
-                <div class="form-group dex-credentials" style="display: none;">
-                    <label for="dex_token" class="form-label">
-                        <span class="label-text">API Token</span>
-                        <span class="label-description">Your personal Mangadex API token</span>
-                    </label>
-                    <input type="text" id="dex_token" name="dex_token"
-                           placeholder="Enter your Mangadex API token" class="form-input" />
-                </div>
-            </div>
-
-            <!-- MyAnimeList Integration -->
-            <div class="settings-group">
-                <h2 class="group-title">MyAnimeList Integration</h2>
-
-                <div class="form-group">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="mal_integration" name="mal_integration" class="form-checkbox" />
-                        <span class="checkbox-custom"></span>
-                        <div class="checkbox-content">
-                            <span class="label-text">Enable MyAnimeList Integration</span>
-                            <span class="label-description">Sync your reading progress with MyAnimeList</span>
-                        </div>
-                    </label>
-                </div>
-            </div>
-
-            <!-- Form Actions -->
-            <div class="form-actions">
-                <button type="submit" class="btn-primary" id="saveBtn">
-                    <span class="btn-text">Save Settings</span>
-                    <div class="btn-loader hidden">
-                        <div class="spinner"></div>
+                <!-- Error State -->
+                <div class="error-container hidden" id="errorContainer">
+                    <div class="error-message">
+                        <span class="error-icon">⚠️</span>
+                        <span id="errorText">Failed to load settings</span>
                     </div>
-                </button>
-                <div id="statusMessage" class="status-message"></div>
+                </div>
+
+                <!-- Settings Form -->
+                <form id="settingsForm" class="settings-form hidden">
+                    <!-- General Settings Section -->
+                    <div class="settings-section">
+                        <div class="section-header">
+                            <h2>📊 General Preferences</h2>
+                            <p>Configure how your manga data is displayed and processed</p>
+                        </div>
+
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="mainRating">
+                                    <span class="label-icon">⭐</span>
+                                    Primary Rating Source
+                                </label>
+                                <select id="mainRating" name="main_rating" required>
+                                    <option value="mu">MangaUpdates</option>
+                                    <option value="dex">MangaDex</option>
+                                    <option value="mal">MyAnimeList</option>
+                                </select>
+                                <small>Choose which source to use as the primary rating display</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="titleLanguages">
+                                    <span class="label-icon">🌐</span>
+                                    Title Languages
+                                </label>
+                                <input
+                                    type="text"
+                                    id="titleLanguages"
+                                    name="title_languages"
+                                    placeholder="en,tr,de,jp"
+                                    pattern="^[a-z]{2}(,[a-z]{2})*$"
+                                >
+                                <small>Comma-separated ISO 639-1 language codes (e.g., en,tr,de)</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MangaUpdates Integration -->
+                    <div class="settings-section">
+                        <div class="section-header">
+                            <h2>
+                                <img src="/static/icons/mangaupdates.svg" alt="MU" class="integration-icon">
+                                MangaUpdates Integration
+                            </h2>
+                        </div>
+
+                        <div class="integration-toggle">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="muIntegration" name="mu_integration">
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-label">Enable MangaUpdates Integration</span>
+                            </label>
+                        </div>
+
+                        <div class="integration-fields" id="muFields">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="muUsername">
+                                        <span class="label-icon">👤</span>
+                                        Username <span class="required-indicator">*</span>
+                                    </label>
+                                    <input type="text" id="muUsername" name="mu_username" autocomplete="username">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="muPassword">
+                                        <span class="label-icon">🔐</span>
+                                        Password <span class="required-indicator" id="muPasswordRequired">*</span>
+                                    </label>
+                                    <input type="password" id="muPassword" name="mu_password" autocomplete="current-password">
+                                </div>
+                            </div>
+
+                            <div class="automation-section">
+                                <div class="integration-toggle">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="muAutomation" name="mu_automation">
+                                        <span class="toggle-slider"></span>
+                                        <span class="toggle-label">Enable Automation</span>
+                                    </label>
+                                </div>
+                                <small>Automatically sync your reading lists and update series data</small>
+                            </div>
+
+                            <div class="lists-section" id="muListsSection">
+                                <h4>📋 List Mapping</h4>
+                                <p>Map your local lists to MangaUpdates list IDs</p>
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label for="muListPlanTo">Plan to Read</label>
+                                        <input type="number" id="muListPlanTo" name="mu_list_plan_to" placeholder="102" min="0">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="muListReading">Reading</label>
+                                        <input type="number" id="muListReading" name="mu_list_reading" placeholder="0" min="0">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="muListCompleted">Completed</label>
+                                        <input type="number" id="muListCompleted" name="mu_list_completed" placeholder="2" min="0">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="muListOneShots">One Shots</label>
+                                        <input type="number" id="muListOneShots" name="mu_list_one_shots" placeholder="101" min="0">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="muListDropped">Dropped</label>
+                                        <input type="number" id="muListDropped" name="mu_list_dropped" placeholder="3" min="0">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="muListOnHold">On Hold</label>
+                                        <input type="number" id="muListOnHold" name="mu_list_on_hold" placeholder="4" min="0">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="muListOngoing">Ongoing</label>
+                                        <input type="number" id="muListOngoing" name="mu_list_ongoing" placeholder="1" min="0">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MangaDex Integration -->
+                    <div class="settings-section">
+                        <div class="section-header">
+                            <h2>
+                                <img src="/static/icons/mangadex.svg" alt="MDX" class="integration-icon">
+                                MangaDex Integration
+                            </h2>
+                        </div>
+
+                        <div class="integration-toggle">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="dexIntegration" name="dex_integration">
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-label">Enable MangaDex Integration</span>
+                            </label>
+                        </div>
+
+                        <div class="integration-fields" id="dexFields">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="dexUsername">
+                                        <span class="label-icon">👤</span>
+                                        Username <span class="required-indicator">*</span>
+                                    </label>
+                                    <input type="text" id="dexUsername" name="dex_username" autocomplete="username">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="dexPassword">
+                                        <span class="label-icon">🔐</span>
+                                        Password <span class="required-indicator" id="dexPasswordRequired">*</span>
+                                    </label>
+                                    <input type="password" id="dexPassword" name="dex_password" autocomplete="current-password">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="dexClientId">
+                                        <span class="label-icon">🆔</span>
+                                        Client ID <span class="required-indicator">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        id="dexClientId"
+                                        name="dex_client_id"
+                                        placeholder="personal-client-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                                        pattern="^personal-client-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                                    >
+                                    <small>Personal client ID from MangaDex API settings</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="dexSecret">
+                                        <span class="label-icon">🔑</span>
+                                        Client Secret <span class="required-indicator" id="dexSecretRequired">*</span>
+                                    </label>
+                                    <input type="password" id="dexSecret" name="dex_secret">
+                                    <small>Client secret from MangaDex API settings</small>
+                                </div>
+                            </div>
+
+                            <div class="automation-section">
+                                <div class="integration-toggle">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="dexAutomation" name="dex_automation">
+                                        <span class="toggle-slider"></span>
+                                        <span class="toggle-label">Enable Automation</span>
+                                    </label>
+                                </div>
+                                <small>Automatically sync your reading lists and update series data</small>
+                            </div>
+
+                            <div class="automation-section">
+                                <div class="integration-toggle">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="dexForced" name="dex_integration_forced">
+                                        <span class="toggle-slider"></span>
+                                        <span class="toggle-label">Force Integration</span>
+                                    </label>
+                                </div>
+                                <small>Override local data with MangaDex data when conflicts occur</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MyAnimeList Integration -->
+                    <div class="settings-section">
+                        <div class="section-header">
+                            <h2>
+                                <img src="/static/icons/myanimelist.ico" alt="MAL" class="integration-icon">
+                                MyAnimeList Integration
+                            </h2>
+                        </div>
+
+                        <!-- MAL Client ID - Always visible because MAL is "cins" -->
+                        <div class="form-group">
+                            <label for="malClientId">
+                                <span class="label-icon">🆔</span>
+                                Client ID
+                            </label>
+                            <input type="text" id="malClientId" name="mal_client_id">
+                            <small>Required for any MAL data access (even public info). Get it from MyAnimeList API settings</small>
+                        </div>
+
+                        <div class="integration-toggle">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="malIntegration" name="mal_integration">
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-label">Enable MyAnimeList Integration</span>
+                            </label>
+                        </div>
+
+                        <div class="integration-fields" id="malFields">
+                            <div class="automation-section">
+                                <div class="integration-toggle">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="malAutomation" name="mal_automation">
+                                        <span class="toggle-slider"></span>
+                                        <span class="toggle-label">Enable Automation</span>
+                                    </label>
+                                </div>
+                                <small>Automatically sync your reading lists and update series data</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Password Change Section -->
+                    <div class="settings-section password-change-section">
+                        <div class="section-header">
+                            <h2>🔐 Change Password</h2>
+                            <p>Update your account password</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="newPassword">
+                                <span class="label-icon">🔑</span>
+                                New Password
+                            </label>
+                            <input
+                                type="password"
+                                id="newPassword"
+                                name="new_password"
+                                autocomplete="new-password"
+                                placeholder="Enter new password (leave blank to keep current)"
+                            >
+                            <small>Leave empty if you don't want to change your password</small>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="settings-actions">
+                        <button type="button" class="secondary-button" id="resetButton">
+                            <span class="button-icon">🔄</span>
+                            Reset Changes
+                        </button>
+                        <button type="submit" class="primary-button" id="saveButton">
+                            <span class="button-icon">💾</span>
+                            <span class="button-text">Save Settings</span>
+                            <div class="loading-spinner hidden">
+                                <div class="spinner-small"></div>
+                            </div>
+                        </button>
+                    </div>
+                </form>
             </div>
-        </form>
-    </section>
-</main>
+
+            <!-- Success/Error Messages -->
+            <div class="message-container" id="messageContainer"></div>
+        </div>
+    </main>
 {% endblock %}
 
 {% block script %}

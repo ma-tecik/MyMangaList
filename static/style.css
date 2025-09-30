@@ -880,59 +880,409 @@ body:has(.login-page) .navbar {
     display: none;
 }
 
-/* Responsive Design */
+/* Settings Page Styles */
+.settings-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.settings-content {
+    position: relative;
+}
+
+/* Loading States */
+.spinner-animation {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--nord3);
+    border-top: 4px solid var(--nord10);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+.spinner-small {
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* Settings Form */
+.settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.settings-section {
+    background: var(--nord1);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 6px 30px rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--nord2);
+}
+
+.section-header {
+    margin-bottom: 1.5rem;
+}
+
+.section-header h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--nord6);
+    margin-bottom: 0.5rem;
+}
+
+.section-header p {
+    color: var(--nord4);
+    opacity: 0.9;
+    font-size: 1rem;
+    margin: 0;
+}
+
+.integration-icon {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+
+.label-icon {
+    font-size: 1rem;
+    margin-right: 0.25rem;
+}
+
+/* Integration Toggles */
+.integration-toggle {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: var(--nord0);
+    border-radius: 12px;
+    border: 2px solid var(--nord2);
+}
+
+.toggle-switch {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.toggle-switch input[type="checkbox"] {
+    display: none;
+}
+
+.toggle-slider {
+    position: relative;
+    width: 50px;
+    height: 28px;
+    background: var(--nord3);
+    border-radius: 14px;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.toggle-slider::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 24px;
+    height: 24px;
+    background: var(--nord6);
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-switch input[type="checkbox"]:checked + .toggle-slider {
+    background: var(--nord15);
+}
+
+.toggle-switch input[type="checkbox"]:checked + .toggle-slider::before {
+    transform: translateX(22px);
+}
+
+.toggle-label {
+    font-weight: 600;
+    color: var(--nord4);
+    font-size: 1.1rem;
+}
+
+/* Integration Fields */
+.integration-fields {
+    display: none;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--nord2);
+}
+
+/* Form Validation */
+.form-group input.error,
+.form-group select.error,
+.form-group textarea.error {
+    border-color: var(--nord11);
+    box-shadow: 0 0 0 3px rgba(191, 97, 106, 0.2);
+}
+
+.field-error {
+    color: var(--nord11);
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+    font-weight: 500;
+}
+
+/* Password Section */
+.password-section {
+    border: 2px solid var(--nord12);
+    background: linear-gradient(135deg, var(--nord1), rgba(208, 135, 112, 0.05));
+}
+
+/* Action Buttons */
+.settings-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 1rem;
+}
+
+.secondary-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: var(--nord2);
+    color: var(--nord4);
+    border: 2px solid var(--nord3);
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.secondary-button:hover {
+    background: var(--nord3);
+    color: var(--nord6);
+    transform: translateY(-1px);
+}
+
+.button-icon {
+    font-size: 1.1rem;
+}
+
+/* Message Container */
+.message-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1001;
+    max-width: 400px;
+}
+
+.message {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    animation: slideInRight 0.3s ease;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.message.info {
+    background: linear-gradient(135deg, var(--nord8), var(--nord9));
+    color: var(--nord6);
+}
+
+.message-icon {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.message-text {
+    flex: 1;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Error Container */
+.error-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+}
+
+.error-message {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem 2rem;
+    background: var(--nord1);
+    border: 2px solid var(--nord11);
+    border-radius: 12px;
+    color: var(--nord4);
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.error-icon {
+    font-size: 1.5rem;
+    color: var(--nord11);
+}
+
+/* Enhanced Focus Styles */
+.toggle-switch:focus-within .toggle-slider {
+    outline: 2px solid var(--nord10);
+    outline-offset: 2px;
+}
+
+/* Automation Sections */
+.automation-section {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: rgba(136, 192, 208, 0.05);
+    border-radius: 8px;
+    border-left: 4px solid var(--nord8);
+}
+
+.automation-section small {
+    display: block;
+    margin-top: 0.5rem;
+    color: var(--nord3);
+    font-style: italic;
+}
+
+/* Lists Section */
+.lists-section {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: rgba(163, 190, 140, 0.05);
+    border-radius: 8px;
+    border-left: 4px solid var(--nord15);
+}
+
+.lists-section h4 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--nord15);
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+}
+
+.lists-section p {
+    color: var(--nord4);
+    margin-bottom: 1rem;
+    opacity: 0.9;
+}
+
+/* Password Change Section */
+.password-change-section {
+    border: 2px solid var(--nord10);
+    background: linear-gradient(135deg, var(--nord1), rgba(94, 129, 172, 0.05));
+}
+
+.password-change-section .section-header h2 {
+    color: var(--nord10);
+}
+
+/* Enhanced form groups for number inputs */
+.form-group input[type="number"] {
+    background: var(--nord0);
+    border: 2px solid var(--nord3);
+    color: var(--nord5);
+}
+
+.form-group input[type="number"]:focus {
+    border-color: var(--nord15);
+    box-shadow: 0 0 0 3px rgba(163, 190, 140, 0.2);
+}
+
+/* Client ID specific styling */
+.form-group input[name="dex_client_id"] {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+}
+
+/* Enhanced integration fields styling */
+.integration-fields {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        max-height: 0;
+        padding-top: 0;
+    }
+    to {
+        opacity: 1;
+        max-height: 1000px;
+        padding-top: 1rem;
+    }
+}
+
+/* Enhanced toggle styling for automation */
+.automation-section .toggle-switch {
+    justify-content: flex-start;
+}
+
+.automation-section .toggle-label {
+    font-size: 1rem;
+    color: var(--nord8);
+}
+
+/* Responsive enhancements for new sections */
 @media (max-width: 768px) {
-    .add-series-container {
-        padding: 1rem;
-    }
-
-    .page-header h1 {
-        font-size: 2rem;
-    }
-
-    .external-ids-grid,
-    .form-grid {
+    .lists-section .form-grid {
         grid-template-columns: 1fr;
-        gap: 1rem;
     }
 
-    .form-section {
-        padding: 1.5rem;
-    }
-
-    .tab-button {
+    .automation-section {
         padding: 0.75rem;
-        font-size: 0.9rem;
     }
 
-    .tab-button .icon {
-        font-size: 1rem;
+    .lists-section {
+        padding: 1rem;
     }
 }
 
 @media (max-width: 480px) {
-    .tab-navigation {
+    .lists-section h4 {
+        font-size: 1.1rem;
+    }
+
+    .automation-section .toggle-switch {
         flex-direction: column;
-        gap: 6px;
-    }
-
-    .tab-button {
-        justify-content: flex-start;
-        padding: 0.75rem 1rem;
+        align-items: flex-start;
+        gap: 0.5rem;
     }
 }
 
-/* Smooth transitions for better UX */
-* {
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-/* Focus styles for accessibility */
-.tab-button:focus,
-.primary-button:focus,
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-    outline: 2px solid var(--nord10);
-    outline-offset: 2px;
+/* Required Indicator */
+.required-indicator {
+    color: var(--nord11);
+    font-weight: bold;
+    margin-left: 0.25rem;
 }
