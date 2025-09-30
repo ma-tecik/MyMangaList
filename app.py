@@ -1,4 +1,4 @@
-from flask import Flask, request, session, jsonify, redirect
+from flask import Flask, request, session, jsonify, redirect, render_template
 from views.api import api_bp
 from views.site import site_bp
 from views.misc import misc_bp
@@ -53,3 +53,13 @@ def require_login():
 app.register_blueprint(api_bp)
 app.register_blueprint(site_bp)
 app.register_blueprint(misc_bp)
+
+# Error Handlers
+@app.errorhandler(404)
+def not_found(error):
+    if request.path.startswith("/api/"):
+        if request.method == "HEAD":
+            return "", 404
+        return jsonify({"status": "KO", "error": "404 Not Found"}), 404
+    return render_template("404.html"), 404
+

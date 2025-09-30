@@ -55,7 +55,7 @@ def series_redirect(id_):
         status = cursor.fetchone()
         if status:
             return redirect("/series/status/id_", 302)
-        return render_template("404-series.html"), 404
+        return render_template("404.html"), 404
     except Exception as e:
         app.logger.error(f"Error in series_redirect: {e}")
         return "Internal Server Error", 500
@@ -75,7 +75,7 @@ def series(status, series_id):
         conn.close()
 
         if not row:
-            return render_template("404-series.html"), 404
+            return render_template("404.html"), 404
         elif row != status:
             return redirect(f"/series/{row}/{series_id}", 302)
         return render_template("series.html")

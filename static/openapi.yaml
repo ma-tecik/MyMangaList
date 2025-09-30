@@ -205,6 +205,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/responseKO'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
         '500':
           description: Internal server error, check logs.
           content:
@@ -246,6 +252,12 @@ paths:
                       - authors
         '400':
           description: Bad request (invalid query)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+        '401':
+          description: Authentication required
           content:
             application/json:
               schema:
@@ -294,6 +306,12 @@ paths:
                     default: OK
                   data:
                     $ref: '#/components/schemas/Series'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
         '404':
           description: Not found
           content:
@@ -333,6 +351,12 @@ paths:
                     $ref: '#/components/schemas/Series'
         '400':
           description: Bad request (invalid query)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+        '401':
+          description: Authentication required
           content:
             application/json:
               schema:
@@ -404,6 +428,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/responseKO'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
         '409':
           description: Series conflict, use merge endpoint.
           content:
@@ -471,6 +501,12 @@ paths:
           description: Updated
         '400':
           description: Bad request (invalid query)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+        '401':
+          description: Authentication required
           content:
             application/json:
               schema:
@@ -554,6 +590,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/responseKO'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
         '500':
           description: Internal server error, check logs.
           content:
@@ -603,6 +645,12 @@ paths:
                     type: integer
         '400':
           description: Bad request (invalid query)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+        '401':
+          description: Authentication required
           content:
             application/json:
               schema:
@@ -672,6 +720,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/responseKO'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
         '404':
           description: Not found
           content:
@@ -731,6 +785,12 @@ paths:
                         series:
                           type: integer
                           description: Total count of his/her series
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
         '500':
           description: Internal server error, check logs.
           content:
@@ -764,6 +824,12 @@ paths:
                 $ref: '#/components/schemas/responseAuthor'
         '400':
           description: Bad request (missing or invalid body)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+        '401':
+          description: Authentication required
           content:
             application/json:
               schema:
@@ -811,6 +877,12 @@ paths:
                           $ref: '#/components/schemas/AuthorIDs'
                         name:
                           type: string
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
         '404':
           description: Not found
           content:
@@ -844,6 +916,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/responseAuthor'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
         '404':
           description: Not found
           content:
@@ -888,6 +966,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/responseAuthor'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
         '404':
           description: Not found
           content:
@@ -933,6 +1017,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/responseKO'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
         '404':
           description: Not found
           content:
@@ -970,6 +1060,12 @@ paths:
           description: Added or already exist in db. We don't check.
         '400':
           description: Bad request (invalid query)
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
         '500':
           description: Internal server error, check logs.
     delete:
@@ -989,6 +1085,12 @@ paths:
           description: Deleted or not exist in db. We don't check.
         '400':
           description: Bad request (invalid query)
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
         '500':
           description: Internal server error, check logs.
 
@@ -1008,6 +1110,8 @@ paths:
       responses:
         '204':
           description: It is.
+        '401':
+          description: Authentication required
         '404':
           description: It is not.
         '500':
@@ -1035,6 +1139,8 @@ paths:
       responses:
         '204':
           description: It is.
+        '401':
+          description: Authentication required
         '404':
           description: It is not.
         '500':
@@ -1112,7 +1218,18 @@ paths:
                         type: boolean
                       mal_integration:
                         type: boolean
-
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+        '500':
+          description: Internal server error, check logs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
   /settings:
     get:
       operationId: getSettings
@@ -1126,6 +1243,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/responseSettings'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
         '500':
           description: Internal server error, check logs.
           content:
@@ -1153,6 +1276,12 @@ paths:
           description: Settings updated
         '400':
           description: Bad request (missing or invalid body)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+        '401':
+          description: Authentication required
           content:
             application/json:
               schema:
@@ -1195,6 +1324,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/responseKO'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
         '500':
           description: Internal server error, check logs.
           content:
@@ -1227,6 +1362,12 @@ paths:
           description: Job completed
         '400':
           description: Bad request (integration disabled)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+        '401':
+          description: Authentication required
           content:
             application/json:
               schema:

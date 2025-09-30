@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Page not found | MML{% endblock %}
+
+{% block content %}
+    <main class="main-content" id="mainContent">
+        <div class="error-page-container">
+            <div class="error-animation">
+                <div class="floating-manga">📚</div>
+                <div class="floating-manga">📖</div>
+                <div class="floating-manga">📝</div>
+            </div>
+
+            <div class="error-content">
+                <div class="error-code">404</div>
+                <div class="error-title">Oops! Page Not Found</div>
+                <div class="error-subtitle">
+                    Looks like this page got lost in another dimension!
+                </div>
+
+                <div class="error-description">
+                    <p>The page you're looking for might have been:</p>
+                    <ul class="error-reasons">
+                        <li>📦 Moved to a different library shelf</li>
+                        <li>📚 Added to someone else's reading list</li>
+                        <li>🔗 Lost in the multiverse of broken links</li>
+                        <li>✨ Isekai'd into a light novel</li>
+                    </ul>
+                </div>
+
+                <div class="error-suggestions">
+                    <h3>🎯 Quick Navigation</h3>
+                    <div class="quick-links">
+                        <a href="/series/reading">📖 Currently Reading</a>
+                        <a href="/series/plan-to">🦚 Plan to Read</a>
+                        <a href="/series/on-hold">⏸️ On Hold</a>
+                        <a href="/series/completed">✅ Completed</a>
+                    </div>
+                </div>
+
+                <div class="error-footer">
+                    <p class="footer-text">
+                        Lost? Don't worry, even the best readers get lost sometimes!
+                        <span class="sparkle">✨</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+{% endblock %}

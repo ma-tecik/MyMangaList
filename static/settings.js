@@ -35,9 +35,6 @@ class SettingsManager {
 
         // Integration toggles
         this.setupIntegrationToggles();
-
-        // Form validation
-        this.setupFormValidation();
     }
 
     setupIntegrationToggles() {
