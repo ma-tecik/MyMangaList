@@ -186,7 +186,7 @@ def get_settings(app):
     conn.close()
 
 
-def update_settings(data) -> bool:
+def update_settings(data):
     from flask import current_app as app
     conn = sqlite3.connect("data/mml.sqlite3")
     cursor = conn.cursor()

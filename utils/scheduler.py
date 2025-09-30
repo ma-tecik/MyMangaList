@@ -3,7 +3,6 @@ from utils.mangaupdates_integration import mu_update_ongoing, mu_get_data_for_al
     mu_update_ratings
 from utils.mangadex_integration import dex_start, dex_sync_lists, dex_sync_lists_forced, dex_refresh_token, \
     dex_update_ratings, dex_fetch_ids
-
 scheduler = APScheduler()
 
 
@@ -25,6 +24,7 @@ def init_scheduler(app):
     if app.config.get("DEX_FETCH_IDS"):
         @scheduler.task("cron", id="dex_fetch_ids", day="*", hour=2, minute=0)
         def scheduled_dex_fetch_ids():
+            app.logger.info("Starting scheduled MangaDex ID fetch...")
             dex_fetch_ids()
 
     if app.config.get("DEX_AUTOMATION"):

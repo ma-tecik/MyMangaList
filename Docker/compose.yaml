@@ -5,6 +5,7 @@ services:
     restart: unless-stopped
     environment:
       - TZ=Europe/Istanbul # Set your timezone
+    user: "1000:1000" # Change 1000:1000 to your desired user and group ID
     ports:
       - "20340:20340" # Change 20340 to your desired port
     volumes:
