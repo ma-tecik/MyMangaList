@@ -311,6 +311,7 @@ class SettingsManager {
         }
 
         document.getElementById('dexAutomation').checked = data.dex_automation || false;
+        document.getElementById('dexFetchIds').checked = data.dex_fetch_ids || false;
         document.getElementById('dexForced').checked = data.dex_integration_forced || false;
 
         // MyAnimeList - Client ID always visible, integration fields conditional
@@ -396,6 +397,7 @@ class SettingsManager {
 
         // MangaDex integration
         settings.dex_integration = formData.has('dex_integration');
+        settings.dex_fetch_ids = formData.has('dex_fetch_ids');
         if (settings.dex_integration) {
             settings.dex_automation = formData.has('dex_automation');
             settings.dex_integration_forced = formData.has('dex_integration_forced');

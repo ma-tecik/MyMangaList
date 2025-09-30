@@ -191,7 +191,7 @@ def mu_update_ongoing() -> int:
         if not headers:
             return 0
         ongoing = app.config.get(f"MU_LIST_ONGOING")
-        plan_to_read = app.config.get(f"MU_LIST_PLAN_TO_READ")
+        plan_to_read = app.config.get(f"MU_LIST_PLAN-TO")
         payload = []
 
         to_move = _get_ids_scanlated(ongoing, headers)
@@ -257,22 +257,22 @@ def mu_sync_lists(data: Dict[str, List[dict]], headers) -> bool:
                 payload = [{"series": {"id": int(j, 36)}, "list_id": list_id} for j in add_to_mu if add_to_mu[j] == i]
                 _add_series_batch(payload, headers)
         if to_update_mu:
-            if add_to_mu:
-                sleep(1)
             for i in ("plan-to", "reading", "completed", "one-shots", "dropped", "on-hold", "ongoing")   :
                 list_id = app.config[f"MU_LIST_{i.upper()}"]
                 payload = [{"series": {"id": j}, "list_id": list_id} for j in add_to_mu if add_to_mu[j] == i]
                 _move_series_batch(payload, headers)
+        w = 1
         for i in add_to_db.keys():
-            if to_update_mu or add_to_mu:
+            if w >= 4:
                 sleep(1)
+                w = 0
             try:
-                r, s = series(base36(i))
+                r, s = series(i)
                 if s != 200:
                     app.logger.info(f"Skipping {i}, ↑")
                     continue
                 cursor.execute(f"""INSERT INTO series
-                (id_mu, id_line, title, type, description, vol_ch, id_mu, status, year, timestamp_status, timestamp_mu)
+                (id_mu, id_line, title, type, description, vol_ch, is_md, status, year, timestamp_status, timestamp_mu)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id""",
                                (i, r["ids"].get("line"), r.get("title"), r.get("type"),
                                 r.get("description"), r.get("vol_ch"), True, add_to_db[i][0], r.get("year"),
@@ -283,8 +283,7 @@ def mu_sync_lists(data: Dict[str, List[dict]], headers) -> bool:
             except Exception as e:
                 app.logger.error(e)
                 continue
-            if i != list(add_to_db.keys())[-1]:
-                sleep(1)
+            w += 1
         conn.close()
         return True
     except Exception as e:

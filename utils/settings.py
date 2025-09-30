@@ -37,6 +37,8 @@ def first_run():
     conn.commit()
     conn.close()
 
+
+def first_run_detect_language():
     conn = sqlite3.connect("data/detect_language.sqlite3")
     cursor = conn.cursor()
     cursor.execute("""
@@ -129,7 +131,7 @@ def get_settings(app):
         l = [f"mu_list_{i}" for i in l]
         s = ("mu_username", "mu_password")
         if all(settings.get(i) for i in s) and all(_is_int(settings.get(i)) for i in l):
-            app.config["MU_INTEGRATION"] = "yes"
+            app.config["MU_INTEGRATION"] = 1
             for i in s:
                 app.config[i.upper()] = settings[i]
             for i in l:
@@ -176,6 +178,8 @@ def get_settings(app):
             k = int(k)
             app.config[j.upper()] = k
 
+    app.config["DEX_FETCH_IDS"] = 1 if settings.get("dex_fetch_ids") else 0
+
     if params:
         cursor.executemany("UPDATE settings SET value = ? WHERE key = ? ", params)
         conn.commit()
@@ -189,8 +193,8 @@ def update_settings(data) -> bool:
     cursor.execute("SELECT * FROM settings")
     in_db = {r[0]: r[1] for r in cursor.fetchall()}
     params = []
-    bools = ("mu_integration", "mu_automation", "dex_integration", "dex_integration_forced", "dex_automation",
-             "mal_integration", "mal_automation")
+    bools = ("mu_integration", "mu_automation", "dex_fetch_ids", "dex_integration", "dex_integration_forced",
+             "dex_automation", "mal_integration", "mal_automation")
     accepted = bools + ("main_rating", "title_languages", "password", "mu_username", "mu_password",
                         "dex_username", "dex_password", "dex_client_id", "dex_secret", "mal_client_id")
     for k, v in data.items():

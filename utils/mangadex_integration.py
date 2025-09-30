@@ -3,16 +3,16 @@ from utils.common_db import update_ratings, update_user_ratings, add_series_data
 from utils.external import series_data_external
 from utils.mangadex import search
 from utils.mangaupdates import get_id_old as get_id_mu
-from time import sleep
+from time import sleep, time
 import requests
 import sqlite3
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Union
 
 base_url = "https://api.mangadex.org/"
 auth_url = "https://auth.mangadex.org/realms/mangadex/protocol/openid-connect/token"
 
 
-def dex_authenticate() -> Dict[str, str]:
+def dex_authenticate() -> Dict[str, Union[str, int]]:
     try:
         s = ("USERNAME", "PASSWORD", "CLIENT_ID", "SECRET")
         u = [app.config.get(f"DEX_{i}") for i in s]
@@ -26,24 +26,22 @@ def dex_authenticate() -> Dict[str, str]:
             "client_id": u[2],
             "client_secret": u[3]
         }
-        for attempt in range(3):
-            response = requests.post(auth_url, data=payload)
-            if response.status_code == 200:
-                data = response.json()
-                break
-            if attempt == 2:
-                app.logger.error(f"Failed to authenticate with Mangadex after 3 attempts: {response.status_code}")
-                return {}
-            sleep(2)
+        response = requests.post(auth_url, data=payload)
+        timestamp = time()
+        if response.status_code != 200:
+            app.logger.error(f"Failed to authenticate with Mangadex: {response.status_code}")
+            return {}
+        data = response.json()
         tokens = {"access_token": data["access_token"],
-                  "refresh_token": data["refresh_token"]}
+                  "refresh_token": data["refresh_token"],
+                  "expiration": int(timestamp) + 880}
         return tokens
     except Exception as e:
         app.logger.error(e)
         return {}
 
 
-def dex_refresh_token(tokens) -> Tuple[Dict[str, str], Dict[str, str]]:
+def dex_refresh_token(tokens: Dict[str, Union[str, int]]) -> Tuple[Dict[str, Union[str, int]], Dict[str, str]]:
     try:
         s = ("CLIENT_ID", "CLIENT_SECRET")
         u = [app.config[f"DEX_{i}"] for i in s]
@@ -53,16 +51,14 @@ def dex_refresh_token(tokens) -> Tuple[Dict[str, str], Dict[str, str]]:
             "client_id": u[0],
             "client_secret": u[1]
         }
-        for attempt in range(3):
-            response = requests.post(auth_url, data=payload)
-            if response.status_code == 200:
-                break
-            if attempt == 2:
-                app.logger.error(f"Failed to authenticate with Mangadex after 3 attempts: {response.status_code}")
-                return {}, {}
-            sleep(2)
+        timestamp = time()
+        response = requests.post(auth_url, data=payload)
+        if response.status_code != 200:
+            app.logger.error(f"Failed to refresh Mangadex token: {response.status_code}")
+            return {}, {}
         access_token = response.json()["access_token"]
         tokens["access_token"] = access_token
+        tokens["expiration"] = int(timestamp) + 880
         headers, _ = dex_get_headers(tokens)
         if not headers:
             return {}, {}
@@ -72,7 +68,7 @@ def dex_refresh_token(tokens) -> Tuple[Dict[str, str], Dict[str, str]]:
         return {}, {}
 
 
-def dex_get_headers(tokens) -> Tuple[Dict[str, str], int]:
+def dex_get_headers(tokens: Dict[str, Union[str, int]]) -> Tuple[Dict[str, str], int]:
     try:
         url = base_url + "user/me"
         token = tokens.get("access_token")
@@ -102,11 +98,12 @@ def dex_get_lists(headers) -> Tuple[Dict[str, List[str]], int]:
             if attempt == 2:
                 return {}, 502
             sleep(2)
-        lists = {"plan-to": [], "reading": [], "completed": [], "dropped": [], "on-hold": [], "re_reading": []}
+        status_map = {"on_hold": "on-hold", "plan_to_read": "plan-to", "re_reading": "reading"}
+        lists = {"plan-to": [], "reading": [], "completed": [], "dropped": [], "on-hold": []}
         for k, v in data.items():
+            if v in status_map:
+                v = status_map[v]
             lists[v].append(k)
-        lists["completed"].extend(lists["re_reading"])
-        lists.pop("re_reading")
         return lists, 200
     except Exception as e:
         app.logger.error(e)
@@ -179,26 +176,25 @@ def dex_sync_lists(lists) -> Dict[str, str]:
         conn = sqlite3.connect("data/mml.sqlite3")
         cursor = conn.cursor()
         ids = [i for sublist in lists.values() for i in sublist]
-        query = f"SELECT id_dex, status FROM series WHERE id_dex IS NOT NULL and integration = 1 AND id_dex IN ({','.join(['?']*len(ids))})"
+        query = f"SELECT id_dex, status FROM series WHERE id_dex IS NOT NULL and integration = 1 AND id_dex IN ({','.join(['?'] * len(ids))})"
         cursor.execute(query, ids)
-        db = {m[0]: m[1].lower() for m in cursor.fetchall()}
+        db = {m[0]: m[1] for m in cursor.fetchall()}
 
         add_to_db = {}
         to_update = {}
+        status_map = {"on_hold": "on-hold", "plan_to_read": "plan-to", "re_reading": "reading"}
+        status_map_reverse = {"plan-to": "plan_to_read", "one-shots": "completed", "on-hold": "on_hold",
+                              "ongoing": "plan_to_read"}
         for k, v in db.items():
-            if v == "plan_to":
-                v = "plan_to_read"
-            elif v == "one-shots":
-                v = "completed"
-            elif v == "ongoing":
-                v = "reading"
-            if k in lists[v]:
+            if v in status_map_reverse:
+                v = status_map_reverse[v]
+            if k in lists and lists[v] == k:
                 continue
             to_update[k] = v
-        for i in lists:
-            for m in lists[i]:
-                if m not in db:
-                    add_to_db[m] = i.capitalize()
+        for k, v in lists.items():
+            if k not in db:
+                v = status_map[v] if v in status_map else v
+                add_to_db[k] = v
 
         for k, v in add_to_db.items():
             r, s = series_data_external({"dex": k})
@@ -249,23 +245,23 @@ def dex_sync_lists(lists) -> Dict[str, str]:
         return {}
 
 
-def dex_sync_lists_forced(tokens, headers, to_update: Dict[str, str], ) -> Tuple[Dict[str, str], Dict[str, str]]:
+def dex_sync_lists_forced(tokens: Dict[str, Union[str, int]], headers: Dict[str, str], to_update: Dict[str, str], ) -> Tuple[Dict[str, str], Dict[str, str]]:
     try:
         url = base_url + "manga/"
+        w = 1
         for k, v in to_update.items():
-            w = True
-            for attempt in range(3):
-                r = requests.post(url + k + "status", headers=headers, json={"status": v})
-                if r.status_code == 200:
-                    break
-                elif r.status_code == 401 and w:
-                    w = False
-                    tokens, headers = dex_refresh_token(tokens)
-                    attempt -= 1
-                elif attempt == 2:
-                    return tokens, headers
-                sleep(2)
-            sleep(1)
+            if int(time()) >= tokens["expiration"]:
+                tokens, headers = dex_refresh_token(tokens)
+                if not headers:
+                    return {}, {}
+                w = 1
+            if w >= 3:
+                sleep(1)
+                w = 0
+            response = requests.get(url + k + "status", headers=headers, json={"status": v})
+            if response.status_code != 200:
+                app.logger.error(f"Failed to update status for {k}: {response.status_code}")
+            w += 1
     except Exception as e:
         app.logger.error(e)
     return tokens, headers
@@ -301,7 +297,8 @@ def dex_fetch_ids() -> bool:
             cursor.executemany("UPDATE series SET id_dex = ? WHERE id = ?", to_update)
             conn.commit()
         if to_update_mal:
-            cursor.executemany("SELECT id FROM series WHERE id = ? AND id_mal IS NOT NULL", ((i[1],) for i in to_update_mal))
+            cursor.executemany("SELECT id FROM series WHERE id = ? AND id_mal IS NOT NULL",
+                               ((i[1],) for i in to_update_mal))
             existing = {i[0] for i in cursor.fetchall()}
             if existing:
                 app.logger.info(f"Skipping existing entries with Internal IDs (merge could be required): {existing}")

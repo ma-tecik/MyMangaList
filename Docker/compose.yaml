@@ -1,0 +1,11 @@
+services:
+  mml:
+    image: ghcr.io/ma-tecik/mymangalist:latest
+    container_name: mml
+    restart: unless-stopped
+    environment:
+      - TZ=Europe/Istanbul # Set your timezone
+    ports:
+      - "20340:20340" # Change 20340 to your desired port
+    volumes:
+      - "/opt/mml:/app/data" # Change /opt/mml to your desired path

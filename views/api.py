@@ -115,6 +115,7 @@ def get_settings():
                 "on-hold": int(db.get("mu_list_on-hold")),
                 "ongoing": int(db.get("mu_list_ongoing")),
             },
+            "dex_fetch_ids": bool(int(db.get("dex_fetch_ids", 0))),
             "dex_integration": bool(int(db.get("dex_integration", 0))),
             "dex_integration_forced": bool(int(db.get("dex_integration_forced", 0))),
             "dex_automation": bool(int(db.get("dex_automation", 0))),

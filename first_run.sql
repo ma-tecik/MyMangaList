@@ -82,6 +82,7 @@ INSERT OR IGNORE INTO settings VALUES
 ('mu_list_on-hold', 4),
 ('mu_list_ongoing', 1),
 -- DEX
+('dex_fetch_ids', 1),
 ('dex_integration', 0),
 ('dex_integration_forced', 0),
 ('dex_automation', 0),

@@ -1724,6 +1724,9 @@ components:
           type: string
         mu_lists:
           $ref: '#/components/schemas/mu_lists'
+        dex_fetch_ids:
+          type: boolean
+          description: Fills empty MangaDex IDs on DB if true, works even if "dex_integration" is disabled.
         dex_integration:
           type: boolean
         dex_integration_forced:
@@ -1770,6 +1773,9 @@ components:
               type: boolean
             mu_lists:
               $ref: '#/components/schemas/mu_lists'
+            dex_fetch_ids:
+              type: boolean
+              description: Fills empty MangaDex IDs on DB if true, works even if "dex_integration" is disabled.
             dex_integration:
               type: boolean
             dex_integration_forced:

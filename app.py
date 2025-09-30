@@ -2,7 +2,7 @@ from flask import Flask, request, session, jsonify, redirect, render_template
 from views.api import api_bp
 from views.site import site_bp
 from views.misc import misc_bp
-from utils.settings import first_run, get_settings
+from utils.settings import first_run, first_run_detect_language, get_settings
 from utils.scheduler import init_scheduler
 import logging
 import os
@@ -28,6 +28,10 @@ app.logger.addHandler(file_handler)
 if not os.path.isfile("data/mml.sqlite3"):
     os.makedirs("data/thumbnails", exist_ok=True)
     first_run()
+
+if not os.path.isfile("data/detect_language.sqlite3"):
+    first_run_detect_language()
+
 
 get_settings(app)
 init_scheduler(app)

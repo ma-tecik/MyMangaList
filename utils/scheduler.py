@@ -12,7 +12,7 @@ def init_scheduler(app):
     scheduler.start()
 
     if app.config.get("MU_AUTOMATION"):
-        @scheduler.task("cron", id="mu_automation", day="*", hour=1, minute=0)
+        @scheduler.task("cron", id="mu_automation", day="*", hour=1, minute=30)
         def scheduled_check_updates():
             mu_update_ongoing()
             data, headers = mu_get_data_for_all()
@@ -22,12 +22,13 @@ def init_scheduler(app):
             mu_update_series(data)
             mu_update_ratings(data)
 
-    @scheduler.task("cron", id="dex_fetch_ids", day="*", hour=1, minute=30)
-    def scheduled_dex_fetch_ids():
-        dex_fetch_ids()
+    if app.config.get("DEX_FETCH_IDS"):
+        @scheduler.task("cron", id="dex_fetch_ids", day="*", hour=2, minute=0)
+        def scheduled_dex_fetch_ids():
+            dex_fetch_ids()
 
     if app.config.get("DEX_AUTOMATION"):
-        @scheduler.task("cron", id="dex_automation", day="*", hour=2, minute=0)
+        @scheduler.task("cron", id="dex_automation", day="*", hour=2, minute=30)
         def scheduled_dex_updates():
             tokens, headers, lists = dex_start()
             if not tokens or not headers or not lists:

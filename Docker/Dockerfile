@@ -12,10 +12,7 @@ RUN apt-get update && apt-get install -y sqlite3 cron && \
 
 RUN mv Docker/backup.sh /backup.sh && \
     mv Docker/app.sh /app.sh && \
-    mv Docker/cronjob /etc/cron.d/mml-cron && \
-    rmdir Docker
-
-RUN chmod 0644 /etc/cron.d/mml-cron && \
+    rmdir Docker && \
     chmod +x /backup.sh /app.sh
 
 ENV FLASK_APP=app.py
