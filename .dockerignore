@@ -21,8 +21,7 @@ coverage.xml
 
 .github
 .gitignore
-Docker/Dockerfile
-Docker/compose.yaml
+Docker
 LICENSE
 README.md
 TODO.md

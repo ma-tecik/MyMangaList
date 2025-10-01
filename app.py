@@ -27,6 +27,7 @@ app.logger.addHandler(file_handler)
 
 if not os.path.isfile("data/mml.sqlite3"):
     os.makedirs("data/thumbnails", exist_ok=True)
+    os.makedirs("data/backups", exist_ok=True)
     first_run()
 
 if not os.path.isfile("data/detect_language.sqlite3"):

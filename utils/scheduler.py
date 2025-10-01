@@ -3,12 +3,31 @@ from utils.mangaupdates_integration import mu_update_ongoing, mu_get_data_for_al
     mu_update_ratings
 from utils.mangadex_integration import dex_start, dex_sync_lists, dex_sync_lists_forced, dex_refresh_token, \
     dex_update_ratings, dex_fetch_ids
+
 scheduler = APScheduler()
 
 
 def init_scheduler(app):
     scheduler.init_app(app)
     scheduler.start()
+
+    @scheduler.task("cron", id="db_backup", day="*", hour=1, minute=0)
+    def scheduled_db_backup():
+        from flask import current_app
+        from datetime import datetime
+        import sqlite3
+        import os
+
+        os.makedirs("data/backups", exist_ok=True)
+        backup_path = f"data/backups/mml_{datetime.today().strftime("%Y-%m-%d")}sqlite3"
+        try:
+            src = sqlite3.connect("data/mml.sqlite3")
+            dst = sqlite3.connect(backup_path)
+            src.backup(dst)
+            dst.close()
+            src.close()
+        except Exception as e:
+            current_app.logger.error(e)
 
     if app.config.get("MU_AUTOMATION"):
         @scheduler.task("cron", id="mu_automation", day="*", hour=1, minute=30)
@@ -24,7 +43,6 @@ def init_scheduler(app):
     if app.config.get("DEX_FETCH_IDS"):
         @scheduler.task("cron", id="dex_fetch_ids", day="*", hour=2, minute=0)
         def scheduled_dex_fetch_ids():
-            app.logger.info("Starting scheduled MangaDex ID fetch...")
             dex_fetch_ids()
 
     if app.config.get("DEX_AUTOMATION"):

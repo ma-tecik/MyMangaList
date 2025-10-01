@@ -6,18 +6,12 @@ LABEL org.opencontainers.image.authors="ma-tecik"
 WORKDIR /app
 COPY . .
 
-RUN apt-get update && apt-get install -y sqlite3 cron && \
-    pip install --no-cache-dir -r requirements.txt && \
-    rm -rf /var/lib/apt/lists/*
-
-RUN mv Docker/backup.sh /backup.sh && \
-    mv Docker/app.sh /app.sh && \
-    rmdir Docker && \
-    chmod +x /backup.sh /app.sh
+RUN pip install --no-cache-dir -r requirements.txt
 
 ENV FLASK_APP=app.py
 ENV FLASK_RUN_HOST=0.0.0.0
 ENV FLASK_ENV=production
 
+VOLUME ["/app/data"]
 EXPOSE 20340
-ENTRYPOINT ["/app.sh"]
+ENTRYPOINT ["gunicorn", "-b 0.0.0.0:20340", "app:app"]
