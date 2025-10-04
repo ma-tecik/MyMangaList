@@ -18,13 +18,16 @@ def init_scheduler(app):
         import os
 
         os.makedirs("data/backups", exist_ok=True)
-        backup_path = f"data/backups/mml_{datetime.today().strftime("%Y-%m-%d")}sqlite3"
         try:
             src = sqlite3.connect("data/mml.sqlite3")
-            dst = sqlite3.connect(backup_path)
+            dst = sqlite3.connect(f"data/backups/mml_{datetime.today().strftime("%Y-%m-%d")}.sqlite3")
             src.backup(dst)
             dst.close()
             src.close()
+
+            backups = sorted(os.listdir("data/backups"))
+            for backup in backups[:-10]:
+                os.remove(os.path.join("data/backups", backup))
         except Exception as e:
             with app.context():
                 app.logger.error(e)
@@ -32,7 +35,7 @@ def init_scheduler(app):
     if app.config.get("MU_AUTOMATION"):
         @scheduler.task("cron", id="mu_automation", day="*", hour=1, minute=30)
         def scheduled_check_updates():
-            with app.context():
+            with app.app_context():
                 mu_update_ongoing()
                 data, headers = mu_get_data_for_all()
                 if not data or not headers:
@@ -44,13 +47,13 @@ def init_scheduler(app):
     if app.config.get("DEX_FETCH_IDS"):
         @scheduler.task("cron", id="dex_fetch_ids", day="*", hour=2, minute=0)
         def scheduled_dex_fetch_ids():
-            with app.context():
+            with app.app_context():
                 dex_fetch_ids()
 
     if app.config.get("DEX_AUTOMATION"):
         @scheduler.task("cron", id="dex_automation", day="*", hour=2, minute=30)
         def scheduled_dex_updates():
-            with app.context():
+            with app.app_context():
                 tokens, headers, lists = dex_start()
                 if not tokens or not headers or not lists:
                     return
