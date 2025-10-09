@@ -1,5 +1,4 @@
 from flask import Blueprint, jsonify, current_app as app
-from utils.common_code import base36
 from utils.mangaupdates_integration import mu_get_data_for_all, mu_update_ratings, mu_update_ongoing, mu_sync_lists, \
     mu_update_series
 from utils.mangadex_integration import dex_start, dex_update_ratings, dex_sync_lists, dex_sync_lists_forced, \
@@ -15,12 +14,32 @@ integration_bp.register_blueprint(integration_dex)
 integration_bp.register_blueprint(integration_mal)
 
 
+@integration_bp.before_request
+def integration_check():
+    if app.config.get("REDIS_DISABLED"):
+        return jsonify({"result": "KO", "error": "Background tasks are disabled"}), 503
+    return None
+
+
+def _create_check(config_key, error_message):
+    def check():
+        config_value = app.config.get(config_key)
+        if not config_value:
+            return jsonify({"result": "KO", "error": error_message}), 503
+        return None
+
+    return check
+
+
+integration_mu.before_request(_create_check("MU_INTEGRATION", "MU_INTEGRATION is disabled."))
+integration_dex.before_request(_create_check("DEX_INTEGRATION", "DEX_INTEGRATION is disabled."))
+integration_mal.before_request(_create_check("MAL_INTEGRATION", "MAL_INTEGRATION is disabled."))
+
+
 # MangaUpdates Integration endpoints
 @integration_mu.route("/update-ratings", methods=["PUT"])
 def mu_ratings():
     try:
-        if not app.config["MU_INTEGRATION"]:
-            return jsonify({"result": "KO", "error": "MU_INTEGRATION is disabled"}), 400
         data, _ = mu_get_data_for_all()
         if data:
             s = mu_update_ratings(data)
@@ -34,8 +53,6 @@ def mu_ratings():
 @integration_mu.route("/update-ongoing", methods=["PUT"])
 def mu_ongoing():
     try:
-        if not app.config["MU_INTEGRATION"]:
-            return jsonify({"result": "KO", "error": "MU_INTEGRATION is disabled"}), 400
         s = mu_update_ongoing()
         if s == 2:
             sleep(5)
@@ -50,8 +67,6 @@ def mu_ongoing():
 @integration_mu.route("/sync-lists", methods=["PUT"])
 def mu_lists():
     try:
-        if not app.config["MU_INTEGRATION"]:
-            return jsonify({"result": "KO", "error": "MU_INTEGRATION is disabled"}), 400
         data, headers = mu_get_data_for_all()
         if data:
             s = mu_sync_lists(data, headers)
@@ -65,13 +80,10 @@ def mu_lists():
 @integration_mu.route("/update-series", methods=["PUT"])
 def mu_series():
     try:
-        if not app.config["MU_INTEGRATION"]:
-            return jsonify({"result": "KO", "error": "MU_INTEGRATION is disabled"}), 400
         data, _ = mu_get_data_for_all()
         if not data:
             return jsonify(
                 {"result": "KO", "error": "Internal error", "message": "Did you set up mu lists correctly?"}), 502
-
         s = mu_update_series(data)
         if s:
             return "", 204
@@ -84,8 +96,6 @@ def mu_series():
 @integration_dex.route("/update-ratings", methods=["PUT"])
 def dex_ratings():
     try:
-        if not app.config["DEX_INTEGRATION"]:
-            return jsonify({"error": "DEX_INTEGRATION is disabled"}), 400
         tokens, headers, lists = dex_start()
         if not headers:
             return jsonify({"error": "Failed to authenticate with Mangadex"}), 502
@@ -100,8 +110,6 @@ def dex_ratings():
 @integration_dex.route("/sync-lists", methods=["PUT"])
 def dex_lists():
     try:
-        if not app.config["DEX_INTEGRATION"]:
-            return jsonify({"result": "KO", "error": "DEX_INTEGRATION is disabled"}), 400
         tokens, headers, lists = dex_start()
         if not headers:
             return jsonify({"result": "KO", "error": "Failed to authenticate with Mangadex"}), 502
