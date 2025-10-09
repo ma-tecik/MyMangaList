@@ -4,9 +4,10 @@ services:
     container_name: mml
     restart: unless-stopped
     environment:
-      - TZ=Europe/Istanbul # Set your timezone
-    user: "1000:1000" # Change 1000:1000 to your desired user and group ID
+      - TZ=Europe/Istanbul
+      - MML_REDIS_DISABLED=true
+    user: "1000:1000"
     ports:
-      - "20340:20340" # Change 20340 to your desired port
+      - "20340:20340"
     volumes:
-      - "/opt/mml:/app/data" # Change /opt/mml to your desired path
+      - "/opt/mml:/app/data"

@@ -20,7 +20,7 @@ integration_bp.register_blueprint(integration_mal)
 def mu_ratings():
     try:
         if not app.config["MU_INTEGRATION"]:
-            return jsonify({"error": "MU_INTEGRATION is disabled"}), 400
+            return jsonify({"result": "KO", "error": "MU_INTEGRATION is disabled"}), 400
         data, _ = mu_get_data_for_all()
         if data:
             s = mu_update_ratings(data)
@@ -35,7 +35,7 @@ def mu_ratings():
 def mu_ongoing():
     try:
         if not app.config["MU_INTEGRATION"]:
-            return jsonify({"error": "MU_INTEGRATION is disabled"}), 400
+            return jsonify({"result": "KO", "error": "MU_INTEGRATION is disabled"}), 400
         s = mu_update_ongoing()
         if s == 2:
             sleep(5)
@@ -51,7 +51,7 @@ def mu_ongoing():
 def mu_lists():
     try:
         if not app.config["MU_INTEGRATION"]:
-            return jsonify({"error": "MU_INTEGRATION is disabled"}), 400
+            return jsonify({"result": "KO", "error": "MU_INTEGRATION is disabled"}), 400
         data, headers = mu_get_data_for_all()
         if data:
             s = mu_sync_lists(data, headers)
@@ -66,7 +66,7 @@ def mu_lists():
 def mu_series():
     try:
         if not app.config["MU_INTEGRATION"]:
-            return jsonify({"error": "MU_INTEGRATION is disabled"}), 400
+            return jsonify({"result": "KO", "error": "MU_INTEGRATION is disabled"}), 400
         data, _ = mu_get_data_for_all()
         if not data:
             return jsonify(
@@ -89,7 +89,7 @@ def dex_ratings():
         tokens, headers, lists = dex_start()
         if not headers:
             return jsonify({"error": "Failed to authenticate with Mangadex"}), 502
-        s = dex_update_ratings(headers, lists)
+        s = dex_update_ratings(lists, headers)
         if s:
             return "", 204
     except Exception as e:
@@ -101,10 +101,10 @@ def dex_ratings():
 def dex_lists():
     try:
         if not app.config["DEX_INTEGRATION"]:
-            return jsonify({"error": "DEX_INTEGRATION is disabled"}), 400
+            return jsonify({"result": "KO", "error": "DEX_INTEGRATION is disabled"}), 400
         tokens, headers, lists = dex_start()
         if not headers:
-            return jsonify({"error": "Failed to authenticate with Mangadex"}), 502
+            return jsonify({"result": "KO", "error": "Failed to authenticate with Mangadex"}), 502
         to_update = dex_sync_lists(lists)
         if to_update and app.config["DEX_INTEGRATION_FORCED"] == "1":
             dex_sync_lists_forced(tokens, headers, to_update)
@@ -126,5 +126,6 @@ def dex_fetch_ids_api():
 
 # MyAnimeList Integration endpoints (TODO)
 @integration_mal.route("", methods=["PUT"])
-def mal():
-    pass
+@integration_mal.route("/<n>", methods=["PUT"])
+def mal(n=None):
+    return jsonify({"result": "KO", "error": "Not implemented yet"}), 501

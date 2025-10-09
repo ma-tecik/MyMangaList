@@ -171,7 +171,7 @@ def mu_get_data_for_all() -> Tuple[Dict[str, List[dict]], dict]:
             return {}, {}
 
         data = {}
-        for i in ("plan-to", "reading", "completed", "one-shots", "dropped", "on-hold", "ongoing"):
+        for i in ("completed", "one-shots", "reading", "on-hold", "dropped", "plan-to", "ongoing"):
             list_id = app.config[f"MU_LIST_{i.upper()}"]
             data_ = mu_get_list(list_id, headers)
             if data_:
@@ -240,16 +240,16 @@ def mu_sync_lists(data: Dict[str, List[dict]], headers) -> bool:
                 add_to_db[k] = v
             elif db[k][0] == v[0]:
                 continue
-            elif db[k][1] >> v[1]:
+            elif db[k][1] > v[1]:
                 to_update_mu[k] = v
-            elif db[k][1] << v[1]:
+            elif db[k][1] < v[1]:
                 to_update_db[k] = v
             else:
                 app.logger.warning(f"Skipping {k}, because status different but timestamps same")
 
         if to_update_db:
             query = "UPDATE series SET status = ?, timestamp_status = ? WHERE id_mu = ?"
-            cursor.executemany(query, [(to_update_db[k][0], to_update_mu[1], k) for k in to_update_mu.keys()])
+            cursor.executemany(query, [(v[0], v[1], k) for k, v in to_update_mu.items()])
             conn.commit()
         if add_to_mu:
             for i in ("plan-to", "reading", "completed", "one-shots", "dropped", "on-hold", "ongoing"):
@@ -257,7 +257,7 @@ def mu_sync_lists(data: Dict[str, List[dict]], headers) -> bool:
                 payload = [{"series": {"id": int(j, 36)}, "list_id": list_id} for j in add_to_mu if add_to_mu[j] == i]
                 _add_series_batch(payload, headers)
         if to_update_mu:
-            for i in ("plan-to", "reading", "completed", "one-shots", "dropped", "on-hold", "ongoing")   :
+            for i in ("plan-to", "reading", "completed", "one-shots", "dropped", "on-hold", "ongoing"):
                 list_id = app.config[f"MU_LIST_{i.upper()}"]
                 payload = [{"series": {"id": j}, "list_id": list_id} for j in add_to_mu if add_to_mu[j] == i]
                 _move_series_batch(payload, headers)

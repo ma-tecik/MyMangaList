@@ -3,7 +3,6 @@ from views.api import api_bp
 from views.site import site_bp
 from views.misc import misc_bp
 from utils.settings import first_run, first_run_detect_language, get_settings
-from utils.scheduler import init_scheduler
 import logging
 import os
 
@@ -35,7 +34,11 @@ if not os.path.isfile("data/detect_language.sqlite3"):
 
 
 get_settings(app)
-init_scheduler(app)
+
+if os.environ.get("MML_REDIS_DISABLED") == "true":
+    app.config["REDIS_DISABLED"] = True
+    from utils.scheduler import init_scheduler
+    init_scheduler(app)
 
 
 @app.before_request

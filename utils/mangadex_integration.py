@@ -211,11 +211,12 @@ def dex_sync_lists(lists) -> Dict[str, str]:
                 params.append(n)
 
             cursor.execute(query, params)
-            if len(cursor.fetchall()) >= 2:
+            rows = cursor.fetchall()
+            if len(rows) >= 2:
                 app.logger.warning(f"Multiple entries found for Title:{r['title']}, IDs: ({r['ids']}). Skipping.")
                 continue
-            if cursor.fetchone():
-                id_ = cursor.fetchone()[0]
+            if rows:
+                id_ = rows[0][0]
                 query = "UPDATE series SET "
                 params = []
                 for m, n in r["ids"].items():
