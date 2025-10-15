@@ -5,15 +5,24 @@ from typing import Tuple, Union, Dict, List, Any
 
 
 def download_thumbnail(series_id: int, thumbnail: str, cursor: sqlite3.Cursor) -> Tuple[dict, int]:
-    import requests
     try:
-        response = requests.get(thumbnail)
-        if response.status_code != 200:
-            app.logger.error(f"Failed to download image from {thumbnail}, status code: {response.status_code}")
-            return {"result": "KO", "error": "Failed to download thumbnail"}, 502
-        ext = response.headers.get("Content-Type").split("/")[-1]
+        if thumbnail.startswith("line://"):
+            from utils.line import get_thumbnail
+            img = get_thumbnail(thumbnail[7:])
+            if not img:
+                app.logger.error(f"Failed to download image from {thumbnail}")
+                return {"result": "KO", "error": "Failed to download thumbnail"}, 502
+            ext = thumbnail[-3:]
+        else:
+            import requests
+            response = requests.get(thumbnail)
+            if response.status_code != 200:
+                app.logger.error(f"Failed to download image from {thumbnail}, status code: {response.status_code}")
+                return {"result": "KO", "error": "Failed to download thumbnail"}, 502
+            ext = response.headers.get("Content-Type").split("/")[-1]
+            img = response.content
         with open(f"data/thumbnails/{series_id}.{ext}", "wb") as f:
-            f.write(response.content)
+            f.write(img)
         cursor.execute("INSERT INTO series_thumbnails (series_id, extension, url) VALUES (?, ?, ?)",
                        (series_id, ext, thumbnail))
         return {"result": "OK"}, 201
@@ -21,18 +30,6 @@ def download_thumbnail(series_id: int, thumbnail: str, cursor: sqlite3.Cursor) -
         app.logger.error(f"Failed to download the image from {thumbnail}: {e}")
         return {"result": "KO", "error": "Failed to download thumbnail"}, 500
 
-
-# def delete_thumbnail(series_id: int, cursor: sqlite3.Cursor) -> Tuple[Dict[str, str], int]:
-#     try:
-#         cursor.execute("DELETE FROM series_thumbnails WHERE series_id = ? RETURNING extension", (series_id,))
-#         ext = cursor.fetchone()[0]
-#         with open(f'data/thumbnails/{series_id}.{ext}', 'wb') as image_file:
-#             image_file.write(b'')
-#         return {"result": "OK"}, 204
-#     except Exception as e:
-#         app.logger.error(f"Failed to delete the image for series {series_id}: {e}")
-#         return {"result": "KO", "error": "Failed to delete image"}, 500
-#
 
 def update_thumbnail(series_id: int, thumbnail: str, cursor: sqlite3.Cursor) -> Tuple[Dict[str, str], int]:
     try:

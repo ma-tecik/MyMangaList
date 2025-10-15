@@ -1,6 +1,5 @@
 import sqlite3
 
-
 def _is_int(value):
     try:
         int(value)
@@ -143,11 +142,12 @@ def get_settings(app):
 
     # DEX INTEGRATION
     if app.config["DEX_INTEGRATION"]:
-        s = ["dex_username", "dex_password", "dex_client_id", "dex_secret", "dex_integration_forced"]
+        s = ["dex_username", "dex_password", "dex_client_id", "dex_secret"]
         if all(settings.get(i) for i in s):
             app.config["DEX_INTEGRATION"] = 1
             for i in s:
                 app.config[i.upper()] = settings[i]
+            app.config["DEX_INTEGRATION_FORCED"] = 1 if settings.get("dex_integration_forced") == "1" else 0
         else:
             app.config["DEX_INTEGRATION"] = 0
             params.append((0, "dex_integration"))
@@ -159,7 +159,8 @@ def get_settings(app):
     # https://web.archive.org/web/20250514000339/https://myanimelist.net/forum/?topicid=1973141#:~:text=publicly%20available%20information
     app.config["MAL_CLIENT_ID"] = _is_mal_id_valid(settings.get("mal_client_id"))
     if not app.config["MAL_CLIENT_ID"]:
-        app.logger.warning("You must provide a MAL Client ID to get any data from MyAnimeList.")
+        if not app.config.get("WORKER"):
+            app.logger.warning("You must provide a MAL Client ID to get any data from MyAnimeList.")
         if app.config["MAL_INTEGRATION"]:
             app.config["MAL_INTEGRATION"] = 0
             params.append((0, "mal_integration"))
@@ -235,5 +236,6 @@ def update_settings(data):
         conn.commit()
         conn.close()
         get_settings(app)
+        app.extensions["celery"].send_task("reload_settings", priority=0)
     else:
         conn.close()

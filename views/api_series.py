@@ -340,6 +340,12 @@ def delete_series(id_) -> Tuple[jsonify, int]:
 
         conn.commit()
         conn.close()
+        try:
+            with open(f"data/thumbnails/{id_}.{r.get("thumbnail_ext")}", "wb") as f:
+                f.write(b"")
+        except Exception as e:
+            app.logger.error(f"Thumbnail could not be deleted for {r.get('title')}: {e}")
+
         return jsonify({"result": "OK", "data": r}), 200
 
     except Exception as e:

@@ -1,9 +1,6 @@
 from flask import Blueprint, jsonify, current_app as app
-from utils.mangaupdates_integration import mu_get_data_for_all, mu_update_ratings, mu_update_ongoing, mu_sync_lists, \
-    mu_update_series
-from utils.mangadex_integration import dex_start, dex_update_ratings, dex_sync_lists, dex_sync_lists_forced, \
-    dex_fetch_ids
-from time import sleep
+import utils.tasks as tasks
+from typing import Any
 
 integration_bp = Blueprint("api_integration", __name__, url_prefix="/integration")
 integration_mu = Blueprint("api_integration_mu", __name__, url_prefix="/mu")
@@ -36,100 +33,78 @@ integration_dex.before_request(_create_check("DEX_INTEGRATION", "DEX_INTEGRATION
 integration_mal.before_request(_create_check("MAL_INTEGRATION", "MAL_INTEGRATION is disabled."))
 
 
-# MangaUpdates Integration endpoints
-@integration_mu.route("/update-ratings", methods=["PUT"])
-def mu_ratings():
+@integration_bp.route("/tasks/<task_id>", methods=["GET"])
+def task_status(task_id):
     try:
-        data, _ = mu_get_data_for_all()
-        if data:
-            s = mu_update_ratings(data)
-            if s:
-                return "", 204
+        celery = app.extensions["celery"]
+        task = celery.AsyncResult(task_id)
+        if task.state == "PENDING":
+            return jsonify({"result": "OK", "state": task.state}), 200
+        elif task.state == "SUCCESS":
+            return jsonify({"result": "OK", "state": task.state, "task_result": str(task.result)}), 200
+        elif task.state == "FAILURE":
+            return jsonify({"result": "OK", "state": task.state, "error": str(task.result)}), 200
+        else:
+            return jsonify({"state": task.state}), 200
     except Exception as e:
         app.logger.error(e)
-    return jsonify({"result": "KO", "error": "Internal error", "message": "Did you set up mu lists correctly?"}), 500
+        return jsonify({"result": "KO", "error": "Internal server error"}), 500
+
+
+def _handle_task(task_func: Any):
+    try:
+        task = task_func.delay(priority=1)
+        return jsonify({"result": "OK", "task_id": task.id}), 202
+    except Exception as e:
+        app.logger.error(e)
+        return jsonify({"result": "KO", "error": "Internal server error"}), 500
+
+
+# MangaUpdates Integration endpoints
+@integration_mu.route("/all", methods=["PUT"])
+def mu_all():
+    return _handle_task(tasks.mu_all_task)
+
+
+@integration_mu.route("/update-ratings", methods=["PUT"])
+def mu_ratings():
+    return _handle_task(tasks.mu_update_ratings_task)
 
 
 @integration_mu.route("/update-ongoing", methods=["PUT"])
 def mu_ongoing():
-    try:
-        s = mu_update_ongoing()
-        if s == 2:
-            sleep(5)
-            mu_lists()
-        if s:
-            return "", 204
-    except Exception as e:
-        app.logger.error(e)
-    return jsonify({"result": "KO", "error": "Internal error", "message": "Did you set up mu lists correctly?"}), 500
+    return _handle_task(tasks.mu_update_ongoing_task)
 
 
 @integration_mu.route("/sync-lists", methods=["PUT"])
 def mu_lists():
-    try:
-        data, headers = mu_get_data_for_all()
-        if data:
-            s = mu_sync_lists(data, headers)
-            if s:
-                return "", 204
-    except Exception as e:
-        app.logger.error(e)
-    return jsonify({"result": "KO", "error": "Internal error", "message": "Did you set up mu lists correctly?"}), 500
+    return _handle_task(tasks.mu_sync_lists_task)
 
 
 @integration_mu.route("/update-series", methods=["PUT"])
 def mu_series():
-    try:
-        data, _ = mu_get_data_for_all()
-        if not data:
-            return jsonify(
-                {"result": "KO", "error": "Internal error", "message": "Did you set up mu lists correctly?"}), 502
-        s = mu_update_series(data)
-        if s:
-            return "", 204
-    except Exception as e:
-        app.logger.error(e)
-    return jsonify({"result": "KO", "error": "Internal error", "message": "Did you set up mu lists correctly?"}), 500
+    return _handle_task(tasks.mu_update_series_task)
 
 
 # MangaDex Integration endpoints
+@integration_dex.route("/all", methods=["PUT"])
+def dex_all():
+    return _handle_task(tasks.dex_all_task)
+
+
 @integration_dex.route("/update-ratings", methods=["PUT"])
 def dex_ratings():
-    try:
-        tokens, headers, lists = dex_start()
-        if not headers:
-            return jsonify({"error": "Failed to authenticate with Mangadex"}), 502
-        s = dex_update_ratings(lists, headers)
-        if s:
-            return "", 204
-    except Exception as e:
-        app.logger.error(e)
-    return jsonify({"result": "KO", "error": "Internal error"}), 500
+    return _handle_task(tasks.dex_update_ratings_task)
 
 
 @integration_dex.route("/sync-lists", methods=["PUT"])
 def dex_lists():
-    try:
-        tokens, headers, lists = dex_start()
-        if not headers:
-            return jsonify({"result": "KO", "error": "Failed to authenticate with Mangadex"}), 502
-        to_update = dex_sync_lists(lists)
-        if to_update and app.config["DEX_INTEGRATION_FORCED"] == "1":
-            dex_sync_lists_forced(tokens, headers, to_update)
-        return "", 204
-    except Exception as e:
-        app.logger.error(e)
-    return jsonify({"result": "KO", "error": "Internal error"}), 500
+    return _handle_task(tasks.dex_sync_lists_task)
 
 
 @integration_dex.route("/fetch-ids", methods=["PUT"])
 def dex_fetch_ids_api():
-    try:
-        if dex_fetch_ids():
-            return "", 204
-    except Exception as e:
-        app.logger.error(e)
-    return jsonify({"result": "KO", "error": "Internal error"}), 500
+    return _handle_task(tasks.dex_fetch_ids_task)
 
 
 # MyAnimeList Integration endpoints (TODO)

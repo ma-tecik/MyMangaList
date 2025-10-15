@@ -21,10 +21,8 @@ info:
     url: https://www.gnu.org/licenses/agpl-3.0.html
   version: 1.0.0
 servers:
-  - url: "http://127.0.0.1:5000/api/v1"
+  - url: "http://127.0.0.1:5000"
     description: Localhost Server (for development purposes)
-  - url: "https://dev.mat.tr.eu.org/api/v1"
-    description: Development Server (DNS record may be deleted any time)
 tags:
   - name: Auth
   - name: Series
@@ -40,7 +38,7 @@ tags:
   - name: Integration
     description: Operation related to external sites
 paths:
-  /login:
+  /api/v1/login:
     post:
       operationId: login
       summary: Login
@@ -87,7 +85,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseKO'
 
-  /auth:
+  /api/v1/auth:
     head:
       operationId: checkAuth
       summary: Check authentication
@@ -101,7 +99,7 @@ paths:
         '500':
           description: Internal server error
 
-  /ping:
+  /api/v1/ping:
     get:
       operationId: getPing
       summary: Ping healthcheck
@@ -117,7 +115,7 @@ paths:
                 type: string
                 default: pong
 
-  /series:
+  /api/v1/series:
     get:
       operationId: getSeriesList
       summary: Retrieve series list
@@ -280,7 +278,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/responseKO'
-  /series/{id}:
+  /api/v1/series/{id}:
     get:
       operationId: getSeriesById
       summary: Get a series by series_id
@@ -447,7 +445,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseKO'
 
-  /series/{id}/ratings:
+  /api/v1/series/{id}/ratings:
     patch:
       operationId: updateSeriesRatings
       summary: Update series ratings and vote counts
@@ -524,7 +522,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseKO'
 
-  /external/series/ratings:
+  /api/v1/external/series/ratings:
     put:
       operationId: externalUpdateSeriesRatings
       summary: Update a list of series' ratings and vote counts
@@ -603,7 +601,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseKO'
 
-  /external/series/id:
+  /api/v1/external/series/id:
     get:
       operationId: externalSeriesID
       summary: Get the series_id of a series by external IDs
@@ -674,7 +672,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseKO'
 
-  /external/series/data:
+  /api/v1/external/series/data:
     get:
       operationId: externalSeriesData
       summary: Get the series details from external sources
@@ -745,7 +743,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseKO'
 
-  /authors:
+  /api/v1/authors:
     get:
       operationId: getAuthorList
       summary: Retrieve authors list
@@ -841,7 +839,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseKO'
 
-  /authors/search:
+  /api/v1/authors/search:
     get:
       operationId: searchAuthor
       summary: Search authors by name
@@ -896,7 +894,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseKO'
 
-  /authors/{id}:
+  /api/v1/authors/{id}:
     get:
       operationId: getAuthorById
       summary: Get an author by author_id
@@ -985,7 +983,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseKO'
 
-  /authors/merge:
+  /api/v1/authors/merge:
     post:
       operationId: mergeAuthors
       summary: Merge 2 or more authors by author_ids
@@ -1042,7 +1040,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseKO'
 
-  /h:
+  /api/v1/h:
     post:
       operationId: addHentai
       summary: Add a hentai
@@ -1094,7 +1092,7 @@ paths:
         '500':
           description: Internal server error, check logs.
 
-  /h/{id}:
+  /api/v1/h/{id}:
     head:
       operationId: isNhentaiInDB
       summary: Check if a hentai is in DB
@@ -1117,7 +1115,7 @@ paths:
         '500':
           description: Internal server error, check logs.
 
-  /h/{id}/{key}:
+  /api/v1/h/{id}/{key}:
     head:
       operationId: isSchaleInDB
       summary: Check if a hentai is in DB
@@ -1146,7 +1144,7 @@ paths:
         '500':
           description: Internal server error, check logs.
 
-  /status:
+  /api/v1/status:
     get:
       operationId: getStatus
       summary: Your reading status
@@ -1230,7 +1228,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/responseKO'
-  /settings:
+  /api/v1/settings:
     get:
       operationId: getSettings
       summary: Retrieve settings
@@ -1293,12 +1291,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseKO'
 
-  /integration/mu/{job}:
+  /api/v1/integration/mu/{job}:
     put:
-      operationId: MuIntegration
+      operationId: muIntegration
       summary: Start a MangaUpdates integration job
       description: |-
         Starts a MangaUpdates integration job
+        - all: Do all of below 
         - update-ratings: Updates ratings in the DB from MangaUpdates, both average and user ratings.
         - update-ongoing: Move fully scanlated series to "plan-to" list and ongoing series to "ongoing" list on MangaUpdates.
         - sync-lists: Sync lists. Works based on the latest changes (Thanks MU for "time_added" timestamp)
@@ -1311,13 +1310,18 @@ paths:
           schema:
             type: string
             enum:
+              - 'all'
               - 'update-ratings'
               - 'update-ongoing'
               - 'sync-lists'
               - 'update-series'
       responses:
-        '204':
-          description: Job completed
+        '202':
+          description: Job accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseJob'
         '400':
           description: Bad request (integration disabled)
           content:
@@ -1337,12 +1341,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseKO'
 
-  /integration/dex/{job}:
+  /api/v1/integration/dex/{job}:
     put:
-      operationId: DexIntegration
+      operationId: dexIntegration
       summary: Start a MangaDex integration job
       description: |-
         Starts a MangaDex integration job
+        - all: Do all of below except fetch-ids
         - update-ratings: Updates ratings in the DB from MangaDex, both average and user ratings.
         - sync-lists: Sync lists. If "DEX_INTEGRATION_FORCED" is disabled practically does nothing.
         - fetch-ids: Fetches and updates missing Mangadex IDs from series that have a MangaUpdates ID. Works even if "DEX_INTEGRATION" is disabled.
@@ -1354,12 +1359,17 @@ paths:
           schema:
             type: string
             enum:
+              - 'all'
               - 'update-ratings'
               - 'sync-lists'
               - 'fetch-ids'
       responses:
-        '204':
-          description: Job completed
+        '202':
+          description: Job accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseJob'
         '400':
           description: Bad request (integration disabled)
           content:
@@ -1379,7 +1389,56 @@ paths:
               schema:
                 $ref: '#/components/schemas/responseKO'
 
-
+  /api/v1/integration/tasks/{task_id}:
+    get:
+      operationId: taskStatus
+      summary: Get the status of a task
+      description: Returns the status of a task
+      tags: [ Integration ]
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/taskID'
+      responses:
+        '200':
+          description: Job status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    default: OK
+                  state:
+                    type: string
+                    enum:
+                      - PENDING
+                      - SUCCESS
+                      - FAILURE
+                      - etc.
+                  task_result:
+                    description: only if state is SUCCESS
+                    type: string
+                    default: only if state is SUCCESS
+                  error:
+                    description: only if state is FAILURE
+                    type: string
+                    default: only if state is FAILURE
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
+        '500':
+          description: Internal server error, check logs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/responseKO'
 
 components:
   schemas:
@@ -1889,6 +1948,19 @@ components:
                     type: integer
                   as_both:
                     type: integer
+    responseJob:
+      type: object
+      properties:
+        result:
+          type: string
+          default: OK
+        task_id:
+          $ref: '#/components/schemas/taskID'
+
+    taskID:
+      type: string
+      pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+
 
   securitySchemes:
     cookieAuth:
